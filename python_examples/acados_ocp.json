@@ -1,7 +1,7 @@
 {
     "acados_include_path": "/home/emmanuel/acados/include",
     "acados_lib_path": "/home/emmanuel/acados/lib",
-    "code_export_directory": "/home/emmanuel/Monocopter OCP/c_generated_code",
+    "code_export_directory": "/home/emmanuel/Monocopter OCP/examples/c_generated_code",
     "constraints": {
         "C": [],
         "C_e": [],
