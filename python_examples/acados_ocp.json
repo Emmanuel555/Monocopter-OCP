@@ -1,7 +1,7 @@
 {
     "acados_include_path": "/home/emmanuel/acados/include",
     "acados_lib_path": "/home/emmanuel/acados/lib",
-    "code_export_directory": "/home/emmanuel/Monocopter OCP/examples/c_generated_code",
+    "code_export_directory": "/home/emmanuel/Monocopter OCP/python_examples/c_generated_code",
     "constraints": {
         "C": [],
         "C_e": [],
@@ -118,7 +118,7 @@
         "zu_e": []
     },
     "cython_include_dirs": [
-        "/usr/lib/python3/dist-packages/numpy/core/include",
+        "/home/emmanuel/.local/lib/python3.8/site-packages/numpy/core/include",
         "/usr/include/python3.8"
     ],
     "dims": {

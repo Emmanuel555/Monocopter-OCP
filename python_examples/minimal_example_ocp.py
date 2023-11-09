@@ -88,6 +88,7 @@ def main():
     status = ocp_solver.solve()
     ocp_solver.print_statistics() # encapsulates: stat = ocp_solver.get_stats("statistics")
 
+    print ("stats out")
     if status != 0:
         raise Exception(f'acados returned status {status}.')
 
