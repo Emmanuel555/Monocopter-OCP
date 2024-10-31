@@ -14,7 +14,7 @@ At the instantiation of the filter the following parameters are compulsory:
         order filters and an extra first order one if necessary.
     cutoff:array/positive float
         Depending on the desired filter 1 cutoff frequency is to be
-        enetered as a positive float for low/highpass filters or
+        entered as a positive float for low/highpass filters or
         2 cutoff frequenices to be entered in an array as positive floats
         for bandstop and bandpass filters. These cutoff frequencies can be
         either entered as normalised to the Nyquist frequency (1 =

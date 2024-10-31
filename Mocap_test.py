@@ -40,9 +40,9 @@ if __name__ == '__main__':
 
         # save data
         
-        data_saver.add_item(abs_time,
-                            raw_data
-                            )
+        #data_saver.add_item(abs_time,
+        #                    raw_data
+        #                    )
         
        #print("rpy: ", data_processor.get_RPY())
         

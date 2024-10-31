@@ -14,6 +14,10 @@ class RealTimeProcessor(object):
         self.qy_last = 0
         self.qz_last = 0
         self.qw_last = 0
+        self.diff_qx_last = 0
+        self.diff_qy_last = 0
+        self.diff_qz_last = 0
+        self.diff_qw_last = 0
 
         # raw data from motion capture
         self.px = 0
@@ -22,7 +26,7 @@ class RealTimeProcessor(object):
         self.quat_x = 0
         self.quat_y = 0
         self.quat_z = 0
-        self.quat_w = 0
+        self.quat_w = 0        
 
         # filted data with IIR2Filter
         self.px_filted = 0
@@ -53,18 +57,23 @@ class RealTimeProcessor(object):
         self.FilterOmega_y = IIR2Filter(5, [50], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterOmega_z = IIR2Filter(5, [50], ftype, design=design, rs=rs, fs=sample_rate)
 
-    def data_unpack(self, udp_data):
-        x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data)
-        self.px = x * 0.0005  # position px
-        self.py = y * 0.0005  # position py
-        self.pz = z * 0.0005  # position pz
+        self.FilterOmega_dot_x = IIR2Filter(5, [70], ftype, design=design, rs=rs, fs=sample_rate)
+        self.FilterOmega_dot_y = IIR2Filter(5, [70], ftype, design=design, rs=rs, fs=sample_rate)
+        self.FilterOmega_dot_z = IIR2Filter(5, [70], ftype, design=design, rs=rs, fs=sample_rate)
+
+        
+    def data_unpack(self, udp_data): ## qns abt this
+        x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
+        self.px = x * 0.0005  # position px 
+        self.py = y * 0.0005  # position py  
+        self.pz = z * 0.0005  # position pz 
 
         self.quat_x = float(qx * 0.001)
         self.quat_y = float(qy * 0.001)
         self.quat_z = float(qz * 0.001)
         self.quat_w = float(qw * 0.001)
-        self.raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
-
+        raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
+        return raw_data
 
     def get_data_filted(self):
         self.px_filted = self.FilterX.filter(self.px)
@@ -132,7 +141,7 @@ class RealTimeProcessor(object):
         roll_x = math.atan2(2*self.quat_w*self.quat_x + 2*self.quat_y*self.quat_z, 1 - 2*(self.quat_y*self.quat_y + self.quat_x*self.quat_x))
         return roll_x
 
-    def get_tpp(self):
+    def get_tpp(self): # qns abt this
         xi_x = math.atan2(self.R13, self.R33)
         xi_y = math.atan2(self.R23, self.R33)
         # xi_x = self.R13
@@ -163,7 +172,7 @@ class RealTimeProcessor(object):
 
         return dot_quat
 
-    def get_Omega(self):
+    """ def get_Omega(self): # taken from shane
 
         diff_qx = self.quat_x - self.qx_last
         diff_qy = self.quat_y - self.qy_last
@@ -180,24 +189,68 @@ class RealTimeProcessor(object):
                      [-self.quat_y, -self.quat_z, self.quat_w, self.quat_x],
                      [-self.quat_z, self.quat_y, -self.quat_x, self.quat_w]]
 
-        self.Omega = 2 * np.dot(E_q_trans, dot_quat)
+        self.Omega = 2 * np.dot(E_q_trans, dot_quat) # 3 x 1 - rpy about y, x, z
 
-        return self.Omega
+        return self.Omega """
 
-    def get_Omega_filt(self):
+    def get_Omega_dot_dotdot(self): # taken from shane
+
+        diff_qx = self.quat_x - self.qx_last
+        diff_qy = self.quat_y - self.qy_last
+        diff_qz = self.quat_z - self.qz_last
+        diff_qw = self.quat_w - self.qw_last
+
+        diff_diff_qx = diff_qx - self.diff_qx_last
+        diff_diff_qy = diff_qy - self.diff_qy_last
+        diff_diff_qz = diff_qz - self.diff_qz_last
+        diff_diff_qw = diff_qw - self.diff_qz_last
+
+        self.qx_last = self.quat_x
+        self.qy_last = self.quat_y
+        self.qz_last = self.quat_z
+        self.qw_last = self.quat_w
+
+        self.diff_qx_last = diff_qx
+        self.diff_qy_last = diff_qy
+        self.diff_qz_last = diff_qz
+        self.diff_qw_last = diff_qw
+
+        dot_quat = [diff_qw/self.sample_time, diff_qx/self.sample_time, diff_qy/self.sample_time, diff_qz/self.sample_time]
+        dot_dot_quat = [diff_diff_qw/self.sample_time, diff_diff_qx/self.sample_time, diff_diff_qy/self.sample_time, diff_diff_qz/self.sample_time]
+
+        E_q_trans = [[-self.quat_x, self.quat_w, self.quat_z, -self.quat_y],
+                     [-self.quat_y, -self.quat_z, self.quat_w, self.quat_x],
+                     [-self.quat_z, self.quat_y, -self.quat_x, self.quat_w]]
+
+        self.Omega = 2 * np.dot(E_q_trans, dot_quat) # 3 x 1 - about x, y, z
+        self.Omega_dot = 2 * np.dot(E_q_trans, dot_dot_quat) # 3 x 1 - about x, y, z
+
+
+        return (self.Omega, self.Omega_dot)
+
+    def get_Omega_dot_dotdot_filt(self):
         Omega_x = self.Omega[0]
         Omega_y = self.Omega[1]
         Omega_z = self.Omega[2]
+
+        Omega_dot_x = self.Omega_dot[0]
+        Omega_dot_y = self.Omega_dot[1]
+        Omega_dot_z = self.Omega_dot[2]
 
         self.Omega_x_f = self.FilterOmega_x.filter(Omega_x)
         self.Omega_y_f = self.FilterOmega_y.filter(Omega_y)
         self.Omega_z_f = self.FilterOmega_z.filter(Omega_z)
 
+        self.Omega_dot_x_f = self.FilterOmega_dot_x.filter(Omega_dot_x)
+        self.Omega_dot_y_f = self.FilterOmega_dot_y.filter(Omega_dot_y)
+        self.Omega_dot_z_f = self.FilterOmega_dot_z.filter(Omega_dot_z)
+
         self.Omega_f = [self.Omega_x_f, self.Omega_y_f, self.Omega_z_f]
+        self.Omega_dot_f = [self.Omega_dot_x_f, self.Omega_dot_y_f, self.Omega_dot_z_f]
 
-        return self.Omega_f
+        return (self.Omega_f, self.Omega_dot_f) # convention is abt x, y, z - pry
 
-    def get_RPY(self):
+    def get_RPY(self): # qns abt this
         # roll - rotating about x axis
         roll_a = 2 * (self.quat_w * self.quat_x + self.quat_y * self.quat_z)
         roll_b = 1 - 2 * (self.quat_x * self.quat_x + self.quat_y * self.quat_y)
@@ -212,7 +265,7 @@ class RealTimeProcessor(object):
         yaw_b = 1 - 2 * (self.quat_y * self.quat_y + self.quat_z * self.quat_z)
         angle_yaw = math.atan2(yaw_a, yaw_b)
 
-        RPY = [angle_roll, angle_pitch, angle_yaw]
+        RPY = [angle_roll, angle_pitch, angle_yaw] # pry
         return RPY
 
 
