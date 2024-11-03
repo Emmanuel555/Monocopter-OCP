@@ -2,8 +2,8 @@ import minsnap_trajectories as ms
 import numpy as np
 import numpy.linalg as la
 import math
-from pyquaternion import Quaternion
-from pyrr import Quaternion, Matrix33, Matrix44, Vector3
+#from pyquaternion import Quaternion
+from pyrr import quaternion, Matrix33, Matrix44, Vector3 # array inputs are all flattened
 
 
 if __name__ == '__main__':
@@ -49,14 +49,32 @@ if __name__ == '__main__':
     z = np.transpose(z)
     print(np.shape(z))
 
-    a = np.array([[0,0,1]]) # 1 x 3 - row based simulated disk vector 
+
+    qz = quaternion.create(0,0,0,1)
+    qzi = quaternion.inverse(qz)
+    ez = np.array([0,0,1]) # 3,: flattened form
+
+    #a = np.array([[0,0,1]]) # 1 x 3 - row based simulated disk vector 
+    a = quaternion.apply_to_vector(qz, ez) # flattened array
+    a = np.array([[a[0],a[1],a[2]]])  # 1 x 3 - row based simulated disk vector
     b = np.array([[1,0,1]]) # 1 x 3 - row based simulated zd which is desired vector 
-    c = np.dot(a,np.transpose(b))
+    c = np.dot(a,np.transpose(b)) # 1 x 1
     d = la.norm(a,2)*la.norm(b,2) # L2 norm of a and b
     angle = math.acos(c/d)
 
-    n = np.cross(a,b)/la.norm(np.cross(a,b)) # cross product of a and b
+    n = np.cross(a,b)/la.norm(np.cross(a,b)) # cross product of a and b - 1 x 3
+    #n = np.transpose(n) # 3 x 1
+    n = list(n.flat)
+    B = quaternion.apply_to_vector(qzi, n) # inverse of qz applied to n
     
-    print(np.shape(n))
+
+    error_quat = np.array([math.cos(angle/2), B[0]*math.sin(angle/2), B[1]*math.sin(angle/2), B[2]*math.sin(angle/2)]) # abt w x y z
+
+    if error_quat[0] < 0:
+        bod_rates = -2*error_quat[1:3]
+    else:
+        bod_rates = 2*error_quat[1:3] # bod_rates[0] = abt x, bod_rates[1] = abt y 
+    print(bod_rates)
+    
 
     #print(math.degrees(angle))
