@@ -20,6 +20,7 @@ class controllers(object):
         self.last_pos_error = np.array([0, 0, 0]) # 3,: flattened form
 
         # polar magnitude
+        self.ades_mag = 0
         self.last_polar_mag = 0
         self.heading = 0
 
@@ -87,6 +88,33 @@ class controllers(object):
         error_pos_d = error_pos_p - self.last_pos_error
         self.ades = self.kpos*(error_pos_p) + self.kdpos*(error_pos_d) + self.kvel*(vel_error) + self.g + ref_acc
         self.a_des_z[2] = self.ades[2]
+
+        # simple computation of cmd_z
+        self.cmd_z = self.a_des_z[2]
+        self.last_pos_error = error_pos_p
+        
+        return self.ades
+    
+    def zd_polar(self,ref_pos, ref_vel, ref_acc):
+        vel_error = self.kvel*(ref_vel - self.last_velocity)
+        error_pos_p = self.kpos*(ref_pos - self.last_position)
+        error_pos_d = error_pos_p - self.last_pos_error
+        #self.ades = self.kpos*(error_pos_p) + self.kdpos*(error_pos_d) + self.kvel*(vel_error) + self.g + ref_acc
+        #self.a_des_z[2] = self.ades[2]
+
+        # polar magnitude
+        polar_mag_pos = la.norm(error_pos_p,2)
+        # kiv this for later
+        error_polar_mag = self.kdpos(ref_pos - self.last_position) - self.last_polar_mag
+        polar_mag_vel = la.norm(vel_error,2)
+        polar_mag_acc = la.norm(ref_acc,2)
+        self.ades_mag = self.kpos*(error_pos_p) + self.kdpos*(error_pos_d) + self.kvel*(vel_error) + self.g + ref_acc
+        
+        polar_mag = la.norm(self.ades,2)
+        self.last_polar_mag = polar_mag
+
+        # heading
+        self.heading = math.atan2(self.ades[1],self.ades[0])
 
         # simple computation of cmd_z
         self.cmd_z = self.a_des_z[2]

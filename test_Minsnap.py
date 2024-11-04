@@ -41,14 +41,14 @@ if __name__ == '__main__':
 
     print(pva[5,99,2]) # up to order of derivatives available, waypoints, axis
 
-    # print(np.shape(np.array([[1,2,3],[2,3,1]]))) # size is 2 x 3
+    
 
+    """ ## Module below used to test the attitude controller
     z = np.array([2,3,1]) # 3 x 1
     z = np.array([[2,3,1]]) # 1 x 3
 
     z = np.transpose(z)
     print(np.shape(z))
-
 
     qz = quaternion.create(0,0,0,1)
     qzi = quaternion.inverse(qz)
@@ -74,7 +74,9 @@ if __name__ == '__main__':
         bod_rates = -2*error_quat[1:3]
     else:
         bod_rates = 2*error_quat[1:3] # bod_rates[0] = abt x, bod_rates[1] = abt y 
-    print(bod_rates)
+    print(bod_rates) """
     
-
-    #print(math.degrees(angle))
+    y = -0.1
+    x = -2
+    heading = math.degrees(math.atan2(y,x)) # its bounded by the 180 deg block
+    print(heading)
