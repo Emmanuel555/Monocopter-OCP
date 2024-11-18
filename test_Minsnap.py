@@ -76,7 +76,10 @@ if __name__ == '__main__':
         bod_rates = 2*error_quat[1:3] # bod_rates[0] = abt x, bod_rates[1] = abt y 
     print(bod_rates) """
     
-    y = -0.1
-    x = -2
-    heading = math.degrees(math.atan2(y,x)) # its bounded by the 180 deg block
+    y = 1
+    x = 2
+    heading = math.degrees(math.atan2(x,y)) # its bounded by the 180 deg block
     print(heading)
+
+    test_x = np.array([1,2,3])/1
+    print(test_x)

@@ -4,7 +4,7 @@ from scipy.io import loadmat
 import os
 import matplotlib.pyplot as plt
 
-file_path = '/Users/airlab/PycharmProjects/AFC/data'
+file_path = '/home/emmanuel/AFC_Optitrack/robot_solo/'
 files = os.listdir(file_path)
 files.sort(key=lambda x: os.path.getmtime(os.path.join(file_path, x)), reverse=True)
 
@@ -15,8 +15,9 @@ mat_data = loadmat(os.path.join(file_path, last_file))
 
 #print(mat_data)
 time = mat_data['Data_time']
-position = mat_data['data']
-px = [row[0] for row in position]
+#position = mat_data['data']
+position = mat_data['robot_1']
+px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
 pz = [row[2] for row in position]
 yaw = [row[3] for row in position]
