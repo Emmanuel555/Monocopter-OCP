@@ -22,7 +22,7 @@ class Udp(object):
             time_list = []
             for i in range(100): # get 1000 sample
                 time_list.append(time.time())
-                data, addr = self.sock.recvfrom(100)  # buffer size is 8192 bytes, if nothing it would be stuck here
+                data, addr = self.sock.recvfrom(14)  # ubuntu set the buffer size to 14 for one vehicle, 42 for 3 vehicles
             dtime = np.diff(time_list)
             sample_time = np.mean(dtime)
             print('Sample rate: ', '%.2f' % (1/sample_time), 'Hz')
@@ -35,5 +35,5 @@ class Udp(object):
     #     return udp_data
 
     def get_data(self):
-        udp_data, addr = self.sock.recvfrom(100)
+        udp_data, addr = self.sock.recvfrom(14) # ubuntu is very exact with this number, 7*2, 7*2*3
         return udp_data

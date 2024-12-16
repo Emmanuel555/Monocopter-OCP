@@ -77,23 +77,23 @@ class RealTimeProcessor(object):
     def data_unpack(self, udp_data): ## qns abt this
         x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
         
-        #self.px = x * 0.0005  # position px 
-        #self.py = y * 0.0005  # position py  
-        #self.pz = z * 0.0005  # position pz 
+        self.px = x * 0.0005  # position px 
+        self.py = y * 0.0005  # position py  
+        self.pz = z * 0.0005  # position pz 
 
-        self.px = float(x)   # position px 
-        self.py = float(y)   # position py  
-        self.pz = float(z)   # position pz 
+        #self.px = float(x)   # position px 
+        #self.py = float(y)   # position py  
+        #self.pz = float(z)   # position pz 
 
-        """ self.quat_x = float(qx * 0.001)
+        self.quat_x = float(qx * 0.001)
         self.quat_y = float(qy * 0.001)
         self.quat_z = float(qz * 0.001)
-        self.quat_w = float(qw * 0.001) """
+        self.quat_w = float(qw * 0.001)
 
-        self.quat_x = float(qx)
-        self.quat_y = float(qy)
-        self.quat_z = float(qz)
-        self.quat_w = float(qw)/np.abs(float(qw)) # normalizing the quaternion
+        #self.quat_x = float(qx)
+        #self.quat_y = float(qy)
+        #self.quat_z = float(qz)
+        #self.quat_w = float(qw)/np.abs(float(qw)) # normalizing the quaternion
 
         raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
         #return raw_data

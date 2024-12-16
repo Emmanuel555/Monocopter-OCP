@@ -4,7 +4,7 @@ import time
 
 import Mocap
 import DataSave
-#import Data_process_swarm
+import Data_process_swarm
 import Data_process
 
 if __name__ == '__main__':
@@ -12,6 +12,7 @@ if __name__ == '__main__':
     data_receiver = Mocap.Udp()
     sample_rate = data_receiver.get_sample_rate()
     sample_time = 1 / sample_rate
+    #data_processor = Data_process_swarm.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
@@ -20,6 +21,7 @@ if __name__ == '__main__':
 
     time_start = time.time()
     time_end = time_start + 1000
+    last_time = 0
 
     count = 0
     while time_end > time.time():
@@ -34,21 +36,27 @@ if __name__ == '__main__':
 
         count = count + 1
 
-        if count % 20 == 0:
+        """ if count % 20 == 0:
             print('-----', 'time: ', abs_time, '-----')
-            print(raw_data)
+            print(raw_data) """
 
         # save data
         
-        #data_saver.add_item(abs_time,
-        #                    raw_data
-        #                    )
+        data_saver.add_item(abs_time,
+                            raw_data
+                            )
         
-       #print("rpy: ", data_processor.get_RPY())
+        t_diff = abs_time -last_time
+        last_time = abs_time
+        
+        #print ("time diff:", t_diff) 
+        print(raw_data)
+        #print("rpy: ", data_processor.get_RPY())
         
 
-        time.sleep(0.05)
+        #time.sleep(0.05)
         # save data
     #path = '/Users/airlab/PycharmProjects/AFC/data/'
+    #path = '/home/emmanuel/AFC_Optitrack/linux_data/'
     #data_saver.save_data(path)
 
