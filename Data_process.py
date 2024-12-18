@@ -101,14 +101,14 @@ class RealTimeProcessor(object):
     def data_unpack_filtered(self,udp_data):
         x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
 
-        self.px = float(x)  # position px 
-        self.py = float(y)  # position py  
-        self.pz = float(z)  # position pz 
+        self.px = x * 0.0005  # position px 
+        self.py = y * 0.0005  # position py  
+        self.pz = z * 0.0005  # position pz 
 
-        self.quat_x = float(qx)
-        self.quat_y = float(qy)
-        self.quat_z = float(qz)
-        self.quat_w = float(qw)/np.abs(float(qw)) # normalizing the quaternion
+        self.quat_x = float(qx * 0.001)
+        self.quat_y = float(qy * 0.001)
+        self.quat_z = float(qz * 0.001)
+        self.quat_w = float(qw) # needa check if this can always be left as 1 when spinning 
 
         self.px_filted = self.FilterX.filter(self.px)
         self.py_filted = self.FilterY.filter(self.py)
@@ -119,7 +119,7 @@ class RealTimeProcessor(object):
         self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
         self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
-        filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
+        self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
 
         #return filted_data
 

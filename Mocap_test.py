@@ -29,10 +29,16 @@ if __name__ == '__main__':
 
         # require data from Mocap
         data = data_receiver.get_data()
+        
         # data unpack
-        data_processor.data_unpack(data)
-        # raw data
-        raw_data = data_processor.raw_data
+        # data_processor.data_unpack(data)
+        data_processor.data_unpack_filtered(data)
+        
+        # processed tpp data
+        state_vector = data_processor.get_Omega_dot_dotdot_filt()
+        tpp_angle = data_processor.tpp
+        tpp_omega = data_processor.Omega
+        tpp_omega_dot = data_processor.Omega_dot
 
         count = count + 1
 
@@ -42,19 +48,22 @@ if __name__ == '__main__':
 
         # save data
         
-        data_saver.add_item(abs_time,
-                            raw_data
-                            )
+        #data_saver.add_item(abs_time,
+        #                    raw_data
+        #                    )
         
-        t_diff = abs_time -last_time
+        t_diff = abs_time - last_time
         last_time = abs_time
         
-        #print ("time diff:", t_diff) 
-        print(raw_data)
+        print("sampling period and freq: ", t_diff, 1/t_diff) 
+        print("tpp angle:", tpp_angle)
         #print("rpy: ", data_processor.get_RPY())
+
+        # TODO:
+        # Work on trying to send info over udp to wj esp32
         
 
-        #time.sleep(0.05)
+        time.sleep(0.05) # impt to pause and see information
         # save data
     #path = '/Users/airlab/PycharmProjects/AFC/data/'
     #path = '/home/emmanuel/AFC_Optitrack/linux_data/'
