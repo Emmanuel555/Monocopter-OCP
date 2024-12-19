@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Udp(object):
-    def __init__(self, udp_ip="0.0.0.0", udp_port=22222, num_bodies=1):
+    def __init__(self, udp_ip="0.0.0.0", udp_port=22222, num_bodies=1): # need to reconfigure here for both sending ips and receiving ips
         self.udpStop = False
         self.udp_data = None
         self.udp_ip = udp_ip
@@ -37,3 +37,16 @@ class Udp(object):
     def get_data(self):
         udp_data, addr = self.sock.recvfrom(14) # ubuntu is very exact with this number, 7*2, 7*2*3
         return udp_data
+    
+    def send_data(self, data): #TODO
+        UDP_IP = "127.0.0.1"
+        UDP_PORT = 5005
+        MESSAGE = b"Hello, World!"
+         
+        print("UDP target IP: %s" % UDP_IP)
+        print("UDP target port: %s" % UDP_PORT)
+        print("Message sent is: %s" % MESSAGE)
+         
+        sock = socket.socket(socket.AF_INET, # Internet
+                              socket.SOCK_DGRAM) # UDP
+        sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
