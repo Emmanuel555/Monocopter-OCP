@@ -264,13 +264,14 @@ class RealTimeProcessor(object):
 
         dot_quat = [diff_qw/self.sample_time, diff_qx/self.sample_time, diff_qy/self.sample_time, diff_qz/self.sample_time]
         dot_dot_quat = [diff_diff_qw/self.sample_time, diff_diff_qx/self.sample_time, diff_diff_qy/self.sample_time, diff_diff_qz/self.sample_time]
-        # the convention for quat here is quat rot mat * qw qx qy qz 
-        E_q_trans = [[-self.quat_x, self.quat_w, self.quat_z, -self.quat_y],
-                     [-self.quat_y, -self.quat_z, self.quat_w, self.quat_x],
-                     [-self.quat_z, self.quat_y, -self.quat_x, self.quat_w]]
         
-        self.Omega = 2 * np.dot(E_q_trans, dot_quat) # 3 x 1 - about x, y, z
-        self.Omega_dot = 2 * np.dot(E_q_trans, dot_dot_quat) # 3 x 1 - about x, y, z
+        # the convention for quat here is quat rot mat * qw qx qy qz 
+        E_q_trans_filted = [[-self.quat_x_filted, self.quat_w_filted, self.quat_z_filted, -self.quat_y_filted],
+                     [-self.quat_y_filted, -self.quat_z_filted, self.quat_w_filted, self.quat_x_filted],
+                     [-self.quat_z_filted, self.quat_y_filted, -self.quat_x_filted, self.quat_w_filted]]
+        
+        self.Omega = 2 * np.dot(E_q_trans_filted, dot_quat) # 3 x 1 - about x, y, z
+        self.Omega_dot = 2 * np.dot(E_q_trans_filted, dot_dot_quat) # 3 x 1 - about x, y, z
 
         roll = self.tpp[0]
         pitch = self.tpp[1]

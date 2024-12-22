@@ -25,7 +25,7 @@ class Udp(object):
                 data, addr = self.sock.recvfrom(14)  # ubuntu set the buffer size to 14 for one vehicle, 42 for 3 vehicles
             dtime = np.diff(time_list)
             sample_time = np.mean(dtime)
-            print('Sample rate: ', '%.2f' % (1/sample_time), 'Hz')
+            print('Sample rate: %.2f' % (1/sample_time), 'Hz')
             return 1/sample_time
         else:
             return self.sample_rate
@@ -38,15 +38,19 @@ class Udp(object):
         udp_data, addr = self.sock.recvfrom(14) # ubuntu is very exact with this number, 7*2, 7*2*3
         return udp_data
     
-    def send_data(self, data): #TODO
-        UDP_IP = "127.0.0.1"
-        UDP_PORT = 5005
-        MESSAGE = b"Hello, World!"
+    def send_data(self, UDP_IP, UDP_PORT, data): # data is a byte array
+        #UDP_IP = "127.0.0.1"
+        #UDP_PORT = 5005
+        #MESSAGE = b"Hello, World!"
          
         print("UDP target IP: %s" % UDP_IP)
         print("UDP target port: %s" % UDP_PORT)
-        print("Message sent is: %s" % MESSAGE)
+        #print("Message sent is: %s" % MESSAGE)
+        print("Data sent is: %s" % data)
          
-        sock = socket.socket(socket.AF_INET, # Internet
-                              socket.SOCK_DGRAM) # UDP
-        sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
+        #esp32_sock = socket.socket(socket.AF_INET, # Internet
+        #                      socket.SOCK_DGRAM) # UDP
+        
+        #esp32_sock.sendto(data, (UDP_IP, UDP_PORT))
+        
+        self.sock.sendto(data, (UDP_IP, UDP_PORT))

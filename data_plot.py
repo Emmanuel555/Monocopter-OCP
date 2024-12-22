@@ -4,7 +4,7 @@ from scipy.io import loadmat
 import os
 import matplotlib.pyplot as plt
 
-file_path = '/home/emmanuel/AFC_Optitrack/robot_solo/'
+file_path = '/home/emmanuel/Monocopter-OCP/robot_solo/'
 files = os.listdir(file_path)
 files.sort(key=lambda x: os.path.getmtime(os.path.join(file_path, x)), reverse=True)
 

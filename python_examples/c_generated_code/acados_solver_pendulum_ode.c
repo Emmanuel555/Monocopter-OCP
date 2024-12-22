@@ -138,15 +138,15 @@ void pendulum_ode_acados_create_1_set_plan(ocp_nlp_plan_t* nlp_solver_plan, cons
     /************************************************
     *  plan
     ************************************************/
-    nlp_solver_plan->nlp_solver = SQP_RTI;
+    nlp_solver_plan->nlp_solver = SQP;
 
     nlp_solver_plan->ocp_qp_solver_plan.qp_solver = PARTIAL_CONDENSING_HPIPM;
 
-    nlp_solver_plan->nlp_cost[0] = NONLINEAR_LS;
+    nlp_solver_plan->nlp_cost[0] = EXTERNAL;
     for (int i = 1; i < N; i++)
-        nlp_solver_plan->nlp_cost[i] = NONLINEAR_LS;
+        nlp_solver_plan->nlp_cost[i] = EXTERNAL;
 
-    nlp_solver_plan->nlp_cost[N] = NONLINEAR_LS;
+    nlp_solver_plan->nlp_cost[N] = EXTERNAL;
 
     for (int i = 0; i < N; i++)
     {
@@ -264,16 +264,12 @@ ocp_nlp_dims* pendulum_ode_acados_create_2_create_and_set_dimensions(pendulum_od
         ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, i, "nsg", &nsg[i]);
         ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, i, "nbxe", &nbxe[i]);
     }
-    ocp_nlp_dims_set_cost(nlp_config, nlp_dims, 0, "ny", &ny[0]);
-    for (int i = 1; i < N; i++)
-        ocp_nlp_dims_set_cost(nlp_config, nlp_dims, i, "ny", &ny[i]);
 
     for (int i = 0; i < N; i++)
     {
     }
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
-    ocp_nlp_dims_set_cost(nlp_config, nlp_dims, N, "ny", &ny[N]);
 
     free(intNp1mem);
 
@@ -322,32 +318,41 @@ void pendulum_ode_acados_create_3_create_and_set_functions(pendulum_ode_solver_c
         MAP_CASADI_FNC(impl_dae_jac_x_xdot_u_z[i], pendulum_ode_impl_dae_jac_x_xdot_u_z);
     }
 
-    // nonlinear least squares function
-    MAP_CASADI_FNC(cost_y_0_fun, pendulum_ode_cost_y_0_fun);
-    MAP_CASADI_FNC(cost_y_0_fun_jac_ut_xt, pendulum_ode_cost_y_0_fun_jac_ut_xt);
-    MAP_CASADI_FNC(cost_y_0_hess, pendulum_ode_cost_y_0_hess);
-    // nonlinear least squares cost
-    capsule->cost_y_fun = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi)*N);
+    // external cost
+    MAP_CASADI_FNC(ext_cost_0_fun, pendulum_ode_cost_ext_cost_0_fun);
+
+    // external cost
+    MAP_CASADI_FNC(ext_cost_0_fun_jac, pendulum_ode_cost_ext_cost_0_fun_jac);
+
+    // external cost
+    MAP_CASADI_FNC(ext_cost_0_fun_jac_hess, pendulum_ode_cost_ext_cost_0_fun_jac_hess);
+    // external cost
+    capsule->ext_cost_fun = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi)*N);
     for (int i = 0; i < N-1; i++)
     {
-        MAP_CASADI_FNC(cost_y_fun[i], pendulum_ode_cost_y_fun);
+        MAP_CASADI_FNC(ext_cost_fun[i], pendulum_ode_cost_ext_cost_fun);
     }
 
-    capsule->cost_y_fun_jac_ut_xt = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi)*N);
+    capsule->ext_cost_fun_jac = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi)*N);
     for (int i = 0; i < N-1; i++)
     {
-        MAP_CASADI_FNC(cost_y_fun_jac_ut_xt[i], pendulum_ode_cost_y_fun_jac_ut_xt);
+        MAP_CASADI_FNC(ext_cost_fun_jac[i], pendulum_ode_cost_ext_cost_fun_jac);
     }
 
-    capsule->cost_y_hess = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi)*N);
+    capsule->ext_cost_fun_jac_hess = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi)*N);
     for (int i = 0; i < N-1; i++)
     {
-        MAP_CASADI_FNC(cost_y_hess[i], pendulum_ode_cost_y_hess);
+        MAP_CASADI_FNC(ext_cost_fun_jac_hess[i], pendulum_ode_cost_ext_cost_fun_jac_hess);
     }
-    // nonlinear least square function
-    MAP_CASADI_FNC(cost_y_e_fun, pendulum_ode_cost_y_e_fun);
-    MAP_CASADI_FNC(cost_y_e_fun_jac_ut_xt, pendulum_ode_cost_y_e_fun_jac_ut_xt);
-    MAP_CASADI_FNC(cost_y_e_hess, pendulum_ode_cost_y_e_hess);
+    // external cost - function
+    MAP_CASADI_FNC(ext_cost_e_fun, pendulum_ode_cost_ext_cost_e_fun);
+    
+
+    // external cost - jacobian
+    MAP_CASADI_FNC(ext_cost_e_fun_jac, pendulum_ode_cost_ext_cost_e_fun_jac);
+
+    // external cost - hessian
+    MAP_CASADI_FNC(ext_cost_e_fun_jac_hess, pendulum_ode_cost_ext_cost_e_fun_jac_hess);
 
 #undef MAP_CASADI_FNC
 }
@@ -383,7 +388,7 @@ void pendulum_ode_acados_create_5_set_nlp_in(pendulum_ode_solver_capsule* capsul
     if (new_time_steps) {
         pendulum_ode_acados_update_time_steps(capsule, N, new_time_steps);
     } else {// all time_steps are identical
-        double time_step = 0.02;
+        double time_step = 0.05;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -403,64 +408,18 @@ void pendulum_ode_acados_create_5_set_nlp_in(pendulum_ode_solver_capsule* capsul
     }
 
     /**** Cost ****/
-    double* yref_0 = calloc(NY0, sizeof(double));
-    // change only the non-zero elements:
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "yref", yref_0);
-    free(yref_0);
-    double* yref = calloc(NY, sizeof(double));
-    // change only the non-zero elements:
-
+    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "ext_cost_fun", &capsule->ext_cost_0_fun);
+    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "ext_cost_fun_jac", &capsule->ext_cost_0_fun_jac);
+    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "ext_cost_fun_jac_hess", &capsule->ext_cost_0_fun_jac_hess);
     for (int i = 1; i < N; i++)
     {
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "yref", yref);
+        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "ext_cost_fun", &capsule->ext_cost_fun[i-1]);
+        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "ext_cost_fun_jac", &capsule->ext_cost_fun_jac[i-1]);
+        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "ext_cost_fun_jac_hess", &capsule->ext_cost_fun_jac_hess[i-1]);
     }
-    free(yref);
-    double* yref_e = calloc(NYN, sizeof(double));
-    // change only the non-zero elements:
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", yref_e);
-    free(yref_e);
-   double* W_0 = calloc(NY0*NY0, sizeof(double));
-    // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 2000;
-    W_0[1+(NY0) * 1] = 2000;
-    W_0[2+(NY0) * 2] = 0.02;
-    W_0[3+(NY0) * 3] = 0.02;
-    W_0[4+(NY0) * 4] = 0.02;
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
-    free(W_0);
-    double* W = calloc(NY*NY, sizeof(double));
-    // change only the non-zero elements:
-    W[0+(NY) * 0] = 2000;
-    W[1+(NY) * 1] = 2000;
-    W[2+(NY) * 2] = 0.02;
-    W[3+(NY) * 3] = 0.02;
-    W[4+(NY) * 4] = 0.02;
-
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "W", W);
-    }
-    free(W);
-    double* W_e = calloc(NYN*NYN, sizeof(double));
-    // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 2000;
-    W_e[1+(NYN) * 1] = 2000;
-    W_e[2+(NYN) * 2] = 0.02;
-    W_e[3+(NYN) * 3] = 0.02;
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
-    free(W_e);
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "nls_y_fun", &capsule->cost_y_0_fun);
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "nls_y_fun_jac", &capsule->cost_y_0_fun_jac_ut_xt);
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "nls_y_hess", &capsule->cost_y_0_hess);
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "nls_y_fun", &capsule->cost_y_fun[i-1]);
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "nls_y_fun_jac", &capsule->cost_y_fun_jac_ut_xt[i-1]);
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "nls_y_hess", &capsule->cost_y_hess[i-1]);
-    }
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "nls_y_fun", &capsule->cost_y_e_fun);
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "nls_y_fun_jac", &capsule->cost_y_e_fun_jac_ut_xt);
-    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "nls_y_hess", &capsule->cost_y_e_hess);
+    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "ext_cost_fun", &capsule->ext_cost_e_fun);
+    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "ext_cost_fun_jac", &capsule->ext_cost_e_fun_jac);
+    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "ext_cost_fun_jac_hess", &capsule->ext_cost_e_fun_jac_hess);
 
 
 
@@ -584,7 +543,7 @@ void pendulum_ode_acados_create_6_set_opts(pendulum_ode_solver_capsule* capsule)
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_num_stages", &sim_method_num_stages);
 
-    int newton_iter_val = 10;
+    int newton_iter_val = 3;
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_newton_iter", &newton_iter_val);
 
@@ -602,8 +561,9 @@ void pendulum_ode_acados_create_6_set_opts(pendulum_ode_solver_capsule* capsule)
     /* options QP solver */
     int qp_solver_cond_N;
 
-    const int qp_solver_cond_N_ori = 40;
-    qp_solver_cond_N = N < qp_solver_cond_N_ori ? N : qp_solver_cond_N_ori; // use the minimum value here
+    
+    // NOTE: there is no condensing happening here!
+    qp_solver_cond_N = N;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_cond_N", &qp_solver_cond_N);
 
     int nlp_solver_ext_qp_res = 0;
@@ -612,6 +572,24 @@ void pendulum_ode_acados_create_6_set_opts(pendulum_ode_solver_capsule* capsule)
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_hpipm_mode", "BALANCE");
 
 
+    // set SQP specific options
+    double nlp_solver_tol_stat = 0.000001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_stat", &nlp_solver_tol_stat);
+
+    double nlp_solver_tol_eq = 0.000001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_eq", &nlp_solver_tol_eq);
+
+    double nlp_solver_tol_ineq = 0.000001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_ineq", &nlp_solver_tol_ineq);
+
+    double nlp_solver_tol_comp = 0.000001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_comp", &nlp_solver_tol_comp);
+
+    int nlp_solver_max_iter = 100;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "max_iter", &nlp_solver_max_iter);
+
+    int initialize_t_slacks = 0;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "initialize_t_slacks", &initialize_t_slacks);
 
     int qp_solver_iter_max = 50;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_iter_max", &qp_solver_iter_max);
@@ -626,6 +604,11 @@ int print_level = 0;
 
 
     int ext_cost_num_hess = 0;
+    for (int i = 0; i < N; i++)
+    {
+        ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "cost_numerical_hessian", &ext_cost_num_hess);
+    }
+    ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, N, "cost_numerical_hessian", &ext_cost_num_hess);
 }
 
 
@@ -832,15 +815,16 @@ int pendulum_ode_acados_update_params(pendulum_ode_solver_capsule* capsule, int 
         // cost
         if (stage == 0)
         {
-            capsule->cost_y_0_fun.set_param(&capsule->cost_y_0_fun, p);
-            capsule->cost_y_0_fun_jac_ut_xt.set_param(&capsule->cost_y_0_fun_jac_ut_xt, p);
-            capsule->cost_y_0_hess.set_param(&capsule->cost_y_0_hess, p);
+            capsule->ext_cost_0_fun.set_param(&capsule->ext_cost_0_fun, p);
+            capsule->ext_cost_0_fun_jac.set_param(&capsule->ext_cost_0_fun_jac, p);
+            capsule->ext_cost_0_fun_jac_hess.set_param(&capsule->ext_cost_0_fun_jac_hess, p);
+        
         }
         else // 0 < stage < N
         {
-            capsule->cost_y_fun[stage-1].set_param(capsule->cost_y_fun+stage-1, p);
-            capsule->cost_y_fun_jac_ut_xt[stage-1].set_param(capsule->cost_y_fun_jac_ut_xt+stage-1, p);
-            capsule->cost_y_hess[stage-1].set_param(capsule->cost_y_hess+stage-1, p);
+            capsule->ext_cost_fun[stage-1].set_param(capsule->ext_cost_fun+stage-1, p);
+            capsule->ext_cost_fun_jac[stage-1].set_param(capsule->ext_cost_fun_jac+stage-1, p);
+            capsule->ext_cost_fun_jac_hess[stage-1].set_param(capsule->ext_cost_fun_jac_hess+stage-1, p);
         }
     }
 
@@ -848,9 +832,10 @@ int pendulum_ode_acados_update_params(pendulum_ode_solver_capsule* capsule, int 
     {
         // terminal shooting node has no dynamics
         // cost
-        capsule->cost_y_e_fun.set_param(&capsule->cost_y_e_fun, p);
-        capsule->cost_y_e_fun_jac_ut_xt.set_param(&capsule->cost_y_e_fun_jac_ut_xt, p);
-        capsule->cost_y_e_hess.set_param(&capsule->cost_y_e_hess, p);
+        capsule->ext_cost_e_fun.set_param(&capsule->ext_cost_e_fun, p);
+        capsule->ext_cost_e_fun_jac.set_param(&capsule->ext_cost_e_fun_jac, p);
+        capsule->ext_cost_e_fun_jac_hess.set_param(&capsule->ext_cost_e_fun_jac_hess, p);
+    
         // constraints
     
     }
@@ -918,21 +903,21 @@ int pendulum_ode_acados_free(pendulum_ode_solver_capsule* capsule)
     free(capsule->impl_dae_jac_x_xdot_u_z);
 
     // cost
-    external_function_param_casadi_free(&capsule->cost_y_0_fun);
-    external_function_param_casadi_free(&capsule->cost_y_0_fun_jac_ut_xt);
-    external_function_param_casadi_free(&capsule->cost_y_0_hess);
+    external_function_param_casadi_free(&capsule->ext_cost_0_fun);
+    external_function_param_casadi_free(&capsule->ext_cost_0_fun_jac);
+    external_function_param_casadi_free(&capsule->ext_cost_0_fun_jac_hess);
     for (int i = 0; i < N - 1; i++)
     {
-        external_function_param_casadi_free(&capsule->cost_y_fun[i]);
-        external_function_param_casadi_free(&capsule->cost_y_fun_jac_ut_xt[i]);
-        external_function_param_casadi_free(&capsule->cost_y_hess[i]);
+        external_function_param_casadi_free(&capsule->ext_cost_fun[i]);
+        external_function_param_casadi_free(&capsule->ext_cost_fun_jac[i]);
+        external_function_param_casadi_free(&capsule->ext_cost_fun_jac_hess[i]);
     }
-    free(capsule->cost_y_fun);
-    free(capsule->cost_y_fun_jac_ut_xt);
-    free(capsule->cost_y_hess);
-    external_function_param_casadi_free(&capsule->cost_y_e_fun);
-    external_function_param_casadi_free(&capsule->cost_y_e_fun_jac_ut_xt);
-    external_function_param_casadi_free(&capsule->cost_y_e_hess);
+    free(capsule->ext_cost_fun);
+    free(capsule->ext_cost_fun_jac);
+    free(capsule->ext_cost_fun_jac_hess);
+    external_function_param_casadi_free(&capsule->ext_cost_e_fun);
+    external_function_param_casadi_free(&capsule->ext_cost_e_fun_jac);
+    external_function_param_casadi_free(&capsule->ext_cost_e_fun_jac_hess);
 
     // constraints
 
@@ -957,16 +942,24 @@ void pendulum_ode_acados_print_stats(pendulum_ode_solver_capsule* capsule)
     if (stat_n > 8)
         printf("\t\tqp_res_stat\tqp_res_eq\tqp_res_ineq\tqp_res_comp");
     printf("\n");
-    printf("iter\tqp_stat\tqp_iter\n");
+
     for (int i = 0; i < nrow; i++)
     {
         for (int j = 0; j < stat_n + 1; j++)
         {
-            tmp_int = (int) stat[i + j * nrow];
-            printf("%d\t", tmp_int);
+            if (j == 0 || j == 5 || j == 6)
+            {
+                tmp_int = (int) stat[i + j * nrow];
+                printf("%d\t", tmp_int);
+            }
+            else
+            {
+                printf("%e\t", stat[i + j * nrow]);
+            }
         }
         printf("\n");
     }
+
 }
 
 int pendulum_ode_acados_custom_update(pendulum_ode_solver_capsule* capsule, double* data, int data_len)
