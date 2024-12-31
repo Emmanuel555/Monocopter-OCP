@@ -3,6 +3,7 @@ import struct
 from Filter import IIR2Filter
 import math
 import numpy as np
+from pyrr import quaternion
 
 
 class RealTimeProcessor(object):
@@ -183,7 +184,7 @@ class RealTimeProcessor(object):
         # xi_x = self.R13
         # xi_y = self.R23
         # tpp = [xi_x, xi_y, xi_z] # disk euler angle vector about (x, y, z)
-        
+         
         self.tpp[0] = xi_x # roll
         self.tpp[1] = xi_y # pitch
         self.tpp[2] = xi_z # yaw
@@ -307,7 +308,7 @@ class RealTimeProcessor(object):
 
     def tpp_eulerAnglesToQuaternion(self):
         """
-        Convert an Euler angle to a quaternion.
+        Converts the TPP Euler angle to a TPP quaternion angle to prepare quaternion rotation of vector 001
         
         We have used the following definition of Euler angles.
 
@@ -345,14 +346,37 @@ class RealTimeProcessor(object):
         pitch = self.tpp[1]
         yaw = self.tpp[2]
         
-        q0 = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        q1 = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        q2 = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-        q3 = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        tpp_qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        tpp_qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        tpp_qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        tpp_qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
         
-        p = np.r_[q0, q1, q2, q3]
+        tpp_quaternion = np.array([tpp_qx, tpp_qy, tpp_qz, tpp_qw])
+
+        # alternative from pyrr same formula as above 
+        ## formula:
+        ##  
+        ##        halfRoll = roll * 0.5
+        ##        sR = np.sin(halfRoll)
+        ##        cR = np.cos(halfRoll)
+
+        ##        halfPitch = pitch * 0.5
+        ##        sP = np.sin(halfPitch)
+        ##        cP = np.cos(halfPitch)
+
+        ##        halfYaw = yaw * 0.5
+        ##        sY = np.sin(halfYaw)
+        ##        cY = np.cos(halfYaw)
+        ##        
+        ##    tpp_qx = (sR * cP * cY) + (cR * sP * sY),
+        ##    tpp_qy = (cR * sP * cY) - (sR * cP * sY),
+        ##    tpp_qz = (cR * cP * sY) + (sR * sP * cY),
+        ##    tpp_qw = (cR * cP * cY) - (sR * sP * sY),
+        ##
+
+        # tpp_quaternion = quaternion.create_from_eulers(roll, pitch, yaw) # actual line of code to use
         
-        return p
+        return tpp_quaternion
     
 
 

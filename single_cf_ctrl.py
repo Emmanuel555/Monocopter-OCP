@@ -17,7 +17,7 @@ import numpy.linalg as la
 
 from cflib.crazyflie.swarm import CachedCfFactory
 from cflib.crazyflie.swarm import Swarm
-import att_ctrl
+import monoco_att_ctrl
 import trajectory_generator
 
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
         kdz_1 = 10
         kiz_1 = 1
         z_gains_1 = np.array([kpz_1*1000, kdz_1*1000, kiz_1])
-        att_robot_1 = att_ctrl.att_ctrl(z_gains_1)
+        att_robot_1 = monoco_att_ctrl.att_ctrl(z_gains_1)
                
 
         time_start = time.time()

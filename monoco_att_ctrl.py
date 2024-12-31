@@ -1,8 +1,3 @@
-import cflib.crtp
-import pygame
-from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
-
 import logging
 import time
 
@@ -29,6 +24,7 @@ class att_ctrl(object):
         self.position_error_last = np.array([0, 0, 0])
         self.control_signal = np.array([0,0,0]) 
         self.z_offset = 0
+        self.cmd_z = 0
         
 
     def update(self, robot_locale, dt, ref_pos, z_offset):
@@ -48,7 +44,7 @@ class att_ctrl(object):
 
     def attitude_loop(self, quat, control_input):
         kpa = np.array([1.0, 1.0]) # abt x y
-        qz = quaternion.create(quat[0], quat[1], quat[2], 1) # x y z w
+        qz = quaternion.create(quat[0], quat[1], quat[2], 1) # x y z w ## qw is always set to 1 even in optitrack itself
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
         disk_vector = quaternion.apply_to_vector(qz, ez) # flattened array
@@ -126,6 +122,57 @@ class att_ctrl(object):
             des_thrust = 10
 
         final_cmd = np.array([des_roll, des_pitch, 0, enable*des_thrust])
+        self.cmd_z = enable*des_thrust
 
         return (final_cmd)
+    
+
+    def include_jerk_bod_rates(self,ref_jerk):
+        if self.cmd_z == 0:
+            wy = 0
+            wx = 0
+        else:    
+            wy = ref_jerk[0]/self.cmd_z
+            wx = ref_jerk[1]/(-1*self.cmd_z)
+        wz = 0
+        ref_bod_rates = np.array([wx,wy,wz]) # flattened array abt x y z
+        
+        #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
+        return ref_bod_rates
+    
+
+    def include_snap_bod_raterate(self,ref_snap):
+        if self.cmd_z == 0:
+            wy_dot = 0
+            wx_dot = 0
+        else:    
+            wy_dot = ref_snap[0]/self.cmd_z
+            wx_dot = ref_snap[1]/(-1*self.cmd_z)
+        wz_dot = 0
+        ref_bod_raterate = np.array([wx_dot,wy_dot,wz_dot]) # flattened array abt x y z
+        
+        #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
+        return ref_bod_raterate
+    
+    
+"""     def INDI_loop(self):
+        # INDI body rate rates
+        self.kpang = np.array([1.0, 1.0, 1.0]) # 3,: flattened form
+        self.kdang = np.array([0, 0, 0]) # 3,: flattened form
+        self.kiang = np.array([0, 0, 0]) # 3,: flattened form
+
+        # commanded inputs
+        self.cmd_att = np.array([0, 0, 0]) # attitude
+        self.cmd_bod_rates = np.array([0, 0, 0]) # body rates
+        self.ff_snap = np.array([0, 0, 0]) # ff snap
+        self.cmd_bod_rates_rates = np.array([0, 0, 0]) # body rate rates
+
+        
+        if self.mode == 1:
+           self.cmd_bod_rates_rates = self.kpang*(self.cmd_att - self.last_angular_rate_rate)
+        elif self.mode == 3:
+            self.cmd_bod_rates_rates = self.kpang*(((self.cmd_att + self.cmd_bod_rates + self.ff_snap)/3) - self.last_angular_rate_rate) 
+        self.cmd_bod_rates_rates = self.MOI*self.cmd_bod_rates_rates
+        return self.cmd_bod_rates_rates """
+
 

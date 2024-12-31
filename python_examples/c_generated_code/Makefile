@@ -43,15 +43,6 @@ MODEL_OBJ := $(MODEL_SRC:.c=.o)
 
 # optimal control problem - mostly CasADi exports
 OCP_SRC=
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_0_fun.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_0_fun_jac.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_0_fun_jac_hess.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_fun.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_fun_jac.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_fun_jac_hess.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_e_fun.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_e_fun_jac.c
-OCP_SRC+= pendulum_ode_cost/pendulum_ode_cost_ext_cost_e_fun_jac_hess.c
 
 OCP_SRC+= acados_solver_pendulum_ode.c
 OCP_OBJ := $(OCP_SRC:.c=.o)
