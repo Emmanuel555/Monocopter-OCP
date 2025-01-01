@@ -14,13 +14,38 @@ import numpy.linalg as la
 
 class att_ctrl(object):
     def __init__(self,z_gains):
+        ## feedback
         self.robot_pos = np.array([0,0,0]) # x y z
+        self.robot_vel = np.array([0,0,0]) # x y z
+        self.robot_acc = np.array([0,0,0]) # x y z
         self.robot_quat = np.array([0,0,0,0]) # x y z w
+        self.robot_tpp_bod_rate = np.array([0,0,0]) # x y z
+        self.robot_tpp_bod_raterate = np.array([0,0,0]) # x y z
+        
+        ## gains
+        # pos
         self.kpz = z_gains[0]
         self.kdz = z_gains[1]
         self.kiz = z_gains[2]
+        # attitude/angle
+        self.kpa = np.array([10, 10]) # abt x y
+        # body rates
+        self.kpr = np.array([50, 50]) # abt x y
+        # body rate rates
+        self.kprr = np.array([1000, 1000]) # abt x y
+        
+        ## sampling time
         self.dt = 0
+
+        ## references
         self.ref_pos = np.array([0,0,0]) 
+        self.ref_vel = np.array([0,0,0]) 
+        self.ref_acc = np.array([0,0,0]) 
+        self.monocopter_weight = np.array([0,0,47500]) # monocopter weight
+
+        # contd bem tmr
+
+
         self.position_error_last = np.array([0, 0, 0])
         self.control_signal = np.array([0,0,0]) 
         self.z_offset = 0
@@ -43,7 +68,7 @@ class att_ctrl(object):
 
 
     def attitude_loop(self, quat, control_input):
-        kpa = np.array([1.0, 1.0]) # abt x y
+        kpa = self.kpa # abt x y
         qz = quaternion.create(quat[0], quat[1], quat[2], 1) # x y z w ## qw is always set to 1 even in optitrack itself
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
@@ -95,8 +120,10 @@ class att_ctrl(object):
         integral_error = (position_error*self.dt) + I_term_prior
         self.position_error_last = position_error
         
-        # pid controller
+        # references
         robot_mg = np.array([0,0,47500]) # robot weight
+
+        # pid controller
         self.control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
         
 

@@ -9,7 +9,7 @@ from pyrr import quaternion
 class RealTimeProcessor(object):
     def __init__(self, order, cutoff, ftype, design, rs, sample_rate):
         self.flag = 0
-        self.sample_time = 1 / sample_rate
+        self.sample_time = 1/sample_rate
         self.sample_rate = sample_rate
         self.qx_last = 0
         self.qy_last = 0
@@ -19,7 +19,16 @@ class RealTimeProcessor(object):
         self.diff_qy_last = 0
         self.diff_qz_last = 0
         self.diff_qw_last = 0
-
+        self.px_last = 0
+        self.py_last = 0
+        self.pz_last = 0
+        self.vx_last = 0
+        self.vy_last = 0
+        self.vz_last = 0
+        self.ax = 0
+        self.ay = 0
+        self.az = 0
+        
         # raw data from motion capture
         self.px = 0
         self.py = 0
@@ -32,7 +41,7 @@ class RealTimeProcessor(object):
         # tpp angle
         self.tpp = np.array([0, 0, 0])  # flat array 
 
-        # filted data with IIR2Filter
+        # filtered data with IIR2Filter
         self.px_filted = 0
         self.py_filted = 0
         self.pz_filted = 0
@@ -120,9 +129,31 @@ class RealTimeProcessor(object):
         self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
         self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
+        #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
 
-        #return filted_data
+        
+    def pos_vel_acc_filtered(self):
+        self.vx = (self.px_filted - self.px_last)/self.sample_time
+        self.vy = (self.py_filted - self.py_last)/self.sample_time
+        self.vz = (self.pz_filted - self.pz_last)/self.sample_time
+
+        self.ax = (self.vx - self.vx_last)/self.sample_time
+        self.ay = (self.vy - self.vy_last)/self.sample_time
+        self.az = (self.vz - self.vz_last)/self.sample_time
+
+        self.px_last = self.px_filted
+        self.py_last = self.py_filted
+        self.pz_last = self.pz_filted
+
+        self.vx_last = self.vx
+        self.vy_last = self.vy
+        self.vz_last = self.vz
+
+        pos_vel_acc = np.array([self.px_filted, self.py_filted, self.pz_filted, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
+        
+        #return vel_acc
+        return pos_vel_acc
 
 
     def get_rotm(self):
