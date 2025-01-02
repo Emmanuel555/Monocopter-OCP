@@ -13,7 +13,7 @@ import numpy.linalg as la
 
 
 class att_ctrl(object):
-    def __init__(self,z_gains):
+    def __init__(self,p_gains,d_gains,i_gains,angle_gains,body_rate_gains,body_rate_rate_gains):
         ## feedback
         self.robot_pos = np.array([0,0,0]) # x y z
         self.robot_vel = np.array([0,0,0]) # x y z
@@ -24,15 +24,18 @@ class att_ctrl(object):
         
         ## gains
         # pos
-        self.kpz = z_gains[0]
-        self.kdz = z_gains[1]
-        self.kiz = z_gains[2]
+        self.kp = np.array(p_gains) 
+        self.kd = np.array(d_gains) 
+        self.ki = np.array(i_gains) 
         # attitude/angle
-        self.kpa = np.array([10, 10]) # abt x y
+        # self.kpa = np.array([10, 10]) # abt x y
+        self.kpa = np.array(angle_gains) # abt x y
         # body rates
-        self.kpr = np.array([50, 50]) # abt x y
+        # self.kpr = np.array([50, 50]) # abt x y
+        self.kpr = np.array(body_rate_gains) # abt x y
         # body rate rates
-        self.kprr = np.array([1000, 1000]) # abt x y
+        # self.kprr = np.array([1000, 1000]) # abt x y
+        self.kprr = np.array(body_rate_rate_gains) # abt x y
         
         ## sampling time
         self.dt = 0
@@ -41,16 +44,54 @@ class att_ctrl(object):
         self.ref_pos = np.array([0,0,0]) 
         self.ref_vel = np.array([0,0,0]) 
         self.ref_acc = np.array([0,0,0]) 
-        self.monocopter_weight = np.array([0,0,47500]) # monocopter weight
+        self.ref_jer = np.array([0,0,0]) 
+        self.ref_sna = np.array([0,0,0]) 
+        
+        ## physical parameters
+        self.g = 9.81
+        self.rho = 1.225
+        self.wing_radius = 0
+        self.chord_length = 0
+        self.mass = 0
+        self.cl = 0
+        self.cd = 0
 
-        # contd bem tmr
+        ## bem
+        self.drag_rotation_wo_rps = 0
+        self.lift_rotation_wo_rps = 0
 
 
+        ## control signals
         self.position_error_last = np.array([0, 0, 0])
         self.control_signal = np.array([0,0,0]) 
         self.z_offset = 0
         self.cmd_z = 0
-        
+
+
+    def physical_params(self,wing_radius,chord_length,mass,cl,cd):
+        # cl = lift coefficient
+        # cd = drag coefficient
+        self.wing_radius = wing_radius
+        self.chord_length = chord_length
+        self.mass = mass
+        self.cl = cl
+        self.cd = cd
+
+
+    def compute_bem_wo_rps(self,pitch):
+        # pitch = pitch angle in degrees 
+        # original formula for lift: (cl*pitch*(rps^2)*rho*chord_length*(wing_radius^3))/6
+        self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
+        self.lift_rotation_wo_rps = (self.cl*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
+
+
+    def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna):
+        self.ref_pos = ref_pos
+        self.ref_vel = ref_vel
+        self.ref_acc = ref_acc    
+        self.ref_jer = ref_jer
+        self.ref_sna = ref_sna 
+
 
     def update(self, robot_locale, dt, ref_pos, z_offset):
         self.z_offset = z_offset
@@ -98,20 +139,24 @@ class att_ctrl(object):
 
     def control_input(self):
         # control gains
-        kpx = 12_000
-        kpy = 12_000
-        kpz = self.kpz
-        p_gains = np.array([kpx, kpy, kpz])
+        # kpx = 12_000
+        # kpy = 12_000
+        # kpz = self.kpz
+        # p_gains = np.array([kpx, kpy, kpz])
+        p_gains = self.kp
 
-        kdx = 5_000
-        kdy = 5_000
-        kdz = self.kdz
-        d_gains = np.array([kdx, kdy, kdz])
+        # kdx = 5_000
+        # kdy = 5_000
+        # kdz = self.kdz
+        # d_gains = np.array([kdx, kdy, kdz])
+        d_gains = self.kd
 
-        kix = 0
-        kiy = 0
-        kiz = self.kiz
-        i_gains = np.array([kix, kiy, kiz])
+        # kix = 0
+        # kiy = 0
+        # kiz = self.kiz
+        # i_gains = np.array([kix, kiy, kiz])
+        i_gains = self.ki
+        
         I_term_z_prior = 0
         I_term_prior = np.array([0, 0, I_term_z_prior])
 
@@ -120,19 +165,62 @@ class att_ctrl(object):
         integral_error = (position_error*self.dt) + I_term_prior
         self.position_error_last = position_error
         
-        # references
-        robot_mg = np.array([0,0,47500]) # robot weight
+        # weight of the robot
+        robot_mg = np.array([0,0,self.mass*self.g]) # robot weight, cf = 47500
 
-        # pid controller
+        # position pid controller
         self.control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
+
+        # w acceleration references, velocity not needed as d term from position compensates that already
+        self.control_signal = self.control_signal + self.ref_acc
         
 
-    def get_angles_and_thrust(self,enable):
+    def body_rate_loop(self,cascaded_ref_bod_rates):
+        # body rate gains
+        # kpr = np.array([50, 50]) # abt x y
+        kpr = self.kpr
+        fb = np.array(self.robot_tpp_bod_rate[0:2]) # abt x y z
+
+        # body rate controller
+        cmd_bod_rates = kpr*(cascaded_ref_bod_rates - fb)
+        return (cmd_bod_rates)
+    
+
+    def INDI_loop(self,cascaded_ref_bod_acc):
+        # body rate gains
+        # kpr = np.array([50, 50]) # abt x y
+        kprr = self.kprr
+        fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
+
+        # body rate controller
+        cmd_bod_acc = kprr*(cascaded_ref_bod_acc - fb)
+        return (cmd_bod_acc)
+    
+    
+    def get_angles_and_thrust(self,flatness_option):
         self.control_input()
         cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
-        des_roll = int(cmd_att[0]*180/math.pi)
-        des_pitch = int(cmd_att[1]*180/math.pi)
-        des_thrust = int(self.control_signal[2])
+
+        if flatness_option == 0:
+            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
+            cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
+        else:
+            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
+            cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
+            cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
+            cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
+
+        # in degrees
+        #des_roll = int(cmd_att[0]*180/math.pi)
+        #des_pitch = int(cmd_att[1]*180/math.pi)
+        
+        # in radians
+        des_roll = int(cmd_bod_acc[0])
+        des_pitch = int(cmd_bod_acc[1])
+
+        # collective thrust
+        des_rps = np.sqrt((int(self.control_signal[2]))/(self.lift_rotation_wo_rps-self.drag_rotation_wo_rps))
+        des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
          # output saturation
         if des_roll > 25:
@@ -148,35 +236,35 @@ class att_ctrl(object):
         if des_thrust < 10:
             des_thrust = 10
 
-        final_cmd = np.array([des_roll, des_pitch, 0, enable*des_thrust])
-        self.cmd_z = enable*des_thrust
+        final_cmd = np.array([des_roll, des_pitch, des_rps]) # roll pitch rps
+        self.cmd_z = des_thrust
 
         return (final_cmd)
     
 
-    def include_jerk_bod_rates(self,ref_jerk):
+    def include_jerk_bod_rates(self):
         if self.cmd_z == 0:
             wy = 0
             wx = 0
         else:    
-            wy = ref_jerk[0]/self.cmd_z
-            wx = ref_jerk[1]/(-1*self.cmd_z)
-        wz = 0
-        ref_bod_rates = np.array([wx,wy,wz]) # flattened array abt x y z
+            wy = self.ref_jer[0]/self.cmd_z
+            wx = self.ref_jer[1]/(-1*self.cmd_z)
+        
+        ref_bod_rates = np.array([wx,wy]) # flattened array abt x y z
         
         #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
         return ref_bod_rates
     
 
-    def include_snap_bod_raterate(self,ref_snap):
+    def include_snap_bod_raterate(self):
         if self.cmd_z == 0:
             wy_dot = 0
             wx_dot = 0
         else:    
-            wy_dot = ref_snap[0]/self.cmd_z
-            wx_dot = ref_snap[1]/(-1*self.cmd_z)
-        wz_dot = 0
-        ref_bod_raterate = np.array([wx_dot,wy_dot,wz_dot]) # flattened array abt x y z
+            wy_dot = self.ref_sna[0]/self.cmd_z
+            wx_dot = self.ref_sna[1]/(-1*self.cmd_z)
+        
+        ref_bod_raterate = np.array([wx_dot,wy_dot]) # flattened array abt x y z
         
         #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
         return ref_bod_raterate
