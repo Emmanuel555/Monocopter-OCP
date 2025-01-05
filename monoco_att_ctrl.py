@@ -81,7 +81,7 @@ class att_ctrl(object):
     def compute_bem_wo_rps(self,pitch):
         # pitch = pitch angle in degrees 
         # original formula for lift: (cl*pitch*(rps^2)*rho*chord_length*(wing_radius^3))/6
-        self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
+        self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside, not needed atm
         self.lift_rotation_wo_rps = (self.cl*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 
 
@@ -218,8 +218,8 @@ class att_ctrl(object):
         des_roll = int(cmd_bod_acc[0])
         des_pitch = int(cmd_bod_acc[1])
 
-        # collective thrust
-        des_rps = np.sqrt((int(self.control_signal[2]))/(self.lift_rotation_wo_rps-self.drag_rotation_wo_rps))
+        # collective thrust - linearised
+        des_rps = np.sqrt((int(self.control_signal[2]))/self.lift_rotation_wo_rps) # input to motor
         des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
          # output saturation
