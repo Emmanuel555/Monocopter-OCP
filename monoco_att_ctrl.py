@@ -143,19 +143,19 @@ class att_ctrl(object):
         # kpy = 12_000
         # kpz = self.kpz
         # p_gains = np.array([kpx, kpy, kpz])
-        p_gains = self.kp
+        p_gains = self.kp # p_gains = ([kpx, kpy, kpz])
 
         # kdx = 5_000
         # kdy = 5_000
         # kdz = self.kdz
         # d_gains = np.array([kdx, kdy, kdz])
-        d_gains = self.kd
+        d_gains = self.kd # d_gains = ([kpx, kpy, kpz])
 
         # kix = 0
         # kiy = 0
         # kiz = self.kiz
         # i_gains = np.array([kix, kiy, kiz])
-        i_gains = self.ki
+        i_gains = self.ki # i_gains = ([kpx, kpy, kpz])
         
         I_term_z_prior = 0
         I_term_prior = np.array([0, 0, I_term_z_prior])
