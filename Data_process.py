@@ -195,20 +195,20 @@ class RealTimeProcessor(object):
 
         self.R11 = 1 - 2 * (yy + zz)
         self.R12 = 2 * (xy - wz)
-        self.R13 = 2 * (xz + wy) # z cross x or x cross z = y vector
+        self.R13 = 2 * (xz + wy) # z cross x or x cross z = y vector (Contribution of the rotating z-axis to the rotated x-axis)
         self.R21 = 2 * (xy + wz)
         self.R22 = 1 - 2 * (xx + zz)
-        self.R23 = 2 * (yz - wx) # z cross y or y cross z = x vector
+        self.R23 = 2 * (yz - wx) # z cross y or y cross z = x vector (Contribution of the rotating z-axis to the rotated y-axis)
         self.R31 = 2 * (xz - wy)
         self.R32 = 2 * (yz + wx)
-        self.R33 = 1 - 2 * (xx + yy) # x cross y or y cross x = z vector
+        self.R33 = 1 - 2 * (xx + yy) # x cross y or y cross x = z vector (How much of the z-axis aligns with itself after the rotation)
 
         rotm = [self.R11, self.R12, self.R13, self.R21, self.R22, self.R23, self.R31, self.R32, self.R33]
 
         #return rotm
         
 
-    def get_tpp_angle(self): # qns abt this
+    def get_tpp_angle_xy(self): # qns abt this
         xi_x = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector
         xi_y = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
         xi_z = 0
@@ -223,9 +223,18 @@ class RealTimeProcessor(object):
         #return self.tpp
 
 
+    """ def get_tpp_angle(self):
+        q_rot_mat = [[self.R11, self.R12, self.R13],
+                     [self.R21, self.R22, self.R23],
+                     [self.R31, self.R32, self.R33]]
+        
+        n_tpp = [0, 0, 1]
+        tpp_inertial = np.dot(q_rot_mat, n_tpp) """
+        
+
     def get_Omega_dot_dotdot(self): # taken from shane
         self.get_rotm()
-        self.get_tpp_angle()
+        self.get_tpp_angle_xy()
 
         diff_qx = self.quat_x - self.qx_last
         diff_qy = self.quat_y - self.qy_last
@@ -272,7 +281,7 @@ class RealTimeProcessor(object):
 
     def get_Omega_dot_dotdot_filt(self):
         self.get_rotm_filtered()
-        self.get_tpp_angle()
+        self.get_tpp_angle_xy()
 
         diff_qx = self.quat_x_filted - self.qx_last
         diff_qy = self.quat_y_filted - self.qy_last
