@@ -13,7 +13,7 @@ import numpy.linalg as la
 
 
 class att_ctrl(object):
-    def __init__(self,p_gains,d_gains,i_gains,angle_gains,body_rate_gains,body_rate_rate_gains):
+    def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,body_rate_gains,body_rate_gains_d,body_rate_rate_gains):
         ## feedback
         self.robot_pos = np.array([0,0,0]) # x y z
         self.robot_vel = np.array([0,0,0]) # x y z
@@ -30,9 +30,11 @@ class att_ctrl(object):
         # attitude/angle
         # self.kpa = np.array([10, 10]) # abt x y
         self.kpa = np.array(angle_gains) # abt x y
+        self.kpad = np.array(angle_gains_d) # abt x y
         # body rates
         # self.kpr = np.array([50, 50]) # abt x y
         self.kpr = np.array(body_rate_gains) # abt x y
+        self.kprd = np.array(body_rate_gains_d) # abt x y
         # body rate rates
         # self.kprr = np.array([1000, 1000]) # abt x y
         self.kprr = np.array(body_rate_rate_gains) # abt x y
@@ -63,6 +65,8 @@ class att_ctrl(object):
 
         ## control signals
         self.position_error_last = np.array([0, 0, 0])
+        self.angle_error_last = np.array([0, 0])
+        self.rate_error_last = np.array([0, 0])
         self.control_signal = np.array([0,0,0]) 
         self.z_offset = 0
         self.cmd_z = 0
@@ -110,6 +114,7 @@ class att_ctrl(object):
 
     def attitude_loop(self, quat, control_input):
         kpa = self.kpa # abt x y
+        kpad = self.kpad # abt x y
         qz = quaternion.create(quat[0], quat[1], quat[2], 1) # x y z w ## qw is always set to 1 even in optitrack itself
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
@@ -132,9 +137,14 @@ class att_ctrl(object):
             cmd_att = -2*error_quat[1:3]
         else:
             cmd_att = 2*error_quat[1:3] # bod_att[0] = abt x, bod_att[1] = abt y 
-        cmd_att = kpa*(cmd_att) # abt x y z
 
-        return (cmd_att)
+        cmd_att_error = np.array(cmd_att[0],cmd_att[1]) # abt x y only
+        cmd_att_error_rate = (cmd_att_error - self.angle_error_last)/self.dt
+        self.angle_error_last = cmd_att_error
+
+        cmd_att_final = kpa*(cmd_att_error) + kpad*(cmd_att_error_rate) # abt x y z
+        
+        return (cmd_att_final)
     
 
     def control_input(self):
@@ -179,22 +189,28 @@ class att_ctrl(object):
         # body rate gains
         # kpr = np.array([50, 50]) # abt x y
         kpr = self.kpr
+        kprd = self.kprd
         fb = np.array(self.robot_tpp_bod_rate[0:2]) # abt x y z
 
         # body rate controller
-        cmd_bod_rates = kpr*(cascaded_ref_bod_rates - fb)
-        return (cmd_bod_rates)
+        cmd_bod_rates_error = cascaded_ref_bod_rates - fb
+        cmd_bod_rates_error_rate = (cmd_bod_rates_error  - self.rate_error_last)/self.dt
+        self.rate_error_last = cmd_bod_rates_error
+
+        cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) # abt x y z
+        
+        return (cmd_bod_rates_final)
     
 
     def INDI_loop(self,cascaded_ref_bod_acc):
-        # body rate gains
-        # kpr = np.array([50, 50]) # abt x y
+        # body raterate gains
+        # kprr = np.array([50, 50]) # abt x y
         kprr = self.kprr
         fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
 
-        # body rate controller
-        cmd_bod_acc = kprr*(cascaded_ref_bod_acc - fb)
-        return (cmd_bod_acc)
+        # body raterate controller
+        cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc - fb)
+        return (cmd_bod_acc_final)
     
     
     def get_angles_and_thrust(self,flatness_option):
@@ -223,7 +239,7 @@ class att_ctrl(object):
         des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
          # output saturation
-        if des_roll > 25:
+        """ if des_roll > 25:
             des_roll = 25
         if des_roll < -25:
             des_roll = -25
@@ -234,7 +250,7 @@ class att_ctrl(object):
         if des_thrust > 60_000:
             des_thrust = 60_000
         if des_thrust < 10:
-            des_thrust = 10
+            des_thrust = 10 """
 
         final_cmd = np.array([des_roll, des_pitch, des_rps]) # roll pitch rps
         self.cmd_z = des_thrust

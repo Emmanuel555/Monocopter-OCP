@@ -159,5 +159,10 @@ mx = plt.axes(projection='3d')
 mx.plot3D(helix_array_x, helix_array_y, helix_array_z, 'gray')
 plt.show() """
 
+b = [1,0,0]
+a = [[1,0,0],[0,1,0],[0,1,0]]
+test = np.dot(a, b)
+print(np.size(test))
+
 stop = timeit.default_timer()
 print('Program Runtime: ', stop - start)  

@@ -195,13 +195,13 @@ class RealTimeProcessor(object):
 
         self.R11 = 1 - 2 * (yy + zz)
         self.R12 = 2 * (xy - wz)
-        self.R13 = 2 * (xz + wy) # z cross x or x cross z = y vector (Contribution of the rotating z-axis to the rotated x-axis)
+        self.R13 = 2 * (xz + wy) # abt x (Contribution of the rotating z-axis to the rotated x-axis)
         self.R21 = 2 * (xy + wz)
         self.R22 = 1 - 2 * (xx + zz)
-        self.R23 = 2 * (yz - wx) # z cross y or y cross z = x vector (Contribution of the rotating z-axis to the rotated y-axis)
+        self.R23 = 2 * (yz - wx) # abt y (Contribution of the rotating z-axis to the rotated y-axis)
         self.R31 = 2 * (xz - wy)
         self.R32 = 2 * (yz + wx)
-        self.R33 = 1 - 2 * (xx + yy) # x cross y or y cross x = z vector (How much of the z-axis aligns with itself after the rotation)
+        self.R33 = 1 - 2 * (xx + yy) # How much of the z-axis aligns with itself after the rotation
 
         rotm = [self.R11, self.R12, self.R13, self.R21, self.R22, self.R23, self.R31, self.R32, self.R33]
 
@@ -209,16 +209,35 @@ class RealTimeProcessor(object):
         
 
     def get_tpp_angle_xy(self): # qns abt this
-        xi_x = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector
-        xi_y = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
-        xi_z = 0
-        # xi_x = self.R13
-        # xi_y = self.R23
+        #xi_x = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector
+        #xi_y = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
+        
+        """ Finding the TPP Angle
+        To calculate the TPP angle using the rotation matrix:
+
+        Step 1: Identify the TPP Normal Vector
+        The TPP is typically perpendicular to the rotational velocity vector (𝜔D) in the disk's body frame. 
+        Assuming the blade motion traces a circle, the TPP normal in the body frame is:
+
+        𝑛TPP=[0,0,1]T
+        
+        This vector is aligned with the disk's z-axis in the body frame.
+
+        Step 2: Transform the Normal to the Inertial Frame
+        Use the rotation matrix rotm to transform 𝑛TPP into the inertial frame:
+
+        𝑛TPP inertial = rotm⋅𝑛TPP
+
+        This gives the orientation of the TPP in the inertial frame. """
+                
+        abt_x = self.R13
+        abt_y = self.R23
+        abt_z = 0
         # tpp = [xi_x, xi_y, xi_z] # disk euler angle vector about (x, y, z)
          
-        self.tpp[0] = xi_x # roll
-        self.tpp[1] = xi_y # pitch
-        self.tpp[2] = xi_z # yaw
+        self.tpp[0] = abt_x # disk roll
+        self.tpp[1] = abt_y # disk pitch
+        self.tpp[2] = abt_z # disk yaw
 
         #return self.tpp
 
