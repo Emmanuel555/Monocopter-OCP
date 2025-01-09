@@ -62,7 +62,6 @@ class att_ctrl(object):
         self.drag_rotation_wo_rps = 0
         self.lift_rotation_wo_rps = 0
 
-
         ## control signals
         self.position_error_last = np.array([0, 0, 0])
         self.angle_error_last = np.array([0, 0])
@@ -97,10 +96,14 @@ class att_ctrl(object):
         self.ref_sna = ref_sna 
 
 
-    def update(self, robot_locale, dt, ref_pos, z_offset):
+    def update(self, linear_pos, rotational_pos, rotational_quat, dt, ref_pos, z_offset):
         self.z_offset = z_offset
-        self.robot_pos = np.array(robot_locale[0:3])
-        self.robot_quat = np.array(robot_locale[3:7])
+        self.robot_pos = np.array(linear_pos[0:3])
+        self.robot_vel = np.array(linear_pos[3:6])
+        self.robot_acc = np.array(linear_pos[6:9])
+        self.robot_quat = rotational_quat
+        self.robot_tpp_bod_rate = np.array(rotational_pos[1])
+        self.robot_tpp_bod_raterate = np.array(rotational_pos[2])
         self.dt = dt
         self.ref_pos = ref_pos
         self.ref_pos[2] = self.ref_pos[2] + self.z_offset

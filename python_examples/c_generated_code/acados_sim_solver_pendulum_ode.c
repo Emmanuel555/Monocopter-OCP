@@ -74,7 +74,7 @@ int pendulum_ode_acados_sim_create(pendulum_ode_sim_solver_capsule * capsule)
     bool tmp_bool;
 
     
-    double Tsim = 0.1;
+    double Tsim = 0.05;
 
     
     capsule->sim_impl_dae_fun = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
@@ -131,28 +131,16 @@ int pendulum_ode_acados_sim_create(pendulum_ode_sim_solver_capsule * capsule)
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "newton_iter", &tmp_int);
     double tmp_double = 0;
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "newton_tol", &tmp_double);
-    sim_collocation_type collocation_type = GAUSS_RADAU_IIA;
+    sim_collocation_type collocation_type = GAUSS_LEGENDRE;
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "collocation_type", &collocation_type);
 
-
-    tmp_int = 3;
+ 
+    tmp_int = 4;
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "num_stages", &tmp_int);
-    tmp_int = 3;
+    tmp_int = 1;
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "num_steps", &tmp_int);
-
-    // options that are not available to AcadosOcpSolver
-    //  (in OCP they will be determined by other options, like exact_hessian)
-    tmp_bool = true;
-    sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "sens_forw", &tmp_bool);
-    tmp_bool = false;
-    sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "sens_adj", &tmp_bool);
-    tmp_bool = false;
-    sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "sens_algebraic", &tmp_bool);
-    tmp_bool = false;
-    sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "sens_hess", &tmp_bool);
-    tmp_bool = true;
-    sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "output_z", &tmp_bool);
-
+    tmp_bool = 0;
+    sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "jac_reuse", &tmp_bool);
 
 
     // sim in / out

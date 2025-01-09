@@ -11,8 +11,9 @@ class trajectory_generator(object):
 
     def hover_test(self, x_offset):
         ref_x = 0
-        ref_y = 1.0
-        ref_z = 0.15
+        # ref_y = 1.0
+        ref_y = 0
+        ref_z = 1.2
         ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
         msg = "hovering test..."
         return (ref_pos,msg)
