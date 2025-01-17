@@ -87,7 +87,8 @@ class RealTimeProcessor(object):
     def data_unpack(self, udp_data): ## qns abt this
         x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
         
-        self.px = x * 0.0005  # position px 
+        # 0.0005 is the scale factor for the position data
+        self.px = x * 0.0005 # position px 
         self.py = y * 0.0005  # position py  
         self.pz = z * 0.0005  # position pz 
 
@@ -95,29 +96,32 @@ class RealTimeProcessor(object):
         #self.py = float(y)   # position py  
         #self.pz = float(z)   # position pz 
 
-        self.quat_x = float(qx * 0.001)
-        self.quat_y = float(qy * 0.001)
-        self.quat_z = float(qz * 0.001)
-        self.quat_w = float(qw * 0.001)
+        # 1 seems to work better than 0.001
+        self.quat_x = float(qx)
+        self.quat_y = float(qy)
+        self.quat_z = float(qz)
+        self.quat_w = float(qw)
 
         #self.quat_x = float(qx)
         #self.quat_y = float(qy)
         #self.quat_z = float(qz)
         #self.quat_w = float(qw)/np.abs(float(qw)) # normalizing the quaternion
 
-        raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
+        self.raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
         #return raw_data
 
     def data_unpack_filtered(self,udp_data):
         x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
 
+        # 0.0005 is the scale factor for the position data
         self.px = x * 0.0005  # position px 
         self.py = y * 0.0005  # position py  
         self.pz = z * 0.0005  # position pz 
 
-        self.quat_x = float(qx * 0.001)
-        self.quat_y = float(qy * 0.001)
-        self.quat_z = float(qz * 0.001)
+        # 1 seems to work better than 0.001
+        self.quat_x = float(qx)
+        self.quat_y = float(qy)
+        self.quat_z = float(qz)
         self.quat_w = float(qw) # needa check if this can always be left as 1 when spinning 
 
         self.px_filted = self.FilterX.filter(self.px)
@@ -208,10 +212,7 @@ class RealTimeProcessor(object):
         #return rotm
         
 
-    def get_tpp_angle_xy(self): # qns abt this
-        #xi_x = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector
-        #xi_y = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
-        
+    def get_tpp_angle_xy(self): # solved during testing
         """ Finding the TPP Angle
         To calculate the TPP angle using the rotation matrix:
 
@@ -230,30 +231,21 @@ class RealTimeProcessor(object):
 
         This gives the orientation of the TPP in the inertial frame. """
                 
-        abt_x = self.R13
-        abt_y = self.R23
+        abt_y = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
+        abt_x = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector     
         abt_z = 0
-        # tpp = [xi_x, xi_y, xi_z] # disk euler angle vector about (x, y, z)
          
-        self.tpp[0] = abt_x # disk roll
+        # self.tpp is in radians 
+        self.tpp[0] = -1*abt_x # disk roll - need to negate to match the convention of the tpp
         self.tpp[1] = abt_y # disk pitch
         self.tpp[2] = abt_z # disk yaw
 
-        #return self.tpp
+        return self.tpp
 
-
-    """ def get_tpp_angle(self):
-        q_rot_mat = [[self.R11, self.R12, self.R13],
-                     [self.R21, self.R22, self.R23],
-                     [self.R31, self.R32, self.R33]]
-        
-        n_tpp = [0, 0, 1]
-        tpp_inertial = np.dot(q_rot_mat, n_tpp) """
-        
 
     def get_Omega_dot_dotdot(self): # taken from shane
         self.get_rotm()
-        self.get_tpp_angle_xy()
+        self.get_tpp_angle_xy() # in radians
 
         diff_qx = self.quat_x - self.qx_last
         diff_qy = self.quat_y - self.qy_last

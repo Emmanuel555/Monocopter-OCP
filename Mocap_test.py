@@ -1,5 +1,3 @@
-
-
 import time
 
 import Mocap
@@ -37,17 +35,22 @@ if __name__ == '__main__':
             data = data_receiver_sender.get_data()
             
             # data unpack
-            # data_processor.data_unpack(data)
+            #data_processor.data_unpack(data)
             data_processor.data_unpack_filtered(data)
+
+            # cartesian position
+            pos = data_processor.filted_data
             
             # processed tpp data/feedback
             state_vector = data_processor.get_Omega_dot_dotdot_filt()
+            
+            # data_processor.get_rotm_filtered()
             tpp_angle = data_processor.tpp
             tpp_omega = data_processor.Omega
             tpp_omega_dot = data_processor.Omega_dot
 
             # testing sending information over udp to wj esp32
-            data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+            # data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             count = count + 1
 
@@ -65,11 +68,14 @@ if __name__ == '__main__':
             last_time = abs_time
             
             print("sampling period and freq: ", t_diff, 1/t_diff) 
-            print("tpp angle:", tpp_angle)
+            print("tpp angles:", tpp_angle) # rpy
+            print("tpp bodyrates:", tpp_omega*0.0001) # rpy
+            print("tpp bodyraterates:", tpp_omega_dot*0.0001) # rpy
+            print("position: ", pos[0:3])
             #print("rpy: ", data_processor.get_RPY())
 
             
-            time.sleep(0.05) # impt to pause and see information
+            #time.sleep(0.05) # impt to pause and see information
 
     except KeyboardInterrupt:
         print('Keyboard interrupt')
