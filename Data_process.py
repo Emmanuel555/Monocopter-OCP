@@ -11,6 +11,10 @@ class RealTimeProcessor(object):
         self.flag = 0
         self.sample_time = 1/sample_rate
         self.sample_rate = sample_rate
+        self.roll_x_last = 0
+        self.pitch_y_last = 0
+        self.rollrate_x_last = 0
+        self.pitchrate_y_last = 0
         self.qx_last = 0
         self.qy_last = 0
         self.qz_last = 0
@@ -236,7 +240,10 @@ class RealTimeProcessor(object):
         abt_z = 0
          
         # self.tpp is in radians 
+
+        # needa multiply with R22 to get the correct roll angle
         self.tpp[0] = -1*abt_x # disk roll - need to negate to match the convention of the tpp
+        # needa multiply with R11 to get the correct pitch angle
         self.tpp[1] = abt_y # disk pitch
         self.tpp[2] = abt_z # disk yaw
 
@@ -338,6 +345,39 @@ class RealTimeProcessor(object):
         return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
 
 
+    def get_Omega_dot_dotdot_filt_eul(self):
+        self.get_rotm_filtered()
+        self.get_tpp_angle_xy()
+
+        roll = self.tpp[0]
+        pitch = self.tpp[1]
+
+        rollrate_x = (roll - self.roll_x_last)/self.sample_time
+        pitchrate_y = (pitch - self.pitch_y_last)/self.sample_time
+
+        rollraterate_x = (rollrate_x - self.rollrate_x_last)/self.sample_time
+        pitchraterate_y = (pitchrate_y - self.pitchrate_y_last)/self.sample_time
+
+        self.roll_x_last = roll
+        self.pitch_y_last = pitch
+        
+        self.rollrate_x_last = rollrate_x 
+        self.pitchrate_y_last = pitchrate_y
+         
+        self.Omega = [rollrate_x, pitchrate_y, 0] # 3 x 1 - about x, y, z
+        self.Omega_dot = [rollraterate_x, pitchraterate_y, 0] # 3 x 1 - about x, y, z
+
+        rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
+                             [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
+                             [0, -math.sin(roll), math.cos(pitch)*math.cos(roll)]]
+        
+        self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
+        self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
+    
+        return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
+
+    
+    
     def get_RPY(self): # solely for quad
         # roll - rotating about x axis
         roll_a = 2 * (self.quat_w * self.quat_x + self.quat_y * self.quat_z)

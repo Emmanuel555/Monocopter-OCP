@@ -35,17 +35,18 @@ if __name__ == '__main__':
             data = data_receiver_sender.get_data()
             
             # data unpack
-            #data_processor.data_unpack(data)
+            # data_processor.data_unpack(data)
             data_processor.data_unpack_filtered(data)
 
             # cartesian position
             pos = data_processor.filted_data
             
             # processed tpp data/feedback
-            state_vector = data_processor.get_Omega_dot_dotdot_filt()
+            state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
             
+            # needa find pitch angle of the body during hover
             # data_processor.get_rotm_filtered()
-            tpp_angle = data_processor.tpp
+            tpp_angle = data_processor.tpp # test it again and w r11 & r22
             tpp_omega = data_processor.Omega
             tpp_omega_dot = data_processor.Omega_dot
 
@@ -69,8 +70,8 @@ if __name__ == '__main__':
             
             print("sampling period and freq: ", t_diff, 1/t_diff) 
             print("tpp angles:", tpp_angle) # rpy
-            print("tpp bodyrates:", tpp_omega*0.0001) # rpy
-            print("tpp bodyraterates:", tpp_omega_dot*0.0001) # rpy
+            print("tpp bodyrates:", tpp_omega) # rpy
+            print("tpp bodyraterates:", tpp_omega_dot) # rpy
             print("position: ", pos[0:3])
             #print("rpy: ", data_processor.get_RPY())
 
