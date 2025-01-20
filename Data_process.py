@@ -11,6 +11,7 @@ class RealTimeProcessor(object):
         self.flag = 0
         self.sample_time = 1/sample_rate
         self.sample_rate = sample_rate
+        self.body_pitch = 0
         self.roll_x_last = 0
         self.pitch_y_last = 0
         self.rollrate_x_last = 0
@@ -43,7 +44,7 @@ class RealTimeProcessor(object):
         self.quat_w = 0  
 
         # tpp angle
-        self.tpp = np.array([0, 0, 0])  # flat array 
+        self.tpp = np.array([0.0, 0.0, 0.0])  # flat array 
 
         # filtered data with IIR2Filter
         self.px_filted = 0
@@ -55,8 +56,8 @@ class RealTimeProcessor(object):
         self.quat_w_filted = 0
 
         # omega and omega_dot
-        self.Omega = np.array([0, 0, 0])  # flat array
-        self.Omega_dot = np.array([0, 0, 0])  # flat array
+        #self.Omega = np.array([0, 0, 0])  # flat array
+        #self.Omega_dot = np.array([0, 0, 0])  # flat array
 
         # component of rotation matrix
         self.R11 = 0
@@ -211,6 +212,7 @@ class RealTimeProcessor(object):
         self.R32 = 2 * (yz + wx)
         self.R33 = 1 - 2 * (xx + yy) # How much of the z-axis aligns with itself after the rotation
 
+        self.body_pitch = -1*self.R33/100000 # body pitch
         rotm = [self.R11, self.R12, self.R13, self.R21, self.R22, self.R23, self.R31, self.R32, self.R33]
 
         #return rotm
@@ -242,9 +244,9 @@ class RealTimeProcessor(object):
         # self.tpp is in radians 
 
         # needa multiply with R22 to get the correct roll angle
-        self.tpp[0] = -1*abt_x # disk roll - need to negate to match the convention of the tpp
+        self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll - need to negate to match the convention of the tpp
         # needa multiply with R11 to get the correct pitch angle
-        self.tpp[1] = abt_y # disk pitch
+        self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
         self.tpp[2] = abt_z # disk yaw
 
         return self.tpp
@@ -364,8 +366,8 @@ class RealTimeProcessor(object):
         self.rollrate_x_last = rollrate_x 
         self.pitchrate_y_last = pitchrate_y
          
-        self.Omega = [rollrate_x, pitchrate_y, 0] # 3 x 1 - about x, y, z
-        self.Omega_dot = [rollraterate_x, pitchraterate_y, 0] # 3 x 1 - about x, y, z
+        self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
+        self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z
 
         rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
                              [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
