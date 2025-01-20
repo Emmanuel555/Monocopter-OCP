@@ -105,8 +105,9 @@ if __name__ == '__main__':
             data_processor.data_unpack_filtered(data)
 
             # processed tpp data/feedback
-            rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt()
+            rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
             linear_state_vector = data_processor.pos_vel_acc_filtered()
+            body_pitch = data_processor.body_pitch
             # tpp_angle = data_processor.tpp
             # tpp_omega = data_processor.Omega
             # tpp_omega_dot = data_processor.Omega_dot
@@ -150,11 +151,14 @@ if __name__ == '__main__':
             
             # ff references
             monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
+
+            # compute bem thrust
+            monoco.compute_bem_wo_rps(body_pitch)
             
             # control input (traj execution)
             final_cmd = monoco.get_angles_and_thrust(flatness_option)
 
-            # send to monocopter
+            # send to monocopter via INDI
             data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             # counter
@@ -189,5 +193,5 @@ if __name__ == '__main__':
             
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/robot-solo/'
-data_saver.save_data(path)
+#path = '/home/emmanuel/Monocopter-OCP/robot-solo/'
+#data_saver.save_data(path)
