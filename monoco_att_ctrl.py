@@ -15,12 +15,12 @@ import numpy.linalg as la
 class att_ctrl(object):
     def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,body_rate_gains,body_rate_gains_d,body_rate_rate_gains):
         ## feedback
-        self.robot_pos = np.array([0,0,0]) # x y z
-        self.robot_vel = np.array([0,0,0]) # x y z
-        self.robot_acc = np.array([0,0,0]) # x y z
-        self.robot_quat = np.array([0,0,0,0]) # x y z w
-        self.robot_tpp_bod_rate = np.array([0,0,0]) # x y z
-        self.robot_tpp_bod_raterate = np.array([0,0,0]) # x y z
+        self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
+        self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
+        self.robot_acc = np.array([0.0,0.0,0.0]) # x y z
+        self.robot_quat = np.array([0.0,0.0,0.0,0.0]) # x y z w
+        self.robot_tpp_bod_rate = np.array([0.0,0.0,0.0]) # x y z
+        self.robot_tpp_bod_raterate = np.array([0.0,0.0,0.0]) # x y z
         
         ## gains
         # pos
@@ -43,11 +43,11 @@ class att_ctrl(object):
         self.dt = 0
 
         ## references
-        self.ref_pos = np.array([0,0,0]) 
-        self.ref_vel = np.array([0,0,0]) 
-        self.ref_acc = np.array([0,0,0]) 
-        self.ref_jer = np.array([0,0,0]) 
-        self.ref_sna = np.array([0,0,0]) 
+        self.ref_pos = np.array([0.0,0.0,0.0]) 
+        self.ref_vel = np.array([0.0,0.0,0.0]) 
+        self.ref_acc = np.array([0.0,0.0,0.0]) 
+        self.ref_jer = np.array([0.0,0.0,0.0]) 
+        self.ref_sna = np.array([0.0,0.0,0.0]) 
         
         ## physical parameters
         self.g = 9.81
@@ -63,10 +63,10 @@ class att_ctrl(object):
         self.lift_rotation_wo_rps = 0
 
         ## control signals
-        self.position_error_last = np.array([0, 0, 0])
-        self.angle_error_last = np.array([0, 0])
-        self.rate_error_last = np.array([0, 0])
-        self.control_signal = np.array([0,0,0]) 
+        self.position_error_last = np.array([0.0, 0.0, 0.0])
+        self.angle_error_last = np.array([0.0, 0.0])
+        self.rate_error_last = np.array([0.0, 0.0])
+        self.control_signal = np.array([0.0,0.0,0.0]) 
         self.z_offset = 0
         self.cmd_z = 0
 

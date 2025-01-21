@@ -22,7 +22,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse')
                                    
     logging.basicConfig(level=logging.ERROR)
     
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             
             # hovering test
             ref = traj_gen.hover_test(0)
-            hovering_ff = np.array([0, 0, 0])
+            hovering_ff = np.array([0.0, 0.0, 0.0])
             ref_pos = ref[0]
             ref_vel = hovering_ff
             ref_acc = hovering_ff
@@ -176,11 +176,12 @@ if __name__ == '__main__':
             rmse_num_x = rmse_num_x + (ref_pos[0]-linear_state_vector[0])**2
             rmse_num_y = rmse_num_y + (ref_pos[1]-linear_state_vector[1])**2
             rmse_num_z = rmse_num_z + (ref_pos[2]-linear_state_vector[2])**2
+            rmse_num = [rmse_num_x, rmse_num_y, rmse_num_z]
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos
-                                )
+                                linear_state_vector[0:3],ref_pos,rmse_num,0)
+                                
             
     except KeyboardInterrupt:
             
@@ -189,6 +190,12 @@ if __name__ == '__main__':
             final_rmse_y = math.sqrt(rmse_num_y/count)
             final_rmse_z = math.sqrt(rmse_num_z/count)
             final_rmse = la.norm([final_rmse_x, final_rmse_y, final_rmse_z], 2)
+            rmse_num = [final_rmse_x, final_rmse_y, final_rmse_z]
+            
+            # save data
+            data_saver.add_item(abs_time,
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse)
+
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             
 
