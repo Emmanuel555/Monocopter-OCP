@@ -4,13 +4,14 @@ import Mocap
 import DataSave
 import Data_process
 import numpy as np
+import timeit
 
 if __name__ == '__main__':
 
     data_receiver_sender = Mocap.Udp()
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    #data_processor = Data_process_swarm.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
+    ##data_processor = Data_process_swarm.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
@@ -21,14 +22,19 @@ if __name__ == '__main__':
     time_end = time_start + 1000
     last_time = 0
 
-    UDP_IP = "192.168.1.184"
+    UDP_IP = "192.168.65.221"
     UDP_PORT = 1234
-    final_cmd = np.array([0, 0, 0])
+    test_cmd_1 = float(3.423)
+    test_cmd_2 = float(4.534)
+    test_cmd_3 = float(5.645)
+    test_cmd_4 = float(6.756)
+    final_cmd = np.array([[test_cmd_1,test_cmd_2,test_cmd_3,test_cmd_4]])
 
     count = 0
     try:
         #while time_end > time.time():
-        while True:    
+        while True:  
+            start = timeit.default_timer()  
             abs_time = time.time() - time_start
 
             # require data from Mocap
@@ -52,7 +58,8 @@ if __name__ == '__main__':
             body_pitch = data_processor.body_pitch
 
             # testing sending information over udp to wj esp32
-            # data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+            print ("sending info: ", final_cmd)
+            data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             count = count + 1
 
@@ -69,7 +76,7 @@ if __name__ == '__main__':
             t_diff = abs_time - last_time
             last_time = abs_time
 
-            r11 = data_processor.R11
+            """ r11 = data_processor.R11
             r12 = data_processor.R12
             r13 = data_processor.R13
             r21 = data_processor.R21
@@ -77,12 +84,12 @@ if __name__ == '__main__':
             r23 = data_processor.R23
             r31 = data_processor.R31
             r32 = data_processor.R32
-            r33 = data_processor.R33
+            r33 = data_processor.R33 """
             
             print("sampling period and freq: ", t_diff, 1/t_diff) 
             print("tpp angles:", tpp_angle) # rpy
-            print("tpp bodyrates:", tpp_omega) # rpy
-            print("tpp bodyraterates:", tpp_omega_dot) # rpy
+            #print("tpp bodyrates:", tpp_omega) # rpy
+            #print("tpp bodyraterates:", tpp_omega_dot) # rpy
             print("position: ", pos[0:3])
 
             #n = 100000
@@ -94,6 +101,8 @@ if __name__ == '__main__':
             #print("body pitch: ", body_pitch)
             
             #time.sleep(0.05) # impt to pause and see information
+            stop = timeit.default_timer()
+            print('Program Runtime: ', stop - start)  
 
     except KeyboardInterrupt:
         print('Keyboard interrupt')

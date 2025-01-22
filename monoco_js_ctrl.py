@@ -12,6 +12,7 @@ import numpy.linalg as la
 
 import monoco_att_ctrl
 import trajectory_generator
+import timeit
 
 
 if __name__ == '__main__':
@@ -82,21 +83,21 @@ if __name__ == '__main__':
     flatness_option = 0
 
     # Monocopter UDP IP & Port
-    UDP_IP = "192.168.1.184"
+    UDP_IP = "192.168.65.221"
     UDP_PORT = 1234
 
 
     try:
         #while time_end > time.time():
         while True:
-
+            start = timeit.default_timer() 
             abs_time = time.time() - time_start
             
-            lowest = 0.9
-            highest = -1
-            range_js = -(highest - lowest)
-            range_motor = 65535
-            rate = range_motor / range_js
+            #lowest = 0.9
+            #highest = -1
+            #range_js = -(highest - lowest)
+            #range_motor = 65535
+            #rate = range_motor / range_js
         
             # require data from Mocap
             data = data_receiver_sender.get_data()
@@ -181,6 +182,9 @@ if __name__ == '__main__':
             # save data
             data_saver.add_item(abs_time,
                                 linear_state_vector[0:3],ref_pos,rmse_num,0)
+            
+            stop = timeit.default_timer()
+            print('Program Runtime: ', stop - start)  
                                 
             
     except KeyboardInterrupt:

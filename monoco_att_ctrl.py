@@ -170,8 +170,8 @@ class att_ctrl(object):
         # i_gains = np.array([kix, kiy, kiz])
         i_gains = self.ki # i_gains = ([kpx, kpy, kpz])
         
-        I_term_z_prior = 0
-        I_term_prior = np.array([0, 0, I_term_z_prior])
+        I_term_z_prior = 0.0
+        I_term_prior = np.array([0.0, 0.0, I_term_z_prior])
 
         position_error = self.ref_pos - self.robot_pos # calculate position error
         rate_posiition_error = (position_error - self.position_error_last)/self.dt
@@ -179,7 +179,7 @@ class att_ctrl(object):
         self.position_error_last = position_error
         
         # weight of the robot
-        robot_mg = np.array([0,0,self.mass*self.g]) # robot weight, cf = 47500
+        robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
 
         # position pid controller
         self.control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
@@ -234,11 +234,11 @@ class att_ctrl(object):
         #des_pitch = int(cmd_att[1]*180/math.pi)
         
         # in radians
-        des_roll = int(cmd_bod_acc[0])
-        des_pitch = int(cmd_bod_acc[1])
+        des_roll = float(cmd_bod_acc[0])
+        des_pitch = float(cmd_bod_acc[1])
 
         # collective thrust - linearised
-        des_rps = np.sqrt((int(self.control_signal[2]))/self.lift_rotation_wo_rps) # input to motor
+        des_rps = np.sqrt((float(self.control_signal[2]))/self.lift_rotation_wo_rps) # input to motor
         des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
          # output saturation
@@ -255,7 +255,7 @@ class att_ctrl(object):
         if des_thrust < 10:
             des_thrust = 10 """
 
-        final_cmd = np.array([des_roll, des_pitch, des_rps]) # roll pitch rps
+        final_cmd = np.array([[des_roll, des_pitch, des_rps, float(0)]]) # roll pitch rps
         self.cmd_z = des_thrust
 
         return (final_cmd)
