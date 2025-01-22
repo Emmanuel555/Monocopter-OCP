@@ -255,7 +255,7 @@ class att_ctrl(object):
         if des_thrust < 10:
             des_thrust = 10 """
 
-        final_cmd = np.array([[des_roll, des_pitch, des_rps, float(0)]]) # roll pitch rps
+        final_cmd = np.array([[des_pitch, des_roll, des_rps, float(0)]]) # pitch(x) roll(y) rps on wj side
         self.cmd_z = des_thrust
 
         return (final_cmd)
