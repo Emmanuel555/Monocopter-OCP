@@ -234,11 +234,20 @@ class att_ctrl(object):
         #des_pitch = int(cmd_att[1]*180/math.pi)
         
         # in radians
-        des_roll = float(cmd_bod_acc[0])
-        des_pitch = float(cmd_bod_acc[1])
+        # angles
+        des_roll = float(cmd_att[0])
+        des_pitch = float(cmd_att[1])
+
+        # bodyrate
+        #des_roll = float(cascaded_ref_bod_rates[0])
+        #des_pitch = float(cascaded_ref_bod_rates[1])
+
+        # bodyraterate
+        #des_roll = float(cmd_bod_acc[0])
+        #des_pitch = float(cmd_bod_acc[1])
 
         # collective thrust - linearised
-        des_rps = np.sqrt((float(self.control_signal[2]))/self.lift_rotation_wo_rps) # input to motor
+        des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
         des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
          # output saturation
@@ -254,8 +263,25 @@ class att_ctrl(object):
             des_thrust = 60_000
         if des_thrust < 10:
             des_thrust = 10 """
+        
+        des_rps = des_rps/1000
+        des_roll = des_roll/100
+        des_pitch = des_pitch/100
+        
 
-        final_cmd = np.array([[des_pitch, des_roll, des_rps, float(0)]]) # pitch(x) roll(y) rps on wj side
+        if des_rps > 1.0:
+            des_rps = 1.0
+
+        #des_pitch = float(0.0)
+        #des_roll = float(0.0)
+
+        if abs(des_pitch) > 0.5:
+            des_pitch = 0.5*(des_pitch/abs(des_pitch))
+
+        if abs(des_roll) > 0.5:
+            des_roll = 0.5*(des_roll/abs(des_roll))
+
+        final_cmd = np.array([[-1.0*des_pitch, -1.0*des_roll, des_rps, float(0)]]) # pitch(x) roll(y) rps on wj side
         self.cmd_z = des_thrust
 
         return (final_cmd)

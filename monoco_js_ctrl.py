@@ -47,26 +47,26 @@ if __name__ == '__main__':
     pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(0, 2.0, 50, 5)  # (0, 1.2, 30) - 3 m/s, (0 , 1.4, 50) - 5m/s
 
     # collective z
-    kpz = 20
-    kdz = 10
-    kiz = 1
+    kpz = 9.6
+    kdz = 2.5
+    kiz = 64.0
     
     # cyclic xyz
-    kp = [20,20,kpz]
-    kd = [10,10,kdz]
-    ki = [1,1,kiz]
+    kp = [0.025,0.025,kpz]
+    kd = [2,2,kdz]
+    ki = [0,0,kiz]
 
     # cyclic xy
-    ka = [28.2, 28.2]
-    kad = [0.116, 0.116]
-    kr = [31.3, 31.3]
-    krd = [0.799, 0.799]
-    krr = [1.72, 1.72]
+    ka = [1.0, 1.0]
+    kad = [0.1, 0.1]
+    kr = [0.1, 0.1]
+    krd = [0.1, 0.1]
+    krr = [1.0, 1.0]
 
     # physical params
-    wing_radius = 504.22/1000
+    wing_radius = 320/1000
     chord_length = 0.12
-    mass = 99.9/1000
+    mass = 75/1000
     cl = 0.5
     cd = 0.052
     
@@ -112,7 +112,7 @@ if __name__ == '__main__':
             # tpp_angle = data_processor.tpp
             # tpp_omega = data_processor.Omega
             # tpp_omega_dot = data_processor.Omega_dot
-            tpp_quat = data_processor.tpp_eulerAnglesToQuaternion
+            tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
 
 
             # time difference needed to calculate velocity
@@ -168,7 +168,8 @@ if __name__ == '__main__':
                 
                 #print(abs_time) # updating at 120 hz
                 print(ref_msg) 
-                print('shapes: ', np.shape(final_cmd))
+                #print('shapes: ', np.shape(final_cmd))
+                print('cmd info sent: ', final_cmd)
                 print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
                 print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
                 print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
@@ -184,7 +185,7 @@ if __name__ == '__main__':
                                 linear_state_vector[0:3],ref_pos,rmse_num,0)
             
             stop = timeit.default_timer()
-            print('Program Runtime: ', stop - start)  
+            #print('Program Runtime: ', stop - start)  
                                 
             
     except KeyboardInterrupt:

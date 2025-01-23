@@ -56,6 +56,7 @@ if __name__ == '__main__':
             tpp_omega = data_processor.Omega
             tpp_omega_dot = data_processor.Omega_dot
             body_pitch = data_processor.body_pitch
+            tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
 
             # testing sending information over udp to wj esp32
             print ("sending info: ", final_cmd)
@@ -86,11 +87,12 @@ if __name__ == '__main__':
             r32 = data_processor.R32
             r33 = data_processor.R33 """
             
-            print("sampling period and freq: ", t_diff, 1/t_diff) 
+            #print("sampling period and freq: ", t_diff, 1/t_diff) 
             print("tpp angles:", tpp_angle) # rpy
             #print("tpp bodyrates:", tpp_omega) # rpy
             #print("tpp bodyraterates:", tpp_omega_dot) # rpy
-            print("position: ", pos[0:3])
+            #print("position: ", pos[0:3])
+            #print("tpp quaternion: ", tpp_quat)
 
             #n = 100000
             #print("r11, r12, r13: ", r11/n, r12/n, r13/n)
