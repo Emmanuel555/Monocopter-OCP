@@ -233,10 +233,14 @@ class att_ctrl(object):
         #des_roll = int(cmd_att[0]*180/math.pi)
         #des_pitch = int(cmd_att[1]*180/math.pi)
         
-        # in radians
+        # in radians - control inputs
+        # error inputs
+        des_roll = float(self.control_signal[1]) # y
+        des_pitch = float(self.control_signal[0]) # x
+
         # angles
-        des_roll = float(cmd_att[0])
-        des_pitch = float(cmd_att[1])
+        #des_roll = float(cmd_att[0])
+        #des_pitch = float(cmd_att[1])
 
         # bodyrate
         #des_roll = float(cascaded_ref_bod_rates[0])
@@ -281,7 +285,10 @@ class att_ctrl(object):
         if abs(des_roll) > 0.5:
             des_roll = 0.5*(des_roll/abs(des_roll))
 
-        final_cmd = np.array([[-1.0*des_pitch, -1.0*des_roll, des_rps, float(0)]]) # pitch(x) roll(y) rps on wj side
+        ## when doing bod rates
+        # final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+        ## when using pure control inputs
+        final_cmd = np.array([[des_pitch, des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         self.cmd_z = des_thrust
 
         return (final_cmd)
