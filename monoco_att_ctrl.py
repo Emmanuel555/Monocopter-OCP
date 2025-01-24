@@ -235,9 +235,14 @@ class att_ctrl(object):
         
         # in radians - control inputs
         # error inputs
-        des_roll = float(self.control_signal[1]) # y
-        des_pitch = float(self.control_signal[0]) # x
 
+        # initialised at float 0.0
+        des_pitch = float(0.0)
+        des_roll = float(0.0)
+
+        des_x = float(self.control_signal[0]) # x
+        des_y = float(self.control_signal[1]) # y
+        
         # angles
         #des_roll = float(cmd_att[0])
         #des_pitch = float(cmd_att[1])
@@ -272,12 +277,8 @@ class att_ctrl(object):
         des_roll = des_roll/100
         des_pitch = des_pitch/100
         
-
-        if des_rps > 1.0:
-            des_rps = 1.0
-
-        #des_pitch = float(0.0)
-        #des_roll = float(0.0)
+        if abs(des_rps) > 1.0:
+            des_rps = 1.0*(des_rps/abs(des_rps))
 
         if abs(des_pitch) > 0.5:
             des_pitch = 0.5*(des_pitch/abs(des_pitch))
@@ -285,10 +286,15 @@ class att_ctrl(object):
         if abs(des_roll) > 0.5:
             des_roll = 0.5*(des_roll/abs(des_roll))
 
-        ## when doing bod rates
-        # final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
-        ## when using pure control inputs
-        final_cmd = np.array([[des_pitch, des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+
+        ## when involving pitch roll
+        #des_x = ((des_x/abs(des_x))*abs(des_pitch))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        #des_y = ((des_y/abs(des_y))*abs(des_roll))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+
+        #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+        
+        ## final cmd at the end
+        final_cmd = np.array([[des_x, des_y, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         self.cmd_z = des_thrust
 
         return (final_cmd)
