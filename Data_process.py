@@ -244,7 +244,7 @@ class RealTimeProcessor(object):
         # self.tpp is in radians 
 
         # needa multiply with R22 to get the correct roll angle
-        self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll - need to negate to match the convention of the tpp
+        self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll 
         # needa multiply with R11 to get the correct pitch angle
         self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
         self.tpp[2] = abt_z # disk yaw

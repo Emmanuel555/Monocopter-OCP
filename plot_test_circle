@@ -4,6 +4,7 @@ import minsnap_trajectories as ms
 import trajectory_generator
 from pyrr import quaternion
 import timeit
+import copy
 
 start = timeit.default_timer()
 
@@ -159,10 +160,30 @@ mx = plt.axes(projection='3d')
 mx.plot3D(helix_array_x, helix_array_y, helix_array_z, 'gray')
 plt.show() """
 
-b = [1,0,0]
-a = [[1,0,0],[0,1,0],[0,1,0]]
-test = np.dot(a, b)
-print(np.size(test))
+#b = [1,0,0]
+#a = [[1,0,0],[0,1,0],[0,1,0]]
+#test = np.dot(a, b)
+#print(np.size(test))
+
+# init
+
+def f(x):
+    return np.sin(x[0]) * np.cos(x[1]) * (1. / (abs(x[2]) + 1))
+
+step = 0.1
+x_start = np.array([0., 0., 0.])
+dim = len(x_start)
+prev_best = f(x_start)
+no_improv = 0
+res = [[x_start, prev_best]]
+
+for i in range(dim):
+    x = copy.copy(x_start)
+    x[i] = x[i] + step
+    score = f(x)
+    res.append([x, score])
+
+print ("res:", res)
 
 stop = timeit.default_timer()
 print('Program Runtime: ', stop - start)  

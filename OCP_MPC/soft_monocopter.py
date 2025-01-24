@@ -17,7 +17,7 @@ import numpy as np
 from src.utils.utils import quaternion_to_euler, skew_symmetric, v_dot_q, unit_quat, quaternion_inverse
 
 
-class Monocopter_textile(object):
+class Soft_Monocopter(object):
 
     def __init__(self, noisy=False, drag=False, payload=False, motor_noise=False):
         """
