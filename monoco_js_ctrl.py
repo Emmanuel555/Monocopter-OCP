@@ -48,12 +48,12 @@ if __name__ == '__main__':
 
     # collective z
     kpz = 9.6
-    kdz = 2.5
-    kiz = 64.0
+    kdz = 5.0
+    kiz = 128.0
     
     # cyclic xyz
     kp = [0.025,0.025,kpz]
-    kd = [2,2,kdz]
+    kd = [0.05,0.05,kdz]
     ki = [0,0,kiz]
 
     # cyclic xy
@@ -171,8 +171,8 @@ if __name__ == '__main__':
                 #print('shapes: ', np.shape(final_cmd))
                 print('cmd info sent: ', final_cmd)
                 print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
-                print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
-                print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
+                #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
+                #print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
             # rmse accumulation
             rmse_num_x = rmse_num_x + (ref_pos[0]-linear_state_vector[0])**2
@@ -205,5 +205,5 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot-solo/'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/tpp_tracking'
 #data_saver.save_data(path)

@@ -242,6 +242,15 @@ class att_ctrl(object):
 
         des_x = float(self.control_signal[0]) # x
         des_y = float(self.control_signal[1]) # y
+
+        #des_x = float(0) # x
+        #des_y = float(0) # y
+
+        if abs(des_x) > 1.0:
+            des_x = 1.0*(des_x/abs(des_x))
+
+        if abs(des_y) > 1.0:
+            des_y = 1.0*(des_y/abs(des_y))
         
         # angles
         #des_roll = float(cmd_att[0])

@@ -133,10 +133,15 @@ class RealTimeProcessor(object):
         self.py_filted = self.FilterY.filter(self.py)
         self.pz_filted = self.FilterZ.filter(self.pz)
 
-        self.quat_x_filted = self.FilterQX.filter(self.quat_x)
-        self.quat_y_filted = self.FilterQY.filter(self.quat_y)
-        self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
-        self.quat_w_filted = self.FilterQW.filter(self.quat_w)
+        #self.quat_x_filted = self.FilterQX.filter(self.quat_x)
+        #self.quat_y_filted = self.FilterQY.filter(self.quat_y)
+        #self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
+        #self.quat_w_filted = self.FilterQW.filter(self.quat_w)
+
+        self.quat_x_filted = float(qx)
+        self.quat_y_filted = float(qy)
+        self.quat_z_filted = float(qz)
+        self.quat_w_filted = float(qw)
 
         #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
