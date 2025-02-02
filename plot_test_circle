@@ -5,6 +5,11 @@ import trajectory_generator
 from pyrr import quaternion
 import timeit
 import copy
+from random import randrange
+import matplotlib.animation as animation
+from matplotlib import style
+from mpl_toolkits.mplot3d import Axes3D
+
 
 start = timeit.default_timer()
 
@@ -167,7 +172,7 @@ plt.show() """
 
 # init
 
-def f(x):
+""" def f(x):
     return np.sin(x[0]) * np.cos(x[1]) * (1. / (abs(x[2]) + 1))
 
 step = 0.1
@@ -204,7 +209,57 @@ for a in res[:-1]:
 centroid = np.mean(cent_list, axis=0) 
 print ("centroid: ", np.shape(centroid)) 
 
-print("zeros:", res[0][0])
+print("zeros:", res[0][0]) """
 
-stop = timeit.default_timer()
+
+
+#plt.axis([0, 10, 0, 1])
+
+#plt.ylim(0, 12)
+
+# fig, ax = plt.subplots(1)
+# ax.plot(pos[0], pos[1])
+# ax.set_aspect(1)
+# plt.show()
+
+# Initialize the plot
+plt.ion()  # Turn on interactive mode
+fig, axes = plt.subplots(3, 1, figsize=(6, 6), constrained_layout = False) # L x W
+x_data, y_data1, y_data2, y_data3 = [], [], [], []
+x = 0
+
+while True:
+    x_data.append(x)  # X-axis: Incremental values
+    y_data1.append(np.random.uniform(0, 3))  # Y-axis: Random values between 0 and 10
+    y_data2.append(np.random.uniform(0, 3))  # Random values for second subplot
+    y_data3.append(np.random.uniform(0, 3))  # Random values for third subplot
+    x += 1
+
+    for ax, y_data, title, color in zip(axes, [y_data1, y_data2, y_data3], ['X error', 'Y error', 'Z error'], ['r', 'g', 'b']):
+        ax.clear()
+        ax.plot(x_data, y_data, marker='o', linestyle='-', color=color, label=title)
+        ax.set_title(title)
+        #ax.set_xlabel('Time Step')
+        ax.set_ylabel('Random Value')
+        ax.set_ylim(-0.5, 4)
+        ax.legend()
+        ax.grid(True)
+
+    axes[2].set_xlabel('Time Step')
+    
+    plt.draw()
+    plt.pause(0.001)  # Pause for a short time to update the plot
+
+    # Optional: Limit data points to avoid memory overload
+    # Optional: Limit data points to avoid memory overload
+    if len(x_data) > 10:
+        x_data.pop(0)
+        y_data1.pop(0)
+        y_data2.pop(0)
+        y_data3.pop(0)
+
+    
+        
+
+#stop = timeit.default_timer()
 #print('Program Runtime: ', stop - start)  
