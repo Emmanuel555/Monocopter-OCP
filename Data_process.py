@@ -75,6 +75,10 @@ class RealTimeProcessor(object):
         self.FilterY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
+        #self.FilterX = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
+        #self.FilterY = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
+        #self.FilterZ = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
+        
         self.FilterQX = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterQY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterQZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
@@ -133,10 +137,10 @@ class RealTimeProcessor(object):
         self.py_filted = self.FilterY.filter(self.py)
         self.pz_filted = self.FilterZ.filter(self.pz)
 
-        #self.quat_x_filted = self.FilterQX.filter(self.quat_x)
-        #self.quat_y_filted = self.FilterQY.filter(self.quat_y)
-        #self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
-        #self.quat_w_filted = self.FilterQW.filter(self.quat_w)
+        # self.quat_x_filted = self.FilterQX.filter(self.quat_x)
+        # self.quat_y_filted = self.FilterQY.filter(self.quat_y)
+        # self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
+        # self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
         self.quat_x_filted = float(qx)
         self.quat_y_filted = float(qy)

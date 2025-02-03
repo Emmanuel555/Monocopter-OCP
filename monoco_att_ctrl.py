@@ -13,7 +13,7 @@ import numpy.linalg as la
 
 
 class att_ctrl(object):
-    def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,body_rate_gains,body_rate_gains_d,body_rate_rate_gains):
+    def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,angle_gains_i,body_rate_gains,body_rate_gains_d,body_rate_rate_gains):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -31,6 +31,7 @@ class att_ctrl(object):
         # self.kpa = np.array([10, 10]) # abt x y
         self.kpa = np.array(angle_gains) # abt x y
         self.kpad = np.array(angle_gains_d) # abt x y
+        self.kpai = np.array(angle_gains_i) # abt x y
         # body rates
         # self.kpr = np.array([50, 50]) # abt x y
         self.kpr = np.array(body_rate_gains) # abt x y
@@ -118,6 +119,7 @@ class att_ctrl(object):
     def attitude_loop(self, quat, control_input):
         kpa = self.kpa # abt x y
         kpad = self.kpad # abt x y
+        kpai = self.kpai # abt x y
         qz = quaternion.create(quat[0], quat[1], quat[2], 1) # x y z w ## qw is always set to 1 even in optitrack itself
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
@@ -143,9 +145,10 @@ class att_ctrl(object):
 
         cmd_att_error = np.array(cmd_att[0],cmd_att[1]) # abt x y only
         cmd_att_error_rate = (cmd_att_error - self.angle_error_last)/self.dt
+        cmd_att_integral_error = (cmd_att_error*self.dt) 
         self.angle_error_last = cmd_att_error
 
-        cmd_att_final = kpa*(cmd_att_error) + kpad*(cmd_att_error_rate) # abt x y z
+        cmd_att_final = kpa*(cmd_att_error) + kpad*(cmd_att_error_rate) + kpai*(cmd_att_integral_error) # abt x y z
         
         return (cmd_att_final)
     
@@ -237,20 +240,14 @@ class att_ctrl(object):
         # error inputs
 
         # initialised at float 0.0
-        des_pitch = float(0.0)
-        des_roll = float(0.0)
+        #des_pitch = float(0.0)
+        #des_roll = float(0.0)
 
         des_x = float(self.control_signal[0]) # x
         des_y = float(self.control_signal[1]) # y
 
         #des_x = float(0) # x
         #des_y = float(0) # y
-
-        if abs(des_x) > 1.0:
-            des_x = 1.0*(des_x/abs(des_x))
-
-        if abs(des_y) > 1.0:
-            des_y = 1.0*(des_y/abs(des_y))
         
         # angles
         #des_roll = float(cmd_att[0])
@@ -261,47 +258,45 @@ class att_ctrl(object):
         #des_pitch = float(cascaded_ref_bod_rates[1])
 
         # bodyraterate
-        #des_roll = float(cmd_bod_acc[0])
-        #des_pitch = float(cmd_bod_acc[1])
+        des_roll = float(cmd_bod_acc[0])
+        des_pitch = float(cmd_bod_acc[1])
 
         # collective thrust - linearised
         des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
         des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
-         # output saturation
-        """ if des_roll > 25:
-            des_roll = 25
-        if des_roll < -25:
-            des_roll = -25
-        if des_pitch > 25:
-            des_pitch = 25
-        if des_pitch < -25:
-            des_pitch = -25
-        if des_thrust > 60_000:
-            des_thrust = 60_000
-        if des_thrust < 10:
-            des_thrust = 10 """
-        
+        # output saturation/normalisation
         des_rps = des_rps/1000
-        des_roll = des_roll/100
-        des_pitch = des_pitch/100
+        des_roll = des_roll
+        des_pitch = des_pitch
         
         if abs(des_rps) > 1.0:
             des_rps = 1.0*(des_rps/abs(des_rps))
 
-        if abs(des_pitch) > 0.5:
-            des_pitch = 0.5*(des_pitch/abs(des_pitch))
+        # if abs(des_pitch) > 0.5:
+        #     des_pitch = 0.5*(des_pitch/abs(des_pitch))
 
-        if abs(des_roll) > 0.5:
-            des_roll = 0.5*(des_roll/abs(des_roll))
+        # if abs(des_roll) > 0.5:
+        #     des_roll = 0.5*(des_roll/abs(des_roll))
 
 
         ## when involving pitch roll
-        #des_x = ((des_x/abs(des_x))*abs(des_pitch))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
-        #des_y = ((des_y/abs(des_y))*abs(des_roll))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_x = ((des_x/abs(des_x))*abs(des_pitch))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_y = ((des_y/abs(des_y))*abs(des_roll))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
 
         #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
+        # to test later
+        #des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        #des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+
+        if abs(des_x) > 1.0:
+            des_x = 1.0*(des_x/abs(des_x))
+
+        if abs(des_y) > 1.0:
+
+            des_y = 1.0*(des_y/abs(des_y))
+
         ## final cmd at the end
         final_cmd = np.array([[des_x, des_y, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         self.cmd_z = des_thrust

@@ -20,7 +20,7 @@ if __name__ == '__main__':
     data_receiver_sender = Mocap.Udp()
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
                                    'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse')
@@ -52,16 +52,17 @@ if __name__ == '__main__':
     kiz = 128.0
     
     # cyclic xyz
-    kp = [0.025,0.025,kpz]
-    kd = [0.05,0.05,kdz]
-    ki = [0,0,kiz]
+    kp = [0.3,0.3,kpz]
+    kd = [0.18,0.18,kdz]
+    ki = [0.000150,0.000150,kiz]
 
     # cyclic xy
-    ka = [1.0, 1.0]
-    kad = [0.1, 0.1]
-    kr = [0.1, 0.1]
-    krd = [0.1, 0.1]
-    krr = [1.0, 1.0]
+    ka = [0.08, 0.08]
+    kad = [0.0, 0.0]
+    kai = [0.0, 0.0]
+    kr = [0.05, 0.05]
+    krd = [0.00022, 0.00022]
+    krr = [0.00065, 0.00065]
 
     # physical params
     wing_radius = 320/1000
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     cl = 0.5
     cd = 0.052
     
-    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kr, krd, krr)
+    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kai, kr, krd, krr)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd)        
     
     time_last = 0
@@ -126,7 +127,7 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
             # hovering test
-            ref = traj_gen.hover_test(0)
+            ref = traj_gen.hover_test(0.0,1.0)
             hovering_ff = np.array([0.0, 0.0, 0.0])
             ref_pos = ref[0]
             ref_vel = hovering_ff
@@ -170,9 +171,9 @@ if __name__ == '__main__':
                 print(ref_msg) 
                 #print('shapes: ', np.shape(final_cmd))
                 print('cmd info sent: ', final_cmd)
-                print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
-                #print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
+                print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
             # rmse accumulation
             rmse_num_x = rmse_num_x + (ref_pos[0]-linear_state_vector[0])**2
@@ -205,5 +206,5 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/tpp_tracking'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/tpp_tracking_circle_att_2'
 #data_saver.save_data(path)

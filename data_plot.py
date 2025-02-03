@@ -3,6 +3,7 @@ import math
 from scipy.io import loadmat
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
 file_path = '/home/emmanuel/Monocopter-OCP/robot_solo/'
 files = os.listdir(file_path)
@@ -16,11 +17,11 @@ mat_data = loadmat(os.path.join(file_path, last_file))
 #print(mat_data)
 time = mat_data['Data_time']
 #position = mat_data['data']
-position = mat_data['robot_1']
+position = mat_data['Monocopter_XYZ']
 px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
 pz = [row[2] for row in position]
-yaw = [row[3] for row in position]
+
 
 #gains = mat_data['gains']
 
@@ -39,7 +40,7 @@ time_index_5 = min(range(len(time_flat_list)), key=lambda i: abs(time_flat_list[
 trim_error_squared = altitude_error_squared[time_index_5:len(altitude_error_squared)]
 mean_error_squared = sum(trim_error_squared)/len(trim_error_squared)
 rmse = math.sqrt(mean_error_squared)
-print(rmse)
+print(time[0]*10)
 
 
 
@@ -52,13 +53,13 @@ rmse = round(rmse, 4)
 text_label = 'RMSE (robot_1): {} (m)'.format(rmse)
 
 
-plt.plot(time[0], pz, label='measurements', color='orange')
-plt.plot(time[0], pz_des, label='reference', linestyle='dashed')
+plt.plot(time[0]*10, pz, label='measurements', color='orange')
+plt.plot(time[0]*10, pz_des, label='reference', linestyle='dashed')
 #plt.plot(time[0], altitude_error, label='pz_des', linestyle='dashed')
 # plt.title('Altitude Plot')
 plt.legend()
-plt.xlim(5, 40)
-plt.ylim(0, 1.8)
+#plt.xlim(5, 40)
+plt.ylim(-1.0, 2.0)
 plt.xlabel('time (s)')
 plt.ylabel('altitude (m)')
 
