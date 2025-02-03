@@ -123,12 +123,14 @@ if __name__ == '__main__':
 
             # reference position
             #ref_pos = traj_gen.simple_rectangle(0, abs_time)
+            
             #ref_pos = traj_gen.simple_circle(0, 0.25, count, 5)
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
             # hovering test
             ref = traj_gen.hover_test(0.0,1.0)
             hovering_ff = np.array([0.0, 0.0, 0.0])
+            
             ref_pos = ref[0]
             ref_vel = hovering_ff
             ref_acc = hovering_ff

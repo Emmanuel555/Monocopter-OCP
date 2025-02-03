@@ -267,8 +267,8 @@ class att_ctrl(object):
 
         # output saturation/normalisation
         des_rps = des_rps/1000
-        des_roll = des_roll
-        des_pitch = des_pitch
+        #des_roll = des_roll
+        #des_pitch = des_pitch
         
         if abs(des_rps) > 1.0:
             des_rps = 1.0*(des_rps/abs(des_rps))
@@ -294,7 +294,6 @@ class att_ctrl(object):
             des_x = 1.0*(des_x/abs(des_x))
 
         if abs(des_y) > 1.0:
-
             des_y = 1.0*(des_y/abs(des_y))
 
         ## final cmd at the end
