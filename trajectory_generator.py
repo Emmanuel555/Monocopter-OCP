@@ -25,43 +25,43 @@ class trajectory_generator(object):
             ref_y = 0.6
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
+            msg = "pt_1..still flying..."
         elif 3 <= abs_time < 7:
             ref_x = 0
             ref_y = 0.9
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
+            msg = "pt_2..still flying..."
         elif 7 <= abs_time < 11:
             ref_x = 0
             ref_y = 1.2
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..." 
+            msg = "pt_3..still flying..." 
         elif 11 <= abs_time < 15:
             ref_x = 0.5
             ref_y = 1.2
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
+            msg = "pt_3..still flying..."
         elif 15 <= abs_time < 19:
             ref_x = 0.5
             ref_y = 0.9
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
+            msg = "pt_4..still flying..."
         elif 19 <= abs_time < 23:
             ref_x = 0.5
             ref_y = 0.6
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
+            msg = "pt_5..still flying..."
         elif 23 <= abs_time < 27:
             ref_x = 0
             ref_y = 0.6
             ref_z = 0.2
             ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
+            msg = "pt_6..still flying..."
         elif 27 <= abs_time:
             ref_x = 0
             ref_y = 0.6
@@ -72,54 +72,60 @@ class trajectory_generator(object):
         return (ref_pos,msg)
     
 
-    def simple_rectangle(self, x_offset, abs_time):
-        if abs_time < 3:
-            ref_x = 0
+    def simple_rectangle(self, x_offset, y_offset, abs_time):
+        if abs_time < 5:
+            ref_x = -0.9
+            ref_y = 0.0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_1..still flying..."
+        elif 5 <= abs_time < 10:
+            ref_x = -0.9
             ref_y = 0.6
-            ref_z = 1.0
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
-        elif 3 <= abs_time < 7:
-            ref_x = 0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_2..still flying..."
+        elif 10 <= abs_time < 15:
+            ref_x = -0.9
             ref_y = 0.9
-            ref_z = 1.0
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
-        elif 7 <= abs_time < 11:
-            ref_x = 0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_3..still flying..." 
+        elif 15 <= abs_time < 20:
+            ref_x = -0.9
             ref_y = 1.2
-            ref_z = 1.0
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..." 
-        elif 11 <= abs_time < 15:
-            ref_x = 0.5
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_4..still flying..."
+        elif 20 <= abs_time < 25:
+            ref_x = 0.9
             ref_y = 1.2
-            ref_z = 1.0
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
-        elif 15 <= abs_time < 19:
-            ref_x = 0.5
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_5..still flying..."
+        elif 25 <= abs_time < 30:
+            ref_x = 0.9
             ref_y = 0.9
-            ref_z = 1.0
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
-        elif 19 <= abs_time < 23:
-            ref_x = 0.5
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_6..still flying..."
+        elif 30 <= abs_time < 35:
+            ref_x = 0.9
             ref_y = 0.6
-            ref_z = 1.0
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
-        elif 23 <= abs_time < 27:
-            ref_x = 0
-            ref_y = 0.6
-            ref_z = 0.2
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
-            msg = "still flying..."
-        elif 27 <= abs_time:
-            ref_x = 0
-            ref_y = 0.6
-            ref_z = 0.01
-            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_7..still flying..."
+        elif 35 <= abs_time < 40:
+            ref_x = 0.9
+            ref_y = 0.0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_8..still flying..."
+        elif 40 <= abs_time:
+            ref_x = 0.0
+            ref_y = 0.0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
             msg = "traj ended..."
 
         return (ref_pos,msg)
@@ -178,7 +184,7 @@ class trajectory_generator(object):
         return (ref_pos,msg)
     
 
-    def compute_jerk_snap_9pt_circle(self, x_offset, radius, speedX):
+    def compute_jerk_snap_9pt_circle(self, x_offset, y_offset, radius, speedX):
         # theta goes from 0 to 2pi
         parts = 9 # octagon
         theta = np.linspace(0, 2*np.pi, parts)
@@ -193,7 +199,7 @@ class trajectory_generator(object):
 
         # compute x1 and x2
         x = r*np.cos(theta) + x_offset
-        y = r*np.sin(theta) + 1.2
+        y = r*np.sin(theta) + y_offset
 
 
         refs = [
@@ -249,7 +255,7 @@ class trajectory_generator(object):
         return (pva,num_points)
     
 
-    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, radius, speedX, laps):
+    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, laps):
         # theta goes from 0 to 2pi
         parts = 9 # octagon lap x 5
         theta = np.linspace(0, 2*np.pi, parts)
@@ -264,7 +270,7 @@ class trajectory_generator(object):
 
         # compute x1 and x2
         x_coordinates = r*np.cos(theta) + x_offset
-        y_coordinates = r*np.sin(theta) + 1.2
+        y_coordinates = r*np.sin(theta) + y_offset
 
         x = np.array([x_coordinates[0]])
         y = np.array([y_coordinates[0]])
@@ -302,7 +308,7 @@ class trajectory_generator(object):
         all_sna = np.array([pva[4,:,0],pva[4,:,1],pva[4,:,2]]) # snap
 
         if count >= num_points:
-            ref_pos = np.array([0,1.0,landing_hgt]) # position
+            ref_pos = np.array([0,0,landing_hgt]) # position
             ref_vel = np.array([0,0,0]) # velocity
             ref_acc = np.array([0,0,0]) # acceleration
             ref_jer = np.array([0,0,0]) # jerk

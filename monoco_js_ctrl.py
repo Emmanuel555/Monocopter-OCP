@@ -28,7 +28,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
     
     
-    # reference offset for z
+    # reference offset for xyz
+    x_offset = 1.16
+    y_offset = -0.29
     z_offset = 0.0
 
     # rmse terms
@@ -44,7 +46,7 @@ if __name__ == '__main__':
 
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(0, 2.0, 50, 5)  # (0, 1.2, 30) - 3 m/s, (0 , 1.4, 50) - 5m/s
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, 1.2, 2.0, 5)  # mechanical limit for monocopter is 0.5m/s
 
     # collective z
     kpz = 9.6
@@ -52,20 +54,20 @@ if __name__ == '__main__':
     kiz = 128.0
     
     # cyclic xyz
-    kp = [0.3,0.3,kpz]
-    kd = [0.18,0.18,kdz]
+    kp = [0.47,0.47,kpz] # 0.45 - 1.5 * 0.1m/s 
+    kd = [0.35,0.35,kdz] # 0.2 - 1.5 * 0.1m/s
     ki = [0.000150,0.000150,kiz]
 
     # cyclic xy
-    ka = [0.08, 0.08]
-    kad = [0.0, 0.0]
+    ka = [0.087, 0.087]  # 0.08 - 1.5 * 0.1m/s
+    kad = [0.00015, 0.00015]
     kai = [0.0, 0.0]
     kr = [0.05, 0.05]
     krd = [0.00022, 0.00022]
-    krr = [0.00065, 0.00065]
+    krr = [0.000145, 0.000145]
 
     # physical params
-    wing_radius = 320/1000
+    wing_radius = 320/1000 # change to 700 next round
     chord_length = 0.12
     mass = 75/1000
     cl = 0.5
@@ -81,7 +83,7 @@ if __name__ == '__main__':
     time_end = time.time() + (60*100*minutes) 
 
     # flatness option
-    flatness_option = 0
+    flatness_option = 1
 
     # Monocopter UDP IP & Port
     UDP_IP = "192.168.65.221"
@@ -122,34 +124,35 @@ if __name__ == '__main__':
 
 
             # reference position
-            #ref_pos = traj_gen.simple_rectangle(0, abs_time)
+            # ref = traj_gen.simple_rectangle(x_offset, y_offset, abs_time)
             
             #ref_pos = traj_gen.simple_circle(0, 0.25, count, 5)
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
             # hovering test
-            ref = traj_gen.hover_test(0.0,1.0)
+            #ref = traj_gen.hover_test(x_offset,y_offset)
+            
             hovering_ff = np.array([0.0, 0.0, 0.0])
             
-            ref_pos = ref[0]
-            ref_vel = hovering_ff
-            ref_acc = hovering_ff
-            ref_jerk = hovering_ff
-            ref_snap = hovering_ff
-            ref_msg = ref[1]
+            # ref_pos = ref[0]
+            # ref_vel = hovering_ff
+            # ref_acc = hovering_ff
+            # ref_jerk = hovering_ff
+            # ref_snap = hovering_ff
+            # ref_msg = ref[1]
 
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
-            # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,0.25)
-            # ref_pos = ref_derivatives[0]
-            # ref_vel = ref_derivatives[1]
-            # ref_acc = ref_derivatives[2]
-            # ref_jerk = ref_derivatives[3]
-            # ref_snap = ref_derivatives[4]
-            # ref_msg = ref_derivatives[5]
+            ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,1.2)
+            ref_pos = ref_derivatives[0]
+            ref_vel = ref_derivatives[1]
+            ref_acc = ref_derivatives[2]
+            ref_jerk = ref_derivatives[3]
+            ref_snap = ref_derivatives[4]
+            ref_msg = ref_derivatives[5]
 
-
+            
             # update positions etc.
             monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, ref_pos, z_offset)
             
@@ -173,14 +176,14 @@ if __name__ == '__main__':
                 print(ref_msg) 
                 #print('shapes: ', np.shape(final_cmd))
                 print('cmd info sent: ', final_cmd)
-                #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
                 print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
             # rmse accumulation
-            rmse_num_x = rmse_num_x + (ref_pos[0]-linear_state_vector[0])**2
-            rmse_num_y = rmse_num_y + (ref_pos[1]-linear_state_vector[1])**2
-            rmse_num_z = rmse_num_z + (ref_pos[2]-linear_state_vector[2])**2
+            rmse_num_x = rmse_num_x + (ref_pos[0]-x_offset-linear_state_vector[0])**2
+            rmse_num_y = rmse_num_y + (ref_pos[1]-y_offset-linear_state_vector[1])**2
+            rmse_num_z = rmse_num_z + (ref_pos[2]-z_offset-linear_state_vector[2])**2
             rmse_num = [rmse_num_x, rmse_num_y, rmse_num_z]
             
             # save data
@@ -208,5 +211,5 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/tpp_tracking_circle_att_2'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_ff'
+data_saver.save_data(path)

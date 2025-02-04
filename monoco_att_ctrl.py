@@ -231,7 +231,9 @@ class att_ctrl(object):
             cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
             cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
             cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
+            cmd_att = cmd_att + self.include_jerk_bod_rates() + self.include_snap_bod_raterate()
 
+        
         # in degrees
         #des_roll = int(cmd_att[0]*180/math.pi)
         #des_pitch = int(cmd_att[1]*180/math.pi)
@@ -250,16 +252,16 @@ class att_ctrl(object):
         #des_y = float(0) # y
         
         # angles
-        #des_roll = float(cmd_att[0])
-        #des_pitch = float(cmd_att[1])
+        des_roll = float(cmd_att[0])
+        des_pitch = float(cmd_att[1])
 
         # bodyrate
         #des_roll = float(cascaded_ref_bod_rates[0])
         #des_pitch = float(cascaded_ref_bod_rates[1])
 
         # bodyraterate
-        des_roll = float(cmd_bod_acc[0])
-        des_pitch = float(cmd_bod_acc[1])
+        #des_roll = float(cmd_bod_acc[0])
+        #des_pitch = float(cmd_bod_acc[1])
 
         # collective thrust - linearised
         des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor

@@ -111,17 +111,17 @@ snap_y = pva[4,:,1] # snap
 print("original x coordinates: ", x) """
 traj_gen = trajectory_generator.trajectory_generator()
 #derivatives = traj_gen.jerk_snap_9pt_circle(0, 0.4, 0, 1)
-pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(0, 0.4, 1, 5)
+pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(1.16,-0.29,0.9,1,5)
 
-#derivatives = traj_gen.jerk_snap_9pt_circle(0.5,0,0,1)
+#derivatives = traj_gen.jerk_snap_circle(0.5,0,0,1)
 #pos = derivatives[0]
 
 #print (len(derivatives))
 #print(np.shape(pos))
-# fig, ax = plt.subplots(1)
-# ax.plot(pos[0], pos[1])
-# ax.set_aspect(1)
-# plt.show()
+fig, ax = plt.subplots(1)
+ax.plot(pva[0,0:2000,0], pva[0,0:2000,1])
+ax.set_aspect(1)
+plt.show()
 
 test = traj_gen.elevated_circle(0, 0.6, 0, 1)
 
@@ -223,7 +223,7 @@ print("zeros:", res[0][0]) """
 # plt.show()
 
 # Initialize the plot
-plt.ion()  # Turn on interactive mode
+""" plt.ion()  # Turn on interactive mode
 fig, axes = plt.subplots(3, 1, figsize=(6, 6), constrained_layout = False) # L x W
 x_data, y_data1, y_data2, y_data3 = [], [], [], []
 x = 0
@@ -257,7 +257,7 @@ while True:
         y_data1.pop(0)
         y_data2.pop(0)
         y_data3.pop(0)
-
+ """
     
         
 
