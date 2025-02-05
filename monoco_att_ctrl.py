@@ -249,8 +249,8 @@ class att_ctrl(object):
         #des_pitch = float(0.0)
         #des_roll = float(0.0)
 
-        des_x = float(self.control_signal[0]) # x
-        des_y = float(self.control_signal[1]) # y
+        #des_x = float(self.control_signal[0]) # x
+        #des_y = float(self.control_signal[1]) # y
 
         #des_x = float(0) # x
         #des_y = float(0) # y
@@ -287,14 +287,14 @@ class att_ctrl(object):
 
 
         ## when involving pitch roll
-        des_x = ((des_x/abs(des_x))*abs(des_pitch))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
-        des_y = ((des_y/abs(des_y))*abs(des_roll))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        #des_x = ((des_x/abs(des_x))*abs(des_pitch))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        #des_y = ((des_y/abs(des_y))*abs(des_roll))/self.wing_radius # convert to linear term cos of inner cyclic ctrl
 
         #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         # to test later
-        #des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
-        #des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
 
         if abs(des_x) > 1.0:
             des_x = 1.0*(des_x/abs(des_x))

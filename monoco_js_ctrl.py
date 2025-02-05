@@ -46,14 +46,20 @@ if __name__ == '__main__':
     loop_counter = 1
     rate_loop = 2 # 150 hz
     att_loop = 3 # 100 hz
-    pid_loop = 3 # 100 hz
+    pid_loop = 6 # 50 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
 
+    # circle parameters
+    radius = 1.2
+    speedX = 2.0
+    laps = 5
+    reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
+
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, 1.2, 2.0, max_sample_rate/pid_loop, 5) # mechanical limit for monocopter is 0.5m/s
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw) # mechanical limit for monocopter is 0.5m/s
 
     # collective z
     kpz = 9.6
@@ -70,7 +76,7 @@ if __name__ == '__main__':
     kad = [0.00015, 0.00015]
     kai = [0.0, 0.0]
     kr = [0.05, 0.05]
-    krd = [0.00022, 0.00022]
+    krd = [0.022, 0.022]
     krr = [0.000145, 0.000145]
 
     # physical params
@@ -142,7 +148,7 @@ if __name__ == '__main__':
             time_last = time.time()
 
 
-            # update references for PID/Angle loop
+            # update references for PID loop
             if loop_counter % pid_loop == 0:
 
                 # reference position
@@ -182,11 +188,14 @@ if __name__ == '__main__':
                 # pid control input
                 monoco.control_input()
 
+
+            # update references for Angle loop
+            if loop_counter % att_loop == 0:
                 # get angle
                 cmd_att = monoco.get_angle()
 
 
-            # update references for PID/Angle loop
+            # update references for Bodyrates loop
             if loop_counter % rate_loop == 0:
                 cmd_bod_rates = monoco.get_body_rate(cmd_att,flatness_option)
 

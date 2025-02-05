@@ -15,7 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 start = timeit.default_timer() 
 
 
-""" # theta goes from 0 to 2pi
+# theta goes from 0 to 2pi
 parts = 9
 theta = np.linspace(0, 2*np.pi, parts)
 
@@ -33,9 +33,19 @@ num_points = int(num_points/speedX) # 0.1 m/s baseline
 
 # compute x1 and x2
 x = r*np.cos(theta)
-y = r*np.sin(theta) + 1.2
+y = r*np.sin(theta) 
 
+#x = np.flip(x)
+#y = np.flip(y)
 
+print(np.shape(x))
+
+fig, ax = plt.subplots(1)
+ax.plot(x[0:3], y[0:3])
+ax.set_aspect(1)
+plt.show()
+
+"""
 refs = [
     ms.Waypoint(
         time=(total_time/(parts-1))*0,

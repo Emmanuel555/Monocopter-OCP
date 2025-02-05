@@ -255,7 +255,7 @@ class trajectory_generator(object):
         return (pva,num_points)
     
 
-    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps):
+    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw):
         # theta goes from 0 to 2pi
         parts = 9 # octagon lap x 5
         theta = np.linspace(0, 2*np.pi, parts)
@@ -271,6 +271,10 @@ class trajectory_generator(object):
         # compute x1 and x2
         x_coordinates = r*np.cos(theta) + x_offset
         y_coordinates = r*np.sin(theta) + y_offset
+
+        if reverse_cw == 1:
+            x_coordinates = np.flip(x_coordinates)
+            y_coordinates = np.flip(y_coordinates)
 
         x = np.array([x_coordinates[0]])
         y = np.array([y_coordinates[0]])
