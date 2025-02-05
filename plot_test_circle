@@ -113,7 +113,7 @@ traj_gen = trajectory_generator.trajectory_generator()
 #derivatives = traj_gen.jerk_snap_9pt_circle(0, 0.4, 0, 1)
 pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(1.16,-0.29,0.9,1,5)
 
-#derivatives = traj_gen.jerk_snap_circle(0.5,0,0,1)
+#derivatives = traj_gen.jerk_snap_circle(0.5,0,0,1) .....
 #pos = derivatives[0]
 
 #print (len(derivatives))
