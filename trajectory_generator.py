@@ -255,7 +255,7 @@ class trajectory_generator(object):
         return (pva,num_points)
     
 
-    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, laps):
+    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps):
         # theta goes from 0 to 2pi
         parts = 9 # octagon lap x 5
         theta = np.linspace(0, 2*np.pi, parts)
@@ -265,7 +265,7 @@ class trajectory_generator(object):
         r = radius
         circumference = 2*np.pi*r
         total_time = laps*((circumference/0.1)/speedX)
-        num_points = int(laps*((circumference/0.1)*100)) # 0.1 m/s baseline 
+        num_points = int(laps*((circumference/0.1)*pid_update_rate)) # 0.1 m/s baseline, pid_update_rate = 100 as of now for pid
         num_points = int(num_points/speedX) # 0.1 m/s baseline
 
         # compute x1 and x2

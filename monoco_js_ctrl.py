@@ -18,6 +18,7 @@ import timeit
 if __name__ == '__main__':
 
     data_receiver_sender = Mocap.Udp()
+    max_sample_rate = 300
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
@@ -41,12 +42,18 @@ if __name__ == '__main__':
     rmse_num_z = 0
     final_rmse_z = 0
 
+    # loop rates
+    loop_counter = 1
+    rate_loop = 2 # 150 hz
+    att_loop = 3 # 100 hz
+    pid_loop = 3 # 100 hz
+
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
 
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, 1.2, 2.0, 5)  # mechanical limit for monocopter is 0.5m/s
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, 1.2, 2.0, max_sample_rate/pid_loop, 5) # mechanical limit for monocopter is 0.5m/s
 
     # collective z
     kpz = 9.6
@@ -81,13 +88,25 @@ if __name__ == '__main__':
     time_start = time.time()
     minutes = 1 # no.of mins to run this loop
     time_end = time.time() + (60*100*minutes) 
-
+    
     # flatness option
     flatness_option = 1
 
     # Monocopter UDP IP & Port
     UDP_IP = "192.168.65.221"
     UDP_PORT = 1234
+
+    # Initialize references
+    ref_pos = 0.0
+    ref_vel = 0.0
+    ref_acc = 0.0
+    ref_jerk = 0.0
+    ref_snap = 0.0
+    ref_msg = "havent computed yet"
+
+    # Control Loop Commands
+    cmd_att = np.array(0.0,0.0)
+    cmd_bod_rates = np.array(0.0,0.0)
 
 
     try:
@@ -123,52 +142,72 @@ if __name__ == '__main__':
             time_last = time.time()
 
 
-            # reference position
-            # ref = traj_gen.simple_rectangle(x_offset, y_offset, abs_time)
-            
-            #ref_pos = traj_gen.simple_circle(0, 0.25, count, 5)
-            #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
-            
-            # hovering test
-            #ref = traj_gen.hover_test(x_offset,y_offset)
-            
-            hovering_ff = np.array([0.0, 0.0, 0.0])
-            
-            # ref_pos = ref[0]
-            # ref_vel = hovering_ff
-            # ref_acc = hovering_ff
-            # ref_jerk = hovering_ff
-            # ref_snap = hovering_ff
-            # ref_msg = ref[1]
+            # update references for PID/Angle loop
+            if loop_counter % pid_loop == 0:
 
-            #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
-            #ref_pos = ref_pos_1[0]
-
-            ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,1.2)
-            ref_pos = ref_derivatives[0]
-            ref_vel = ref_derivatives[1]
-            ref_acc = ref_derivatives[2]
-            ref_jerk = ref_derivatives[3]
-            ref_snap = ref_derivatives[4]
-            ref_msg = ref_derivatives[5]
-
+                # reference position
+                # ref = traj_gen.simple_rectangle(x_offset, y_offset, abs_time)
             
+                #ref_pos = traj_gen.simple_circle(0, 0.25, count, 5)
+                #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
+                
+                # hovering test
+                # ref = traj_gen.hover_test(x_offset,y_offset)
+                
+                # hovering_ff = np.array([0.0, 0.0, 0.0])
+                
+                # ref_pos = ref[0]
+                # ref_vel = hovering_ff
+                # ref_acc = hovering_ff
+                # ref_jerk = hovering_ff
+                # ref_snap = hovering_ff
+                # ref_msg = ref[1]
+
+                #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
+                #ref_pos = ref_pos_1[0]
+
+                ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,1.2)
+                ref_pos = ref_derivatives[0]
+                ref_vel = ref_derivatives[1]
+                ref_acc = ref_derivatives[2]
+                ref_jerk = ref_derivatives[3]
+                ref_snap = ref_derivatives[4]
+                ref_msg = ref_derivatives[5]
+
+                monoco.update_ref_pos(ref_pos)
+
+                # ff references
+                monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
+
+                # pid control input
+                monoco.control_input()
+
+                # get angle
+                cmd_att = monoco.get_angle()
+
+
+            # update references for PID/Angle loop
+            if loop_counter % rate_loop == 0:
+                cmd_bod_rates = monoco.get_body_rate(cmd_att,flatness_option)
+
+
+            # update loop counter
+            loop_counter = loop_counter + 1
+
             # update positions etc.
-            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, ref_pos, z_offset)
+            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, z_offset)
             
-            # ff references
-            monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
-
             # compute bem thrust
             monoco.compute_bem_wo_rps(body_pitch)
             
-            # control input (traj execution)
-            final_cmd = monoco.get_angles_and_thrust(flatness_option)
+            # final control input (traj execution)
+            final_cmd = monoco.get_angles_and_thrust(cmd_bod_rates,flatness_option)
 
             # send to monocopter via INDI
             data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
-            # counter
+
+            # normal counter
             count = count + 1
             if count % 10 == 0:
                 
