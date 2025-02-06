@@ -30,23 +30,23 @@ if __name__ == '__main__':
     
     
     # reference offset for xyz
-    x_offset = 1.16
-    y_offset = -0.29
+    x_offset = 0.0
+    y_offset = 0.0
     z_offset = 0.0
 
     # rmse terms
-    rmse_num_x = 0
-    final_rmse_x = 0
-    rmse_num_y = 0
-    final_rmse_y = 0
-    rmse_num_z = 0
-    final_rmse_z = 0
+    rmse_num_x = 0.0
+    final_rmse_x = 0.0
+    rmse_num_y = 0.0
+    final_rmse_y = 0.0
+    rmse_num_z = 0.0
+    final_rmse_z = 0.0
 
     # loop rates
     loop_counter = 1
     rate_loop = 2 # 150 hz
-    att_loop = 3 # 100 hz
-    pid_loop = 6 # 50 hz
+    att_loop = 1 # 100 hz
+    pid_loop = 1 # 50 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
@@ -73,11 +73,11 @@ if __name__ == '__main__':
 
     # cyclic xy
     ka = [0.087, 0.087]  # 0.08 - 1.5 * 0.1m/s
-    kad = [0.00015, 0.00015]
+    kad = [0.0, 0.0]
     kai = [0.0, 0.0]
-    kr = [0.05, 0.05]
-    krd = [0.022, 0.022]
-    krr = [0.000145, 0.000145]
+    kr = [0.005, 0.005]
+    krd = [0.0, 0.0]
+    krr = [0.0025, 0.0025]
 
     # physical params
     wing_radius = 320/1000 # change to 700 next round
@@ -96,23 +96,23 @@ if __name__ == '__main__':
     time_end = time.time() + (60*100*minutes) 
     
     # flatness option
-    flatness_option = 1
+    flatness_option = 0
 
     # Monocopter UDP IP & Port
     UDP_IP = "192.168.65.221"
     UDP_PORT = 1234
 
     # Initialize references
-    ref_pos = 0.0
-    ref_vel = 0.0
-    ref_acc = 0.0
-    ref_jerk = 0.0
-    ref_snap = 0.0
+    ref_pos = np.array([0.0,0.0,0.0])
+    ref_vel = np.array([0.0,0.0,0.0])
+    ref_acc = np.array([0.0,0.0,0.0])
+    ref_jerk = np.array([0.0,0.0,0.0])
+    ref_snap = np.array([0.0,0.0,0.0])
     ref_msg = "havent computed yet"
 
     # Control Loop Commands
-    cmd_att = np.array(0.0,0.0)
-    cmd_bod_rates = np.array(0.0,0.0)
+    cmd_att = np.array([0.0,0.0])
+    cmd_bod_rates = np.array([0.0,0.0])
 
 
     try:
@@ -142,10 +142,15 @@ if __name__ == '__main__':
             # tpp_omega_dot = data_processor.Omega_dot
             tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
 
-
             # time difference needed to calculate velocity
             dt = time.time() - time_last  #  time step/period
             time_last = time.time()
+
+            # update positions etc.
+            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, z_offset)
+            
+            # compute bem thrust
+            monoco.compute_bem_wo_rps(body_pitch)
 
 
             # update references for PID loop
@@ -158,27 +163,26 @@ if __name__ == '__main__':
                 #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
                 
                 # hovering test
-                # ref = traj_gen.hover_test(x_offset,y_offset)
+                ref = traj_gen.hover_test(x_offset,y_offset)
                 
-                # hovering_ff = np.array([0.0, 0.0, 0.0])
-                
-                # ref_pos = ref[0]
-                # ref_vel = hovering_ff
-                # ref_acc = hovering_ff
-                # ref_jerk = hovering_ff
-                # ref_snap = hovering_ff
-                # ref_msg = ref[1]
+                hovering_ff = np.array([0.0, 0.0, 0.0])
+                ref_pos = ref[0]
+                ref_vel = hovering_ff
+                ref_acc = hovering_ff
+                ref_jerk = hovering_ff
+                ref_snap = hovering_ff
+                ref_msg = ref[1]
 
                 #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
                 #ref_pos = ref_pos_1[0]
 
-                ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,1.2)
-                ref_pos = ref_derivatives[0]
-                ref_vel = ref_derivatives[1]
-                ref_acc = ref_derivatives[2]
-                ref_jerk = ref_derivatives[3]
-                ref_snap = ref_derivatives[4]
-                ref_msg = ref_derivatives[5]
+                # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,1.2)
+                # ref_pos = ref_derivatives[0]
+                # ref_vel = ref_derivatives[1]
+                # ref_acc = ref_derivatives[2]
+                # ref_jerk = ref_derivatives[3]
+                # ref_snap = ref_derivatives[4]
+                # ref_msg = ref_derivatives[5]
 
                 monoco.update_ref_pos(ref_pos)
 
@@ -202,14 +206,8 @@ if __name__ == '__main__':
 
             # update loop counter
             loop_counter = loop_counter + 1
-
-            # update positions etc.
-            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, z_offset)
             
-            # compute bem thrust
-            monoco.compute_bem_wo_rps(body_pitch)
-            
-            # final control input (traj execution)
+            # final control input (INDI loop)
             final_cmd = monoco.get_angles_and_thrust(cmd_bod_rates,flatness_option)
 
             # send to monocopter via INDI
@@ -259,5 +257,5 @@ if __name__ == '__main__':
             
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_ff'
-data_saver.save_data(path)
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_ff'
+#data_saver.save_data(path)

@@ -70,6 +70,7 @@ class att_ctrl(object):
         self.control_signal = np.array([0.0,0.0,0.0]) 
         self.z_offset = 0
         self.cmd_z = 0
+        self.cmd_att = np.array([0.0,0.0])
 
 
     def physical_params(self,wing_radius,chord_length,mass,cl,cd):
@@ -116,14 +117,17 @@ class att_ctrl(object):
         kpa = self.kpa # abt x y
         kpad = self.kpad # abt x y
         kpai = self.kpai # abt x y
-        qz = quaternion.create(quat[0], quat[1], quat[2], 1) # x y z w ## qw is always set to 1 even in optitrack itself
+        qz = quaternion.create(quat[0], quat[1], quat[2], 1.0) # x y z w ## qw is always set to 1 even in optitrack itself
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
         disk_vector = quaternion.apply_to_vector(qz, ez) # flattened array
         disk_vector = np.array([[disk_vector[0],disk_vector[1],disk_vector[2]]])  # 1 x 3 - row based simulated disk vector
         
         # pos control input here
-        zd = control_input/la.norm(control_input,2)
+        if la.norm(control_input,2) == 0:
+            zd = np.array([0.0,0.0,0.0])
+        else:
+            zd = control_input/la.norm(control_input,2)
         zd = np.array([[zd[0],zd[1],zd[2]]]) # 1 x 3 - row based simulated zd which is desired vector 
         num = np.dot(disk_vector,np.transpose(zd)) # 1 x 1
         den = la.norm(disk_vector,2)*la.norm(zd,2) # L2 norm of a and b
@@ -217,6 +221,7 @@ class att_ctrl(object):
 
     def get_angle(self):
         cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
+        self.cmd_att = cmd_att
         return (cmd_att)
     
 
@@ -236,7 +241,7 @@ class att_ctrl(object):
         else:
             cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
             cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
-            
+            self.cmd_att = self.cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
         
         # in degrees
         #des_roll = int(cmd_att[0]*180/math.pi)
@@ -256,19 +261,23 @@ class att_ctrl(object):
         #des_y = float(0) # y
         
         # angles
-        #des_roll = float(cmd_att[0])
-        #des_pitch = float(cmd_att[1])
+        des_roll = float(self.cmd_att[0])
+        des_pitch = float(self.cmd_att[1])
 
         # bodyrate
         #des_roll = float(cascaded_ref_bod_rates[0])
         #des_pitch = float(cascaded_ref_bod_rates[1])
 
         # bodyraterate
-        des_roll = float(cmd_bod_acc[0])
-        des_pitch = float(cmd_bod_acc[1])
+        #des_roll = float(cmd_bod_acc[0])
+        #des_pitch = float(cmd_bod_acc[1])
 
         # collective thrust - linearised
-        des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
+        if self.control_signal[2] == 0:
+            des_rps = 0.0
+        else:
+            des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
+        
         des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
 
         # output saturation/normalisation
