@@ -118,6 +118,7 @@ class att_ctrl(object):
         kpad = self.kpad # abt x y
         kpai = self.kpai # abt x y
         qz = quaternion.create(quat[0], quat[1], quat[2], 1.0) # x y z w ## qw is always set to 1 even in optitrack itself
+        # qz = np.array([quat[0],quat[1],quat[2],quat[3]])
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
         disk_vector = quaternion.apply_to_vector(qz, ez) # flattened array
@@ -234,14 +235,19 @@ class att_ctrl(object):
         return (cascaded_ref_bod_rates)
     
     
-    def get_angles_and_thrust(self,cascaded_ref_bod_rates,flatness_option):
-    
+    def get_angles_and_thrust(self,flatness_option):
+        # self.control_input()
+        cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
+
         if flatness_option == 0:
+            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
             cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
         else:
+            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
+            cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
             cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
             cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
-            self.cmd_att = self.cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
+            cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
         
         # in degrees
         #des_roll = int(cmd_att[0]*180/math.pi)
@@ -254,15 +260,15 @@ class att_ctrl(object):
         #des_pitch = float(0.0)
         #des_roll = float(0.0)
 
-        #des_x = float(self.control_signal[0]) # x
-        #des_y = float(self.control_signal[1]) # y
+        des_x = float(self.control_signal[0]) # x
+        des_y = float(self.control_signal[1]) # y
 
         #des_x = float(0) # x
         #des_y = float(0) # y
         
         # angles
-        des_roll = float(self.cmd_att[0])
-        des_pitch = float(self.cmd_att[1])
+        des_roll = float(cmd_att[0])
+        des_pitch = float(cmd_att[1])
 
         # bodyrate
         #des_roll = float(cascaded_ref_bod_rates[0])
@@ -273,8 +279,9 @@ class att_ctrl(object):
         #des_pitch = float(cmd_bod_acc[1])
 
         # collective thrust - linearised
+        
         if self.control_signal[2] == 0:
-            des_rps = 0.0
+            des_rps = 0
         else:
             des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
         
@@ -302,17 +309,20 @@ class att_ctrl(object):
         #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         # to test later
-        des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
-        des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        #des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        #des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
 
         if abs(des_x) > 1.0:
             des_x = 1.0*(des_x/abs(des_x))
 
         if abs(des_y) > 1.0:
             des_y = 1.0*(des_y/abs(des_y))
+        
+        cyclic_gain = 1000000
+        collective_gain = 1000000
 
         ## final cmd at the end
-        final_cmd = np.array([[des_x, des_y, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+        final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         self.cmd_z = des_thrust
 
         return (final_cmd)
