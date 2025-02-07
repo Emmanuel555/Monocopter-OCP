@@ -68,9 +68,12 @@ class att_ctrl(object):
         self.angle_error_last = np.array([0.0, 0.0])
         self.rate_error_last = np.array([0.0, 0.0])
         self.control_signal = np.array([0.0,0.0,0.0]) 
-        self.z_offset = 0
-        self.cmd_z = 0
+        self.z_offset = 0.0
+        self.cmd_z = 0.0
         self.cmd_att = np.array([0.0,0.0])
+        self.cmd_bod_rates_final = np.array([0.0,0.0])
+        self.cascaded_ref_bod_rates = np.array([0.0,0.0])
+        self.des_rps = 0.0
 
 
     def physical_params(self,wing_radius,chord_length,mass,cl,cd):
@@ -113,7 +116,7 @@ class att_ctrl(object):
         self.ref_pos = ref_pos 
 
 
-    def attitude_loop(self, quat, control_input):
+    def attitude_loop(self, quat, control_input, sampling_dt):
         kpa = self.kpa # abt x y
         kpad = self.kpad # abt x y
         kpai = self.kpai # abt x y
@@ -145,8 +148,8 @@ class att_ctrl(object):
             cmd_att = 2*error_quat[1:3] # bod_att[0] = abt x, bod_att[1] = abt y 
 
         cmd_att_error = np.array(cmd_att[0],cmd_att[1]) # abt x y only
-        cmd_att_error_rate = (cmd_att_error - self.angle_error_last)/self.dt
-        cmd_att_integral_error = (cmd_att_error*self.dt) 
+        cmd_att_error_rate = (cmd_att_error - self.angle_error_last)/sampling_dt
+        cmd_att_integral_error = (cmd_att_error*sampling_dt) 
         self.angle_error_last = cmd_att_error
 
         cmd_att_final = kpa*(cmd_att_error) + kpad*(cmd_att_error_rate) + kpai*(cmd_att_integral_error) # abt x y z
@@ -154,7 +157,7 @@ class att_ctrl(object):
         return (cmd_att_final)
     
 
-    def control_input(self):
+    def control_input(self,sampling_dt):
         # control gains
         # kpx = 12_000
         # kpy = 12_000
@@ -178,8 +181,8 @@ class att_ctrl(object):
         I_term_prior = np.array([0.0, 0.0, I_term_z_prior])
 
         position_error = self.ref_pos - self.robot_pos # calculate position error
-        rate_posiition_error = (position_error - self.position_error_last)/self.dt
-        integral_error = (position_error*self.dt) + I_term_prior
+        rate_posiition_error = (position_error - self.position_error_last)/sampling_dt
+        integral_error = (position_error*sampling_dt) + I_term_prior
         self.position_error_last = position_error
         
         # weight of the robot
@@ -190,9 +193,22 @@ class att_ctrl(object):
 
         # w acceleration references, velocity not needed as d term from position compensates that already
         self.control_signal = self.control_signal + self.ref_acc
+
+        # collective thrust - linearised
+        self.collective_thrust()
+    
+
+    def collective_thrust(self): 
+        if self.control_signal[2] == 0:
+            self.des_rps = 0.0
+        else:
+            self.des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
+        
+        des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
+        self.cmd_z = des_thrust
         
 
-    def body_rate_loop(self,cascaded_ref_bod_rates):
+    def body_rate_loop(self,cascaded_ref_bod_rates,sampling_dt):
         # body rate gains
         # kpr = np.array([50, 50]) # abt x y
         kpr = self.kpr
@@ -201,12 +217,12 @@ class att_ctrl(object):
 
         # body rate controller
         cmd_bod_rates_error = cascaded_ref_bod_rates - fb
-        cmd_bod_rates_error_rate = (cmd_bod_rates_error  - self.rate_error_last)/self.dt
+        cmd_bod_rates_error_rate = (cmd_bod_rates_error  - self.rate_error_last)/sampling_dt
         self.rate_error_last = cmd_bod_rates_error
 
-        cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) # abt x y z
+        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) # abt x y z
         
-        return (cmd_bod_rates_final)
+        return (self.cmd_bod_rates_final)
     
 
     def INDI_loop(self,cascaded_ref_bod_acc):
@@ -220,34 +236,33 @@ class att_ctrl(object):
         return (cmd_bod_acc_final)
     
 
-    def get_angle(self):
-        cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
-        self.cmd_att = cmd_att
-        return (cmd_att)
+    def get_angle(self,sampling_dt):
+        self.cmd_att = self.attitude_loop(self.robot_quat, self.control_signal, sampling_dt)
+        return (self.cmd_att)
     
 
-    def get_body_rate(self,cmd_att,flatness_option):
+    def get_body_rate(self,cmd_att,flatness_option,sampling_dt):
         if flatness_option == 0:
-            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
+            self.cascaded_ref_bod_rates = self.body_rate_loop(cmd_att,sampling_dt)
         else:
-            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
-            cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
-        return (cascaded_ref_bod_rates)
+            self.cascaded_ref_bod_rates = self.body_rate_loop(cmd_att,sampling_dt) + self.include_jerk_bod_rates()
+        return (self.cascaded_ref_bod_rates)
     
     
     def get_angles_and_thrust(self,flatness_option):
         # self.control_input()
-        cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
+        # cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
 
-        if flatness_option == 0:
-            cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
+
+        """ if flatness_option == 0:
+            cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
             cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
         else:
             cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
             cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
             cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
             cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
-            cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
+            cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates() """
         
         # in degrees
         #des_roll = int(cmd_att[0]*180/math.pi)
@@ -267,28 +282,20 @@ class att_ctrl(object):
         #des_y = float(0) # y
         
         # angles
-        des_roll = float(cmd_att[0])
-        des_pitch = float(cmd_att[1])
+        des_roll = float(self.cmd_att[0])
+        des_pitch = float(self.cmd_att[1])
 
         # bodyrate
-        #des_roll = float(cascaded_ref_bod_rates[0])
-        #des_pitch = float(cascaded_ref_bod_rates[1])
+        #des_roll = float(self.cascaded_ref_bod_rates[0])
+        #des_pitch = float(self.cascaded_ref_bod_rates[1])
 
         # bodyraterate
+        #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates) + self.include_snap_bod_raterate()
         #des_roll = float(cmd_bod_acc[0])
         #des_pitch = float(cmd_bod_acc[1])
 
-        # collective thrust - linearised
-        
-        if self.control_signal[2] == 0:
-            des_rps = 0
-        else:
-            des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
-        
-        des_thrust = self.lift_rotation_wo_rps*(des_rps**2)
-
         # output saturation/normalisation
-        des_rps = des_rps/1000
+        des_rps = self.des_rps/1000
         #des_roll = des_roll
         #des_pitch = des_pitch
         
@@ -323,7 +330,7 @@ class att_ctrl(object):
 
         ## final cmd at the end
         final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
-        self.cmd_z = des_thrust
+        
 
         return (final_cmd)
     

@@ -13,7 +13,7 @@ class trajectory_generator(object):
         ref_x = 0.0
         # ref_y = 1.0
         ref_y = 0.0
-        ref_z = 1.2
+        ref_z = 2.0
         ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
         msg = "hovering test..."
         return (ref_pos,msg)

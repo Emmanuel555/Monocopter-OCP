@@ -62,14 +62,14 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw) # mechanical limit for monocopter is 0.5m/s
 
     # collective z
-    kpz = 1.2
-    kdz = 0.3
+    kpz = 2.0
+    kdz = 0.6
     kiz = 128.0
     
     # cyclic xyz
-    kp = [0.1,0.1,kpz] # 0.45 - 1.5 * 0.1m/s 
-    kd = [0.0032,0.0032,kdz] # 0.2 - 1.5 * 0.1m/s
-    ki = [0.016,0.016,kiz]
+    kp = [0.05,0.05,kpz] # 0.45 - 1.5 * 0.1m/s 
+    kd = [0.012,0.012,kdz] # 0.2 - 1.5 * 0.1m/s
+    ki = [0.003,0.003,kiz]
 
     # cyclic xy
     ka = [0.0, 0.0]  # 0.08 - 1.5 * 0.1m/s
@@ -191,10 +191,14 @@ if __name__ == '__main__':
                 # ff references
                 monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
 
-                monoco.control_input()
+                # control input
+                monoco.control_input(1/(max_sample_rate/pid_loop))
 
             
             if loop_counter % pid_loop == 0:
+
+                # get angle
+                # monoco.get_angle(1/(max_sample_rate/att_loop))
             
                 # final control input (INDI loop)
                 final_cmd = monoco.get_angles_and_thrust(flatness_option)
@@ -212,6 +216,7 @@ if __name__ == '__main__':
                 #print('shapes: ', np.shape(final_cmd))
                 print('cmd info sent: ', final_cmd)
                 print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                #print('tpp_angle', rotational_state_vector[0][0], rotational_state_vector[0][1], rotational_state_vector[0][2])
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
                 print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
