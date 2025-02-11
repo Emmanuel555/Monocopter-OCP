@@ -18,7 +18,7 @@ import timeit
 if __name__ == '__main__':
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 300
+    max_sample_rate = 360
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     
     # reference offset for xyz
     x_offset = 0.0
-    y_offset = 1.0
+    y_offset = 0.0
     z_offset = 0.0
 
     # rmse terms
@@ -44,9 +44,9 @@ if __name__ == '__main__':
 
     # loop rates
     loop_counter = 1
-    rate_loop = 2 # 150 hz
-    att_loop = 3 # 100 hz
-    pid_loop = 6 # 50 hz
+    rate_loop = 1 # 180 hz
+    att_loop = 2 # 120 hz
+    pid_loop = 2 # 120 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
@@ -62,22 +62,24 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw) # mechanical limit for monocopter is 0.5m/s
 
     # collective z
-    kpz = 2.0
+    kpz = 2.2
     kdz = 0.6
     kiz = 128.0
     
     # cyclic xyz
-    kp = [0.05,0.05,kpz] # 0.45 - 1.5 * 0.1m/s 
-    kd = [0.012,0.012,kdz] # 0.2 - 1.5 * 0.1m/s
-    ki = [0.003,0.003,kiz]
+    kp = [0.052,0.052,kpz] # 0.45 - 1.5 * 0.1m/s 
+    kd = [0.12,0.12,kdz] # 0.2 - 1.5 * 0.1m/s
+    ki = [0.01,0.01,kiz]
 
     # cyclic xy
-    ka = [0.0, 0.0]  # 0.08 - 1.5 * 0.1m/s
-    kad = [0.0, 0.0]
-    kai = [0.0, 0.0]
-    kr = [0.005, 0.005]
+    ka = [0.001, 0.001]  # 0.08 - 1.5 * 0.1m/s
+    kad = [0.002, 0.002]
+    kai = [0.0000, 0.0000]
+    kr = [0.001, 0.001]
     krd = [0.0, 0.0]
-    krr = [0.0025, 0.0025]
+    kri = [0.0, 0.0]
+    krr = [0.001, 0.001]
+    krri = [0.0, 0.0]
 
     # physical params
     wing_radius = 200/1000 # change to 700 next round
@@ -86,7 +88,7 @@ if __name__ == '__main__':
     cl = 0.5
     cd = 0.052
     
-    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kai, kr, krd, krr)
+    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kai, kr, krd, kri, krr, krri)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd)        
     
     time_last = 0
@@ -194,17 +196,44 @@ if __name__ == '__main__':
                 # control input
                 monoco.control_input(1/(max_sample_rate/pid_loop))
 
+                # final control input (INDI loop)
+                #final_cmd = monoco.get_angles_and_thrust(flatness_option)
+
+                # send to monocopter via INDI
+                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+
+
             
-            if loop_counter % pid_loop == 0:
+            if loop_counter % att_loop == 0:
 
                 # get angle
-                # monoco.get_angle(1/(max_sample_rate/att_loop))
+                cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
             
                 # final control input (INDI loop)
                 final_cmd = monoco.get_angles_and_thrust(flatness_option)
 
                 # send to monocopter via INDI
                 data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+
+
+
+            if loop_counter % rate_loop == 0:
+
+                # bod rates
+                monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
+            
+                # final control input (INDI loop)
+                #final_cmd = monoco.get_angles_and_thrust(flatness_option)
+
+                # send to monocopter via INDI
+                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+
+
+            # final control input (INDI loop)
+            #final_cmd = monoco.get_angles_and_thrust(flatness_option)
+
+            # send to monocopter via INDI
+            #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             loop_counter = loop_counter + 1
             # normal counter
@@ -218,7 +247,7 @@ if __name__ == '__main__':
                 print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
                 #print('tpp_angle', rotational_state_vector[0][0], rotational_state_vector[0][1], rotational_state_vector[0][2])
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
-                print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
+                #print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
             # rmse accumulation
             rmse_num_x = rmse_num_x + (ref_pos[0]-x_offset-linear_state_vector[0])**2

@@ -13,7 +13,7 @@ import numpy.linalg as la
 
 
 class att_ctrl(object):
-    def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,angle_gains_i,body_rate_gains,body_rate_gains_d,body_rate_rate_gains):
+    def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,angle_gains_i,body_rate_gains,body_rate_gains_d,body_rate_gains_i,body_rate_rate_gains,body_rate_rate_gains_i):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -36,10 +36,11 @@ class att_ctrl(object):
         # self.kpr = np.array([50, 50]) # abt x y
         self.kpr = np.array(body_rate_gains) # abt x y
         self.kprd = np.array(body_rate_gains_d) # abt x y
+        self.kpri = np.array(body_rate_gains_i) # abt x y
         # body rate rates
         # self.kprr = np.array([1000, 1000]) # abt x y
         self.kprr = np.array(body_rate_rate_gains) # abt x y
-        
+        self.kprri = np.array(body_rate_rate_gains_i) # abt x y
         ## sampling time
         self.dt = 0
 
@@ -147,7 +148,7 @@ class att_ctrl(object):
         else:
             cmd_att = 2*error_quat[1:3] # bod_att[0] = abt x, bod_att[1] = abt y 
 
-        cmd_att_error = np.array(cmd_att[0],cmd_att[1]) # abt x y only
+        cmd_att_error = np.array([cmd_att[0],cmd_att[1]]) # abt x y only
         cmd_att_error_rate = (cmd_att_error - self.angle_error_last)/sampling_dt
         cmd_att_integral_error = (cmd_att_error*sampling_dt) 
         self.angle_error_last = cmd_att_error
@@ -213,14 +214,16 @@ class att_ctrl(object):
         # kpr = np.array([50, 50]) # abt x y
         kpr = self.kpr
         kprd = self.kprd
+        kpri = self.kpri 
         fb = np.array(self.robot_tpp_bod_rate[0:2]) # abt x y z
 
         # body rate controller
         cmd_bod_rates_error = cascaded_ref_bod_rates - fb
         cmd_bod_rates_error_rate = (cmd_bod_rates_error  - self.rate_error_last)/sampling_dt
+        cmd_bod_rates_integral_error = (cmd_bod_rates_error*sampling_dt) 
         self.rate_error_last = cmd_bod_rates_error
 
-        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) # abt x y z
+        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) + kpri*(cmd_bod_rates_integral_error)# abt x y z
         
         return (self.cmd_bod_rates_final)
     
@@ -229,15 +232,17 @@ class att_ctrl(object):
         # body raterate gains
         # kprr = np.array([50, 50]) # abt x y
         kprr = self.kprr
+        kprri = self.kprri
         fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
-
+        cmd_bod_acc_error = cascaded_ref_bod_acc - fb
         # body raterate controller
-        cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc - fb)
+        cmd_bod_acc_final = kprr*(cmd_bod_acc_error) + kprri*(cmd_bod_acc_error*self.dt)
         return (cmd_bod_acc_final)
     
 
     def get_angle(self,sampling_dt):
         self.cmd_att = self.attitude_loop(self.robot_quat, self.control_signal, sampling_dt)
+        #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
     
 
@@ -285,12 +290,24 @@ class att_ctrl(object):
         des_roll = float(self.cmd_att[0])
         des_pitch = float(self.cmd_att[1])
 
+        #if des_x_p != 0.0 and des_y_p != 0.0:
+        #    des_roll = (des_y_p/abs(des_y_p))*abs(des_roll)
+        #    des_pitch = (des_x_p/abs(des_x_p))*abs(des_pitch)
+
         # bodyrate
         #des_roll = float(self.cascaded_ref_bod_rates[0])
         #des_pitch = float(self.cascaded_ref_bod_rates[1])
 
+        #if des_roll_att != 0.0 and des_pitch_att != 0.0:
+        #    des_roll = (des_roll_att/abs(des_roll_att))*abs(des_roll)
+        #    des_pitch = (des_pitch_att/abs(des_pitch_att))*abs(des_pitch)
+      
+
         # bodyraterate
-        #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates) + self.include_snap_bod_raterate()
+        #if flatness_option == 0:
+        #    cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        #else:
+        #    cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates) + self.include_snap_bod_raterate()
         #des_roll = float(cmd_bod_acc[0])
         #des_pitch = float(cmd_bod_acc[1])
 
@@ -316,8 +333,8 @@ class att_ctrl(object):
         #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         # to test later
-        #des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
-        #des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
 
         if abs(des_x) > 1.0:
             des_x = 1.0*(des_x/abs(des_x))

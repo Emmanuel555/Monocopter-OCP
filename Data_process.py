@@ -75,6 +75,11 @@ class RealTimeProcessor(object):
         self.FilterY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
+        self.rX = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        self.pY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        self.yZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+
+
         #self.FilterX = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
         #self.FilterY = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
         #self.FilterZ = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
@@ -150,7 +155,7 @@ class RealTimeProcessor(object):
         #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
 
-        
+    
     def pos_vel_acc_filtered(self):
         self.vx = (self.px_filted - self.px_last)/self.sample_time
         self.vy = (self.py_filted - self.py_last)/self.sample_time
@@ -353,6 +358,10 @@ class RealTimeProcessor(object):
         self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
         self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
     
+        self.Omega[1,1] = self.FilterX.filter(self.Omega[1,1])
+        self.Omega[2,1] = self.FilterX.filter(self.Omega[2,1])
+        self.Omega[3,1] = self.FilterX.filter(self.Omega[3,1])
+
         return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
 
 
@@ -384,6 +393,14 @@ class RealTimeProcessor(object):
         
         self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
         self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
+
+        #self.Omega[0] = self.rX.filter(self.Omega[0])
+        #self.Omega[1] = self.pY.filter(self.Omega[1])
+        #self.Omega[2] = self.yZ.filter(self.Omega[2])
+
+        #self.Omega_dot[0] = self.rX.filter(self.Omega_dot[0])
+        #self.Omega_dot[1] = self.pY.filter(self.Omega_dot[1])
+        #self.Omega_dot[2] = self.yZ.filter(self.Omega_dot[2])
     
         return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
 
