@@ -271,6 +271,12 @@ class RealTimeProcessor(object):
 
         # needa multiply with R22 to get the correct roll angle
         self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll 
+        
+
+        # sign_roll = abt_x*self.R33 # disk roll
+        ## try (sign_roll/abs(sign_roll))*(self.R11,self.R12,self.R21,self.R22,self.R31,self.R32)
+
+
         # needa multiply with R11 to get the correct pitch angle
         self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
         self.tpp[2] = abt_z # disk yaw
@@ -425,9 +431,11 @@ class RealTimeProcessor(object):
         angle_roll = math.atan2(roll_a, roll_b)
 
         # pitch - rotating about y axis
-        pitch_a = np.sqrt(1 + 2 * (self.quat_w_filted * self.quat_y_filted - self.quat_x_filted * self.quat_z_filted))
-        pitch_b = np.sqrt(1 - 2 * (self.quat_w_filted * self.quat_y_filted - self.quat_x_filted * self.quat_z_filted))
-        angle_pitch = 2*math.atan2(pitch_a, pitch_b) - math.pi/2
+        sinp = 2 * (self.quat_w_filted * self.quat_y_filted - self.quat_x_filted * self.quat_z_filted)
+        if abs(sinp) >= 1:
+            angle_pitch = math.sign(sinp) * math.pi / 2  # Use 90 degrees if out of range
+        else:
+            angle_pitch = math.asin(sinp)
 
         # yaw - rotating about z axis
         yaw_a = 2 * (self.quat_w_filted * self.quat_z_filted + self.quat_x_filted * self.quat_y_filted)
