@@ -142,15 +142,15 @@ class RealTimeProcessor(object):
         self.py_filted = self.FilterY.filter(self.py)
         self.pz_filted = self.FilterZ.filter(self.pz)
 
-        # self.quat_x_filted = self.FilterQX.filter(self.quat_x)
-        # self.quat_y_filted = self.FilterQY.filter(self.quat_y)
-        # self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
-        # self.quat_w_filted = self.FilterQW.filter(self.quat_w)
+        self.quat_x_filted = self.FilterQX.filter(self.quat_x)
+        self.quat_y_filted = self.FilterQY.filter(self.quat_y)
+        self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
+        self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
-        self.quat_x_filted = float(qx)
-        self.quat_y_filted = float(qy)
-        self.quat_z_filted = float(qz)
-        self.quat_w_filted = float(qw)
+        # self.quat_x_filted = float(qx)
+        # self.quat_y_filted = float(qy)
+        # self.quat_z_filted = float(qz)
+        # self.quat_w_filted = float(qw)
 
         #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
@@ -226,12 +226,12 @@ class RealTimeProcessor(object):
         self.R32 = 2 * (yz + wx)
         self.R33 = 1 - 2 * (xx + yy) # How much of the z-axis aligns with itself after the rotation
 
-        self.body_pitch = -1*self.R33/100000 # body pitch
+        self.body_pitch = -1*self.R33/100000 # body pitch - somehow corrected itself to degree range
         rotm = [self.R11, self.R12, self.R13, self.R21, self.R22, self.R23, self.R31, self.R32, self.R33]
 
         #return rotm
-        
 
+    
     def get_tpp_angle_xy(self): # solved during testing
         """ Finding the TPP Angle
         To calculate the TPP angle using the rotation matrix:
@@ -251,6 +251,18 @@ class RealTimeProcessor(object):
 
         This gives the orientation of the TPP in the inertial frame. """
                 
+        """ abt_y = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
+        abt_x = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector     
+        abt_z = 0
+         
+        # self.tpp is in radians 
+
+        # needa multiply with R22 to get the correct roll angle
+        self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll 
+        # needa multiply with R11 to get the correct pitch angle
+        self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
+        self.tpp[2] = abt_z # disk yaw """
+
         abt_y = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
         abt_x = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector     
         abt_z = 0
@@ -406,19 +418,20 @@ class RealTimeProcessor(object):
 
     
     
-    def get_RPY(self): # solely for quad
+    def get_RPY(self): # solely for quad, needs fixing for other shapes
         # roll - rotating about x axis
-        roll_a = 2 * (self.quat_w * self.quat_x + self.quat_y * self.quat_z)
-        roll_b = 1 - 2 * (self.quat_x * self.quat_x + self.quat_y * self.quat_y)
+        roll_a = 2 * (self.quat_w_filted * self.quat_x_filted + self.quat_y_filted * self.quat_z_filted)
+        roll_b = 1 - 2 * (self.quat_x_filted * self.quat_x_filted + self.quat_y_filted * self.quat_y_filted)
         angle_roll = math.atan2(roll_a, roll_b)
 
         # pitch - rotating about y axis
-        pitch_a = 2 * (self.quat_w * self.quat_y - self.quat_z * self.quat_x)
-        angle_pitch = math.asin(pitch_a)
+        pitch_a = np.sqrt(1 + 2 * (self.quat_w_filted * self.quat_y_filted - self.quat_x_filted * self.quat_z_filted))
+        pitch_b = np.sqrt(1 - 2 * (self.quat_w_filted * self.quat_y_filted - self.quat_x_filted * self.quat_z_filted))
+        angle_pitch = 2*math.atan2(pitch_a, pitch_b) - math.pi/2
 
         # yaw - rotating about z axis
-        yaw_a = 2 * (self.quat_w * self.quat_z + self.quat_x * self.quat_y)
-        yaw_b = 1 - 2 * (self.quat_y * self.quat_y + self.quat_z * self.quat_z)
+        yaw_a = 2 * (self.quat_w_filted * self.quat_z_filted + self.quat_x_filted * self.quat_y_filted)
+        yaw_b = 1 - 2 * (self.quat_y_filted * self.quat_y_filted + self.quat_z_filted * self.quat_z_filted)
         angle_yaw = math.atan2(yaw_a, yaw_b)
 
         RPY = [angle_roll, angle_pitch, angle_yaw] # pry
