@@ -52,6 +52,7 @@ if __name__ == '__main__':
             
             # needa find pitch angle of the body during hover
             # data_processor.get_rotm_filtered()
+            body_angle = data_processor.get_RPY()
             tpp_angle = data_processor.tpp # test it again and w r11 & r22
             tpp_omega = data_processor.Omega
             tpp_omega_dot = data_processor.Omega_dot
@@ -88,19 +89,22 @@ if __name__ == '__main__':
                 r33 = data_processor.R33
                 
                 #print("sampling period and freq: ", t_diff, 1/t_diff) 
-                print("tpp angles:", tpp_angle) # rpy
+                print("tpp angles in degrees:", tpp_angle*180/np.pi) # rpy
                 #print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
                 print("position: ", pos[0:3])
                 #print("tpp quaternion: ", tpp_quat)
 
                 n = 100000
-                #print("r11, r12, r13: ", r11/n, r12/n, r13/n)
+                print("r11, r12, r13: ", r11/n, abs(r12/n), r13/n)
                 #print("r21, r22, r23: ", r21/n, r22/n, r23/n)
+                #print("r31, r32, r33: ", r31/n, r32/n, r33/n)
                 #print("r23: ", r23/n)
                 #print("r32: ", r32/n)
                 #print("r33: ", -1*r33/n) # seems to be correct 
                 #print("body pitch: ", body_pitch)
+                #print("body_yaw: ", body_angle[2])
+                #print("body_pitch: ", body_angle[0])
                 
                 
                 

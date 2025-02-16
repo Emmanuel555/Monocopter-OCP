@@ -11,6 +11,9 @@ class RealTimeProcessor(object):
         self.flag = 0
         self.sample_time = 1/sample_rate
         self.sample_rate = sample_rate
+        self.body_angle_pitch = 0.0
+        self.body_angle_yaw = 0.0
+        self.body_angle_roll = 0.0
         self.body_pitch = 0
         self.roll_x_last = 0
         self.pitch_y_last = 0
@@ -142,15 +145,15 @@ class RealTimeProcessor(object):
         self.py_filted = self.FilterY.filter(self.py)
         self.pz_filted = self.FilterZ.filter(self.pz)
 
-        self.quat_x_filted = self.FilterQX.filter(self.quat_x)
-        self.quat_y_filted = self.FilterQY.filter(self.quat_y)
-        self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
-        self.quat_w_filted = self.FilterQW.filter(self.quat_w)
+        # self.quat_x_filted = self.FilterQX.filter(self.quat_x)
+        # self.quat_y_filted = self.FilterQY.filter(self.quat_y)
+        # self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
+        # self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
-        # self.quat_x_filted = float(qx)
-        # self.quat_y_filted = float(qy)
-        # self.quat_z_filted = float(qz)
-        # self.quat_w_filted = float(qw)
+        self.quat_x_filted = float(qx)
+        self.quat_y_filted = float(qy)
+        self.quat_z_filted = float(qz)
+        self.quat_w_filted = float(qw)
 
         #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
@@ -270,15 +273,29 @@ class RealTimeProcessor(object):
         # self.tpp is in radians 
 
         # needa multiply with R22 to get the correct roll angle
-        self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll 
-        
+        # self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll 
 
-        # sign_roll = abt_x*self.R33 # disk roll
-        ## try (sign_roll/abs(sign_roll))*(self.R11,self.R12,self.R21,self.R22,self.R31,self.R32)
+        # shit still needs fixing for outliers
+        if abs(self.R12/100000) > 6.0:
+            sign_roll = -1*abt_x # disk roll
+            if sign_roll == 0.0:
+                sign_roll = 1.0
+            else:
+                sign_roll = (sign_roll/abs(sign_roll))
+            self.tpp[0] = sign_roll*abs(self.R23)*pow(7.5,-7) 
 
 
         # needa multiply with R11 to get the correct pitch angle
-        self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
+        # self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
+
+        if abs(self.R12/100000) < 6.0:
+            sign_pitch = abt_y # disk pitch
+            if sign_pitch == 0.0:
+                sign_pitch = 1.0
+            else:
+                sign_pitch = (sign_pitch/abs(sign_pitch))
+            self.tpp[1] = sign_pitch*abs(self.R13)*pow(7.5,-7) 
+
         self.tpp[2] = abt_z # disk yaw
 
         return self.tpp
@@ -424,25 +441,25 @@ class RealTimeProcessor(object):
 
     
     
-    def get_RPY(self): # solely for quad, needs fixing for other shapes
+    def get_RPY(self): # for body frame
         # roll - rotating about x axis
         roll_a = 2 * (self.quat_w_filted * self.quat_x_filted + self.quat_y_filted * self.quat_z_filted)
         roll_b = 1 - 2 * (self.quat_x_filted * self.quat_x_filted + self.quat_y_filted * self.quat_y_filted)
-        angle_roll = math.atan2(roll_a, roll_b)
+        self.body_angle_roll = math.atan2(roll_a, roll_b)
 
         # pitch - rotating about y axis
         sinp = 2 * (self.quat_w_filted * self.quat_y_filted - self.quat_x_filted * self.quat_z_filted)
         if abs(sinp) >= 1:
-            angle_pitch = math.sign(sinp) * math.pi / 2  # Use 90 degrees if out of range
+            self.body_angle_pitch = np.sign(sinp) * math.pi / 2  # Use 90 degrees if out of range
         else:
-            angle_pitch = math.asin(sinp)
+            self.body_angle_pitch = math.asin(sinp)
 
         # yaw - rotating about z axis
         yaw_a = 2 * (self.quat_w_filted * self.quat_z_filted + self.quat_x_filted * self.quat_y_filted)
         yaw_b = 1 - 2 * (self.quat_y_filted * self.quat_y_filted + self.quat_z_filted * self.quat_z_filted)
-        angle_yaw = math.atan2(yaw_a, yaw_b)
+        self.body_angle_yaw = math.atan2(yaw_a, yaw_b)
 
-        RPY = [angle_roll, angle_pitch, angle_yaw] # pry
+        RPY = [self.body_angle_roll, self.body_angle_pitch, self.body_angle_yaw] # pry
         return RPY
     
 
