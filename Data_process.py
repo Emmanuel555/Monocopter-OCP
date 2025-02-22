@@ -269,7 +269,8 @@ class RealTimeProcessor(object):
         abt_y = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
         abt_x = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector     
         abt_z = 0
-         
+
+        # self.R23 is how much the y axis changes subject to the rotational displacement on the z axis when the body rotates  
         # self.tpp is in radians 
 
         # needa multiply with R22 to get the correct roll angle
@@ -287,6 +288,7 @@ class RealTimeProcessor(object):
 
         # needa multiply with R11 to get the correct pitch angle
         # self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
+        
 
         if abs(self.R12/100000) < 6.0:
             sign_pitch = abt_y # disk pitch
