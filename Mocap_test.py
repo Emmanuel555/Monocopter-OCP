@@ -5,6 +5,9 @@ import DataSave
 import Data_process
 import numpy as np
 import timeit
+import math
+import numpy.linalg as la
+from pyrr import quaternion
 
 if __name__ == '__main__':
 
@@ -78,6 +81,7 @@ if __name__ == '__main__':
                 t_diff = abs_time - last_time
                 last_time = abs_time
 
+                n = 10000
                 r11 = data_processor.R11
                 r12 = data_processor.R12
                 r13 = data_processor.R13
@@ -89,15 +93,40 @@ if __name__ == '__main__':
                 r33 = data_processor.R33
                 
                 #print("sampling period and freq: ", t_diff, 1/t_diff) 
-                print("tpp angles in degrees:", tpp_angle*180/np.pi) # rpy
+                #print("tpp angles in degrees:", tpp_angle*180/np.pi) # rpy
                 #print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
-                print("position: ", pos[0:3])
+                #print("position: ", pos[0:3])
                 #print("tpp quaternion: ", tpp_quat)
 
-                n = 100000
-                print("r11, r12, r13: ", r11/n, abs(r12/n), r13/n)
+                
+                #print("r11, r12, r13: ", r11/n, r12/n, r13/n)
                 #print("r21, r22, r23: ", r21/n, r22/n, r23/n)
+
+                # r11 abt y, r22 abt x
+                roll_vector = np.array([r11, r21, r31]) # contribution of the x-axis
+                pitch_vector = np.array([r12, r22, r32]) # contribution of the y-axis
+                z_vector = np.array([0, 0, 1])
+                roll = np.dot(roll_vector,z_vector) # 1 x 1
+                pitch = np.dot(pitch_vector,z_vector)
+                pitch = math.acos(pitch) # denominator is 1 as its a unit vector
+                roll = math.acos(roll) # denominator is 1 as its a unit vector
+
+                pitch_rad = np.pi/2 - pitch
+                roll_rad = np.pi/2 - roll 
+                
+                print(round(roll_rad,2), round(pitch_rad,2))
+                
+                
+                #roll = abs((np.dot(disk_vector,z_vector))/10000)
+                #abt_x = math.atan2(r23, r33)
+                #roll = -1*roll*abt_x
+
+                
+                #print ("roll angle: ", roll/10000)
+                #print ("roll: ", roll)
+
+
                 #print("r31, r32, r33: ", r31/n, r32/n, r33/n)
                 #print("r23: ", r23/n)
                 #print("r32: ", r32/n)

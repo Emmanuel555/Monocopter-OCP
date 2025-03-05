@@ -135,11 +135,11 @@ class RealTimeProcessor(object):
         self.py = y * 0.0005  # position py  
         self.pz = z * 0.0005  # position pz 
 
-        # 1 seems to work better than 0.001
-        self.quat_x = float(qx)
-        self.quat_y = float(qy)
-        self.quat_z = float(qz)
-        self.quat_w = float(qw) # needa check if this can always be left as 1 when spinning 
+        
+        self.quat_x = float(qx)*0.001
+        self.quat_y = float(qy)*0.001
+        self.quat_z = float(qz)*0.001
+        self.quat_w = float(qw)*0.001 # needa check if this can always be left as 1 when spinning 
 
         self.px_filted = self.FilterX.filter(self.px)
         self.py_filted = self.FilterY.filter(self.py)
@@ -150,10 +150,10 @@ class RealTimeProcessor(object):
         # self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
         # self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
-        self.quat_x_filted = float(qx)
-        self.quat_y_filted = float(qy)
-        self.quat_z_filted = float(qz)
-        self.quat_w_filted = float(qw)
+        self.quat_x_filted = float(qx)*0.001
+        self.quat_y_filted = float(qy)*0.001
+        self.quat_z_filted = float(qz)*0.001
+        self.quat_w_filted = float(qw)*0.001
 
         #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
@@ -277,26 +277,26 @@ class RealTimeProcessor(object):
         # self.tpp[0] = abt_x*self.R33*pow(7.5,-7) # disk roll 
 
         # shit still needs fixing for outliers
-        if abs(self.R12/100000) > 6.0:
-            sign_roll = -1*abt_x # disk roll
-            if sign_roll == 0.0:
-                sign_roll = 1.0
-            else:
-                sign_roll = (sign_roll/abs(sign_roll))
-            self.tpp[0] = sign_roll*abs(self.R23)*pow(7.5,-7) 
+        #if abs(self.R12/100000) > 6.0:
+        sign_roll = -1*abt_x # disk roll
+        if sign_roll == 0.0:
+            sign_roll = 1.0
+        else:
+            sign_roll = (sign_roll/abs(sign_roll))
+        self.tpp[0] = sign_roll*abs(self.R23)*pow(7.5,-7) 
 
 
         # needa multiply with R11 to get the correct pitch angle
         # self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
         
 
-        if abs(self.R12/100000) < 6.0:
-            sign_pitch = abt_y # disk pitch
-            if sign_pitch == 0.0:
-                sign_pitch = 1.0
-            else:
-                sign_pitch = (sign_pitch/abs(sign_pitch))
-            self.tpp[1] = sign_pitch*abs(self.R13)*pow(7.5,-7) 
+        #if abs(self.R12/100000) < 6.0:
+        sign_pitch = abt_y # disk pitch
+        if sign_pitch == 0.0:
+            sign_pitch = 1.0
+        else:
+            sign_pitch = (sign_pitch/abs(sign_pitch))
+        self.tpp[1] = sign_pitch*abs(self.R13)*pow(7.5,-7) 
 
         self.tpp[2] = abt_z # disk yaw
 
@@ -536,6 +536,68 @@ class RealTimeProcessor(object):
         # tpp_quaternion = quaternion.create_from_eulers(roll, pitch, yaw) # actual line of code to use
         
         return tpp_quaternion
+    
+
+    def vector_axis_to_quaternion(self, vector, axis):
+        """
+        Convert a 3x1 vector and rotation axis to quaternion.
+        Finds the quaternion that rotates from the axis to the vector.
+        
+        Args:
+            vector (numpy.ndarray): 3D vector to be rotated
+            axis (numpy.ndarray): 3D vector representing the rotation axis
+        
+        Returns:
+            numpy.ndarray: Quaternion in format [w, x, y, z]
+        """
+        # Ensure inputs are numpy arrays and normalized
+        vector = np.array(vector, dtype=np.float64)
+        axis = np.array(axis, dtype=np.float64)
+        
+        # Normalize vectors
+        vector = vector / np.linalg.norm(vector)
+        axis = axis / np.linalg.norm(axis)
+        
+        # Find the cross product and dot product
+        cross_product = np.cross(axis, vector)
+        dot_product = np.dot(axis, vector)
+        
+        # Calculate the rotation angle
+        angle = np.arccos(np.clip(dot_product, -1.0, 1.0))
+        
+        # If vectors are parallel (angle = 0 or π)
+        if np.abs(angle) < 1e-10:  # Parallel same direction
+            return np.array([1., 0., 0., 0.])
+        elif np.abs(angle - np.pi) < 1e-10:  # Parallel opposite direction
+            # Find any perpendicular vector for 180° rotation
+            perpendicular = np.array([1., 0., 0.])
+            if np.abs(np.dot(perpendicular, axis)) > 0.9:
+                perpendicular = np.array([0., 1., 0.])
+            perpendicular = np.cross(perpendicular, axis)
+            perpendicular = perpendicular / np.linalg.norm(perpendicular)
+            return np.array([0., perpendicular[0], perpendicular[1], perpendicular[2]])
+        
+        # Calculate quaternion components
+        half_angle = angle / 2.0
+        sin_half = np.sin(half_angle)
+        
+        # Create quaternion [w, x, y, z]
+        # quaternion = np.array([
+        #     np.cos(half_angle),
+        #     cross_product[0] * sin_half,
+        #     cross_product[1] * sin_half,
+        #     cross_product[2] * sin_half
+        # ])
+
+        # Create quaternion [x, y, z, w]
+        quaternion = np.array([
+            cross_product[0] * sin_half,
+            cross_product[1] * sin_half,
+            cross_product[2] * sin_half,
+            np.cos(half_angle),
+        ])
+        
+        return quaternion
     
 
 
