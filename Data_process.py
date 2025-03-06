@@ -150,6 +150,11 @@ class RealTimeProcessor(object):
         # self.quat_z_filted = self.FilterQZ.filter(self.quat_z)
         # self.quat_w_filted = self.FilterQW.filter(self.quat_w)
 
+        # self.quat_x_filted = float(qx)
+        # self.quat_y_filted = float(qy)
+        # self.quat_z_filted = float(qz)
+        # self.quat_w_filted = float(qw)
+
         self.quat_x_filted = float(qx)*0.001
         self.quat_y_filted = float(qy)*0.001
         self.quat_z_filted = float(qz)*0.001
@@ -229,13 +234,48 @@ class RealTimeProcessor(object):
         self.R32 = 2 * (yz + wx)
         self.R33 = 1 - 2 * (xx + yy) # How much of the z-axis aligns with itself after the rotation
 
-        self.body_pitch = -1*self.R33/100000 # body pitch - somehow corrected itself to degree range
+        #self.body_pitch = -1*self.R33/100000 # body pitch - somehow corrected itself to degree range
         rotm = [self.R11, self.R12, self.R13, self.R21, self.R22, self.R23, self.R31, self.R32, self.R33]
 
         #return rotm
 
-    
+
     def get_tpp_angle_xy(self): # solved during testing
+        roll_vector = np.array([self.R11, self.R21, self.R31]) # contribution of the x-axis
+        pitch_vector = np.array([self.R12, self.R22, self.R32]) # contribution of the y-axis
+        z_vector = np.array([0, 0, 1])
+        roll = np.dot(roll_vector,z_vector) # 1 x 1
+        pitch = np.dot(pitch_vector,z_vector)
+        yaw = math.atan2(self.R11,self.R21)
+        # denominator is 1 as its a unit vector (quaternion mag is 1)
+        bod_pitch = math.acos(pitch) 
+        bod_roll = math.acos(roll) 
+        
+        pitch_rad = np.pi/2 - bod_pitch
+        self.body_pitch = -1*pitch_rad
+        yaw_deg = round(yaw*(180/np.pi),2)
+
+        tpp_roll = np.pi/2 - bod_roll
+        tpp_pitch = np.pi/2 - bod_roll
+
+        ## tpp roll   
+        if abs(yaw_deg) > 90.0:
+            tpp_roll = -1*tpp_roll
+        
+        ## tpp pitch
+        if yaw_deg > 0.0:
+            tpp_pitch = -1*tpp_pitch
+
+        self.tpp[0] = tpp_roll
+        self.tpp[1] = tpp_pitch
+        self.tpp[2] = 0.0
+        
+        # print(round(roll_rad,3), round(pitch_rad,3))
+
+        return self.tpp
+
+    
+
         """ Finding the TPP Angle
         To calculate the TPP angle using the rotation matrix:
 
@@ -266,9 +306,10 @@ class RealTimeProcessor(object):
         self.tpp[1] = -1*abt_y*self.R33*pow(7.5,-7) # disk pitch
         self.tpp[2] = abt_z # disk yaw """
 
-        abt_y = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
-        abt_x = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector     
-        abt_z = 0
+        # previously, the tangent was fking up the signs for tpp whenever body pitch was high
+        # abt_y = math.atan2(self.R13, self.R33) # atan2(opp,adj) \| where opp is x vector and adj is z vector
+        # abt_x = math.atan2(self.R23, self.R33) # atan2(opp,adj) \| where opp is y vector and adj is z vector     
+        # abt_z = 0
 
         # self.R23 is how much the y axis changes subject to the rotational displacement on the z axis when the body rotates  
         # self.tpp is in radians 
@@ -278,12 +319,12 @@ class RealTimeProcessor(object):
 
         # shit still needs fixing for outliers
         #if abs(self.R12/100000) > 6.0:
-        sign_roll = -1*abt_x # disk roll
-        if sign_roll == 0.0:
-            sign_roll = 1.0
-        else:
-            sign_roll = (sign_roll/abs(sign_roll))
-        self.tpp[0] = sign_roll*abs(self.R23)*pow(7.5,-7) 
+        # sign_roll = -1*abt_x # disk roll
+        # if sign_roll == 0.0:
+        #     sign_roll = 1.0
+        # else:
+        #     sign_roll = (sign_roll/abs(sign_roll))
+        # self.tpp[0] = sign_roll*abs(self.R23)*pow(7.5,-7) 
 
 
         # needa multiply with R11 to get the correct pitch angle
@@ -291,16 +332,14 @@ class RealTimeProcessor(object):
         
 
         #if abs(self.R12/100000) < 6.0:
-        sign_pitch = abt_y # disk pitch
-        if sign_pitch == 0.0:
-            sign_pitch = 1.0
-        else:
-            sign_pitch = (sign_pitch/abs(sign_pitch))
-        self.tpp[1] = sign_pitch*abs(self.R13)*pow(7.5,-7) 
+        # sign_pitch = abt_y # disk pitch
+        # if sign_pitch == 0.0:
+        #     sign_pitch = 1.0
+        # else:
+        #     sign_pitch = (sign_pitch/abs(sign_pitch))
+        # self.tpp[1] = sign_pitch*abs(self.R13)*pow(7.5,-7) 
 
-        self.tpp[2] = abt_z # disk yaw
-
-        return self.tpp
+        # self.tpp[2] = abt_z # disk yaw
 
 
     def get_Omega_dot_dotdot(self): # taken from shane

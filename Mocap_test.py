@@ -81,7 +81,6 @@ if __name__ == '__main__':
                 t_diff = abs_time - last_time
                 last_time = abs_time
 
-                n = 10000
                 r11 = data_processor.R11
                 r12 = data_processor.R12
                 r13 = data_processor.R13
@@ -93,7 +92,8 @@ if __name__ == '__main__':
                 r33 = data_processor.R33
                 
                 #print("sampling period and freq: ", t_diff, 1/t_diff) 
-                #print("tpp angles in degrees:", tpp_angle*180/np.pi) # rpy
+                print("tpp angles in degrees:", round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3)) # rpy
+                print("tpp bodypitch:", body_pitch)
                 #print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
                 #print("position: ", pos[0:3])
@@ -104,39 +104,38 @@ if __name__ == '__main__':
                 #print("r21, r22, r23: ", r21/n, r22/n, r23/n)
 
                 # r11 abt y, r22 abt x
-                roll_vector = np.array([r11, r21, r31]) # contribution of the x-axis
-                pitch_vector = np.array([r12, r22, r32]) # contribution of the y-axis
-                z_vector = np.array([0, 0, 1])
-                roll = np.dot(roll_vector,z_vector) # 1 x 1
-                pitch = np.dot(pitch_vector,z_vector)
-                pitch = math.acos(pitch) # denominator is 1 as its a unit vector
-                roll = math.acos(roll) # denominator is 1 as its a unit vector
+                
+                # roll_vector = np.array([r11, r21, r31]) # SO3 x axis vector
+                # pitch_vector = np.array([r12, r22, r32]) # SO3 y axis vector
+                
+                # z_vector = np.array([0, 0, 1])
+                # x_vector = np.array([0, 1, 0])
+                # roll = np.dot(roll_vector,z_vector) # 1 x 1
+                # pitch = np.dot(pitch_vector,z_vector)
+                # yaw = math.atan2(r11,r21)
+                # denominator is 1 as its a unit vector (quaternion mag is 1)
+                # bod_pitch = math.acos(pitch) 
+                # bod_roll = math.acos(roll) 
+                
+                # pitch_rad = np.pi/2 - bod_pitch
+                # yaw_deg = round(yaw*(180/np.pi),2)
 
-                pitch_rad = np.pi/2 - pitch
-                roll_rad = np.pi/2 - roll 
-                
-                print(round(roll_rad,2), round(pitch_rad,2))
-                
-                
-                #roll = abs((np.dot(disk_vector,z_vector))/10000)
-                #abt_x = math.atan2(r23, r33)
-                #roll = -1*roll*abt_x
+                ## tpp roll
+                # tpp_roll = np.pi/2 - bod_roll
+                # tpp_pitch = np.pi/2 - bod_roll
+                # if abs(yaw_deg) > 90.0:
+                #     tpp_roll = -1*tpp_roll
+                # print("tpp_roll: ", tpp_roll)
 
-                
-                #print ("roll angle: ", roll/10000)
-                #print ("roll: ", roll)
-
-
-                #print("r31, r32, r33: ", r31/n, r32/n, r33/n)
-                #print("r23: ", r23/n)
-                #print("r32: ", r32/n)
-                #print("r33: ", -1*r33/n) # seems to be correct 
-                #print("body pitch: ", body_pitch)
-                #print("body_yaw: ", body_angle[2])
-                #print("body_pitch: ", body_angle[0])
-                
-                
-                
+                # ## tpp pitch
+                # if yaw_deg > 0:
+                #     tpp_pitch = -1*tpp_pitch
+                # print("tpp_pitch: ", tpp_pitch)
+                                
+                #print(round(roll*(180/np.pi),3), round(roll*(180/np.pi),3))
+                #print("yaw_deg: ", yaw_deg)
+            
+    
                 #time.sleep(0.05) # impt to pause and see information
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
