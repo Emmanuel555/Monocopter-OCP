@@ -43,8 +43,8 @@ if __name__ == '__main__':
     final_rmse_z = 0.0
 
     # loop rates
-    loop_counter = 1
-    rate_loop = 1 # 180 hz
+    loop_counter = 2
+    rate_loop = 2 # 180 hz
     att_loop = 2 # 120 hz
     pid_loop = 2 # 120 hz
 
@@ -217,10 +217,10 @@ if __name__ == '__main__':
 
 
 
-            if loop_counter % rate_loop == 0:
+            #if loop_counter % rate_loop == 0:
 
                 # bod rates
-                monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
+                #monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
             
                 # final control input (INDI loop)
                 #final_cmd = monoco.get_angles_and_thrust(flatness_option)

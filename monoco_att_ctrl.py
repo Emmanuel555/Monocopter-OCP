@@ -122,7 +122,7 @@ class att_ctrl(object):
         kpad = self.kpad # abt x y
         kpai = self.kpai # abt x y
         qz = quaternion.create(quat[0], quat[1], quat[2], 1.0) # x y z w ## qw is always set to 1 even in optitrack itself
-        # qz = np.array([quat[0],quat[1],quat[2],quat[3]])
+        #qz = np.array([quat[0],quat[1],quat[2],quat[3]]) # x y z w
         qzi = quaternion.inverse(qz)
         ez = np.array([0, 0, 1]) # 3,:
         disk_vector = quaternion.apply_to_vector(qz, ez) # flattened array
