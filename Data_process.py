@@ -246,7 +246,7 @@ class RealTimeProcessor(object):
         z_vector = np.array([0, 0, 1])
         roll = np.dot(roll_vector,z_vector) # 1 x 1
         pitch = np.dot(pitch_vector,z_vector)
-        yaw = math.atan2(self.R11,self.R21)
+        yaw = math.atan2(self.R11,self.R21) # radians
         # denominator is 1 as its a unit vector (quaternion mag is 1)
         bod_pitch = math.acos(pitch) 
         bod_roll = math.acos(roll) 
@@ -255,16 +255,13 @@ class RealTimeProcessor(object):
         self.body_pitch = -1*pitch_rad
         yaw_deg = round(yaw*(180/np.pi),2)
 
-        tpp_roll = np.pi/2 - bod_roll
-        tpp_pitch = np.pi/2 - bod_roll
-
+        bod_roll = np.pi/2 - bod_roll
+        
         ## tpp roll   
-        if abs(yaw_deg) > 90.0:
-            tpp_roll = -1*tpp_roll
+        tpp_roll = math.cos(yaw)*bod_roll
         
         ## tpp pitch
-        if yaw_deg > 0.0:
-            tpp_pitch = -1*tpp_pitch
+        tpp_pitch = math.sin(yaw)*bod_roll
 
         self.tpp[0] = tpp_roll
         self.tpp[1] = tpp_pitch
