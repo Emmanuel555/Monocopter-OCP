@@ -252,7 +252,8 @@ class RealTimeProcessor(object):
         bod_roll = math.acos(roll) 
         
         pitch_rad = np.pi/2 - bod_pitch
-        self.body_pitch = -1*pitch_rad
+        pitch_deg = pitch_rad*(180/np.pi)
+        self.body_pitch = -1*pitch_deg
         yaw_deg = round(yaw*(180/np.pi),2)
 
         bod_roll = np.pi/2 - bod_roll

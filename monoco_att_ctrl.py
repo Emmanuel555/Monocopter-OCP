@@ -333,8 +333,8 @@ class att_ctrl(object):
         #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         # to test later
-        des_x = des_pitch/self.wing_radius # convert to linear term cos of inner cyclic ctrl
-        des_y = -1.0*des_roll/self.wing_radius # convert to linear term cos of inner cyclic ctrl
+        des_x = des_pitch/(self.wing_radius*self.mass) # convert to linear term cos of inner cyclic ctrl
+        des_y = -1.0*des_roll/(self.wing_radius*self.mass) # convert to linear term cos of inner cyclic ctrl
 
         if abs(des_x) > 1.0:
             des_x = 1.0*(des_x/abs(des_x))
@@ -342,7 +342,7 @@ class att_ctrl(object):
         if abs(des_y) > 1.0:
             des_y = 1.0*(des_y/abs(des_y))
         
-        cyclic_gain = 1000000
+        cyclic_gain = 10000
         collective_gain = 1000000
 
         ## final cmd at the end
