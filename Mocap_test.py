@@ -89,10 +89,11 @@ if __name__ == '__main__':
                 r31 = data_processor.R31
                 r32 = data_processor.R32
                 r33 = data_processor.R33
+
                 
                 #print("sampling period and freq: ", t_diff, 1/t_diff) 
                 print("tpp angles in degrees:", round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3)) # rpy
-                #print("tpp bodypitch:", body_pitch)
+                print("tpp bodypitch:", body_pitch)
                 #print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
                 #print("position: ", pos[0:3])

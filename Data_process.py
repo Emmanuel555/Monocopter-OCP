@@ -257,12 +257,14 @@ class RealTimeProcessor(object):
         yaw_deg = round(yaw*(180/np.pi),2)
 
         bod_roll = np.pi/2 - bod_roll
+
+        shift = np.pi/4
         
         ## tpp roll   
-        tpp_roll = math.cos(yaw)*bod_roll
+        tpp_roll = math.cos(yaw-shift)*bod_roll
         
         ## tpp pitch
-        tpp_pitch = math.sin(yaw)*bod_roll
+        tpp_pitch = math.sin(yaw-shift)*-1*bod_roll
 
         self.tpp[0] = tpp_roll
         self.tpp[1] = tpp_pitch
@@ -465,8 +467,8 @@ class RealTimeProcessor(object):
                              [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
                              [0, -math.sin(roll), math.cos(pitch)*math.cos(roll)]]
         
-        self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
-        self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
+        #self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
+        #self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
 
         #self.Omega[0] = self.rX.filter(self.Omega[0])
         #self.Omega[1] = self.pY.filter(self.Omega[1])

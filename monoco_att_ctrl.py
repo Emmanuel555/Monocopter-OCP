@@ -91,7 +91,7 @@ class att_ctrl(object):
         # pitch = pitch angle in degrees 
         # original formula for lift: (cl*pitch*(rps^2)*rho*chord_length*(wing_radius^3))/6
         self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside, not needed atm
-        self.lift_rotation_wo_rps = (self.cl*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
+        self.lift_rotation_wo_rps = (self.cl*abs(pitch)*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 
 
     def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna):
@@ -203,7 +203,10 @@ class att_ctrl(object):
         if self.control_signal[2] == 0:
             self.des_rps = 0.0
         else:
-            self.des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
+            if self.lift_rotation_wo_rps == 0.0:
+                self.des_rps = 0.0
+            else:
+                self.des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
         
         des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
         self.cmd_z = des_thrust
@@ -254,7 +257,7 @@ class att_ctrl(object):
         return (self.cascaded_ref_bod_rates)
     
     
-    def get_angles_and_thrust(self,flatness_option):
+    def get_angles_and_thrust(self,flatness_option,ref_sampling_dt):
         # self.control_input()
         # cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
 
@@ -280,8 +283,8 @@ class att_ctrl(object):
         #des_pitch = float(0.0)
         #des_roll = float(0.0)
 
-        des_x = float(self.control_signal[0]) # x
-        des_y = float(self.control_signal[1]) # y
+        #des_x = float(self.control_signal[0]) # x
+        #des_y = float(self.control_signal[1]) # y
 
         #des_x = float(0) # x
         #des_y = float(0) # y
@@ -289,6 +292,22 @@ class att_ctrl(object):
         # angles
         des_roll = float(self.cmd_att[0])
         des_pitch = float(self.cmd_att[1])
+
+
+
+        # testing INDI
+        des_roll_rate = float(self.cmd_att[0]/ref_sampling_dt)
+        des_pitch_rate = float(self.cmd_att[1]/ref_sampling_dt)
+
+        des_roll_raterate = float(des_roll_rate/ref_sampling_dt)
+        des_pitch_raterate = float(des_pitch_rate/ref_sampling_dt)
+
+        cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
+        cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
+
+        final_des_roll_raterate = float(cmd_bod_acc[0])
+        final_des_pitch_raterate = float(cmd_bod_acc[1])
+
 
         #if des_x_p != 0.0 and des_y_p != 0.0:
         #    des_roll = (des_y_p/abs(des_y_p))*abs(des_roll)
@@ -333,16 +352,20 @@ class att_ctrl(object):
         #final_cmd = np.array([[des_pitch, -1.0*des_roll, des_rps, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         # to test later
-        des_x = des_pitch/(self.wing_radius*self.mass) # convert to linear term cos of inner cyclic ctrl
-        des_y = -1.0*des_roll/(self.wing_radius*self.mass) # convert to linear term cos of inner cyclic ctrl
+        #des_x = des_pitch/(self.wing_radius*self.mass) # convert to linear term cos of inner cyclic ctrl
+        #des_y = -1*des_roll/(self.wing_radius*self.mass) # convert to linear term cos of inner cyclic ctrl
 
+        des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/10000 # convert to linear term cos of inner cyclic ctrl
+        des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/10000
+        
+        
         if abs(des_x) > 1.0:
             des_x = 1.0*(des_x/abs(des_x))
 
         if abs(des_y) > 1.0:
             des_y = 1.0*(des_y/abs(des_y))
         
-        cyclic_gain = 10000
+        cyclic_gain = 1000000
         collective_gain = 1000000
 
         ## final cmd at the end

@@ -43,10 +43,11 @@ if __name__ == '__main__':
     final_rmse_z = 0.0
 
     # loop rates
-    loop_counter = 2
+    loop_counter = 1
+
     rate_loop = 2 # 180 hz
-    att_loop = 2 # 120 hz
-    pid_loop = 2 # 120 hz
+    att_loop = 4 # 90 hz
+    pid_loop = 4 # 90 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
@@ -61,24 +62,24 @@ if __name__ == '__main__':
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw) # mechanical limit for monocopter is 0.5m/s
 
-    # collective z
-    kpz = 2.2
-    kdz = 0.6
-    kiz = 128.0
+    # collective z - reduce this tmr 
+    kpz = 130.0
+    kdz = 40.0
+    kiz = 0.0
     
     # cyclic xyz
-    kp = [0.052,0.052,kpz] # 0.45 - 1.5 * 0.1m/s 
-    kd = [0.12,0.12,kdz] # 0.2 - 1.5 * 0.1m/s
-    ki = [0.01,0.01,kiz]
+    kp = [1.0,1.0,kpz] # 0.45 - 1.5 * 0.1m/s 0.02
+    kd = [0.0,0.0,kdz] # 0.2 - 1.5 * 0.1m/s 0.032
+    ki = [0.0,0.0,kiz] # 0.0015
 
     # cyclic xy
-    ka = [0.001, 0.001]  # 0.08 - 1.5 * 0.1m/s
-    kad = [0.002, 0.002]
+    ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
+    kad = [0.00, 0.00]
     kai = [0.0000, 0.0000]
-    kr = [0.001, 0.001]
+    kr = [0.0, 0.0]
     krd = [0.0, 0.0]
     kri = [0.0, 0.0]
-    krr = [0.001, 0.001]
+    krr = [0.003, 0.003]
     krri = [0.0, 0.0]
 
     # physical params
@@ -210,10 +211,10 @@ if __name__ == '__main__':
                 cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
             
                 # final control input (INDI loop)
-                final_cmd = monoco.get_angles_and_thrust(flatness_option)
+                # final_cmd = monoco.get_angles_and_thrust(flatness_option)
 
                 # send to monocopter via INDI
-                data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+                # data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
 
 
@@ -230,10 +231,10 @@ if __name__ == '__main__':
 
 
             # final control input (INDI loop)
-            #final_cmd = monoco.get_angles_and_thrust(flatness_option)
+            final_cmd = monoco.get_angles_and_thrust(flatness_option,1/(max_sample_rate/att_loop))
 
             # send to monocopter via INDI
-            #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+            data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             loop_counter = loop_counter + 1
             # normal counter
@@ -241,6 +242,8 @@ if __name__ == '__main__':
             if count % 10 == 0:
                 
                 #print(abs_time) # updating at 120 hz
+                #print(monoco.lift_rotation_wo_rps)
+                #print(np.sqrt((float(abs(monoco.control_signal[2])))/float(monoco.lift_rotation_wo_rps)))
                 print(ref_msg) 
                 #print('shapes: ', np.shape(final_cmd))
                 print('cmd info sent: ', final_cmd)
