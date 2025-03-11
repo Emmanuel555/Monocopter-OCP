@@ -63,8 +63,8 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw) # mechanical limit for monocopter is 0.5m/s
 
     # collective z - reduce this tmr 
-    kpz = 130.0
-    kdz = 40.0
+    kpz = 30.5 # 7.5
+    kdz = 10.5 # 2.5
     kiz = 0.0
     
     # cyclic xyz
@@ -74,13 +74,14 @@ if __name__ == '__main__':
 
     # cyclic xy
     ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
-    kad = [0.00, 0.00]
-    kai = [0.0000, 0.0000]
-    kr = [0.0, 0.0]
+    kad = [0.0, 0.0]
+    kai = [0.0, 0.0]
+    kr = [60.0, 60.0]
     krd = [0.0, 0.0]
     kri = [0.0, 0.0]
-    krr = [0.003, 0.003]
-    krri = [0.0, 0.0]
+    krr = [0.0001, 0.0001] # 0.00005, sim = 0.0091
+    krrd = [0.0, 0.0]
+    krri = [0.1, 0.1] # 0.1, sim = 0.976
 
     # physical params
     wing_radius = 200/1000 # change to 700 next round
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     cl = 0.5
     cd = 0.052
     
-    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kai, kr, krd, kri, krr, krri)
+    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kai, kr, krd, kri, krr, krrd, krri)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd)        
     
     time_last = 0
@@ -209,6 +210,8 @@ if __name__ == '__main__':
 
                 # get angle
                 cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
+
+                cmd_att = cmd_att/(1/(max_sample_rate/att_loop))
             
                 # final control input (INDI loop)
                 # final_cmd = monoco.get_angles_and_thrust(flatness_option)
@@ -218,10 +221,10 @@ if __name__ == '__main__':
 
 
 
-            #if loop_counter % rate_loop == 0:
+            if loop_counter % rate_loop == 0:
 
                 # bod rates
-                #monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
+                monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
             
                 # final control input (INDI loop)
                 #final_cmd = monoco.get_angles_and_thrust(flatness_option)
