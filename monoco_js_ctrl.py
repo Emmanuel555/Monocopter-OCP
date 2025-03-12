@@ -45,9 +45,10 @@ if __name__ == '__main__':
     # loop rates
     loop_counter = 1
 
-    rate_loop = 5 # 72 hz
-    att_loop = 25 # 14.4 hz
-    pid_loop = 25 # 14.4 hz
+    raterate_loop = 1 # 360 hz
+    rate_loop = raterate_loop * 3 # 5, 72 hz
+    att_loop = rate_loop * 1 # 25, 14.4 hz
+    pid_loop = rate_loop * 1 # 25, 14.4 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
@@ -68,17 +69,17 @@ if __name__ == '__main__':
     kiz = 0.0
     
     # cyclic xyz
-    kp = [1.0,1.0,kpz] # 0.45 - 1.5 * 0.1m/s 0.02
-    kd = [0.0,0.0,kdz] # 0.2 - 1.5 * 0.1m/s 0.032
-    ki = [0.0,0.0,kiz] # 0.0015
+    kp = [0.8,0.8,kpz] # 0.45 - 1.5 * 0.1m/s 0.02
+    kd = [0.025,0.025,kdz] # 0.2 - 1.5 * 0.1m/s 0.032
+    ki = [0.003,0.003,kiz] # 0.0015
 
     # cyclic xy
     ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
     kad = [0.0, 0.0]
     kai = [0.0, 0.0]
     kr = [1.0, 1.0]
-    krd = [0.0, 0.0]
-    kri = [0.0, 0.0]
+    krd = [0.1, 0.1]
+    kri = [0.1, 0.1]
     krr = [0.0001, 0.0001] # 0.00005, sim = 0.0091
     krrd = [0.0, 0.0]
     krri = [0.1, 0.1] # 0.1, sim = 0.976
@@ -282,5 +283,5 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_ff'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_pid_tuning'
 #data_saver.save_data(path)

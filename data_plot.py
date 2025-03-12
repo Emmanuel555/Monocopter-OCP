@@ -42,6 +42,7 @@ trim_error_squared = altitude_error_squared[time_index_5:len(altitude_error_squa
 mean_error_squared = sum(trim_error_squared)/len(trim_error_squared)
 rmse = math.sqrt(mean_error_squared)
 print(np.shape(px))
+print('RMSE: ', rmse)
 
 
 
@@ -74,8 +75,8 @@ rmse = round(rmse, 4)
 median_filtered_px = ndimage.median_filter(px, size=1000)
 median_filtered_py = ndimage.median_filter(py, size=1000)
 
-start = 5000
-end = 30000
+start = 0
+end = 15200
 
 print(np.shape(median_filtered_px))
 print('ref pos: ', px_des[0], py_des[0], pz_des[0])

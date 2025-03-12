@@ -250,6 +250,7 @@ class att_ctrl(object):
 
     def get_angle(self,sampling_dt):
         self.cmd_att = self.attitude_loop(self.robot_quat, self.control_signal, sampling_dt)
+        self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
     
@@ -259,6 +260,7 @@ class att_ctrl(object):
             self.cascaded_ref_bod_rates = self.body_rate_loop(cmd_att,sampling_dt)
         else:
             self.cascaded_ref_bod_rates = self.body_rate_loop(cmd_att,sampling_dt) + self.include_jerk_bod_rates()
+        self.cascaded_ref_bod_rates = self.cascaded_ref_bod_rates/sampling_dt
         return (self.cascaded_ref_bod_rates)
     
     
@@ -277,7 +279,7 @@ class att_ctrl(object):
             cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
             #cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
         
-        
+        #cmd_bod_acc = cmd_bod_acc/self.dt
         # angles
         #des_roll = float(self.cmd_att[0])
         #des_pitch = float(self.cmd_att[1])
