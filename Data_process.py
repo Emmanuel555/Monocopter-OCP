@@ -58,6 +58,11 @@ class RealTimeProcessor(object):
         self.quat_z_filted = 0
         self.quat_w_filted = 0
 
+
+        # trigger to start tracking
+        self.start = 0.0
+        self.start_tpp = 0.0
+
         # omega and omega_dot
         #self.Omega = np.array([0, 0, 0])  # flat array
         #self.Omega_dot = np.array([0, 0, 0])  # flat array
@@ -159,6 +164,22 @@ class RealTimeProcessor(object):
         self.quat_y_filted = float(qy)*0.001
         self.quat_z_filted = float(qz)*0.001
         self.quat_w_filted = float(qw)*0.001
+
+        if self.start == 0.0:
+            self.px_last = self.px_filted
+            self.py_last = self.py_filted
+            self.pz_last = self.pz_filted
+
+            self.vx_last = 0.0
+            self.vy_last = 0.0
+            self.vz_last = 0.0
+
+            self.qx_last = self.quat_x_filted
+            self.qy_last = self.quat_y_filted
+            self.qz_last = self.quat_z_filted
+            self.qw_last = self.quat_w_filted
+
+            self.start = 1.0
 
         #return filted_data
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
@@ -444,9 +465,16 @@ class RealTimeProcessor(object):
     def get_Omega_dot_dotdot_filt_eul(self):
         self.get_rotm_filtered()
         self.get_tpp_angle_xy()
-
+        
         roll = self.tpp[0]
         pitch = self.tpp[1]
+
+        if self.start_tpp == 0.0:
+            self.roll_x_last = roll
+            self.pitch_y_last = pitch
+            self.rollrate_x_last = 0.0
+            self.pitchrate_y_last = 0.0
+            self.start_tpp = 1.0
 
         rollrate_x = (roll - self.roll_x_last)/self.sample_time
         pitchrate_y = (pitch - self.pitch_y_last)/self.sample_time

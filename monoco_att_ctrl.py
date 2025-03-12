@@ -262,7 +262,7 @@ class att_ctrl(object):
         return (self.cascaded_ref_bod_rates)
     
     
-    def get_angles_and_thrust(self,flatness_option,ref_sampling_dt):
+    def get_angles_and_thrust(self,flatness_option):
         # self.control_input()
         # cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
 
@@ -279,16 +279,16 @@ class att_ctrl(object):
         
         
         # angles
-        des_roll = float(self.cmd_att[0])
-        des_pitch = float(self.cmd_att[1])
+        #des_roll = float(self.cmd_att[0])
+        #des_pitch = float(self.cmd_att[1])
 
 
         # testing INDI
-        des_roll_rate = float(self.cmd_att[0]/ref_sampling_dt)
-        des_pitch_rate = float(self.cmd_att[1]/ref_sampling_dt)
+        #des_roll_rate = float(self.cmd_att[0]/ref_sampling_dt)
+        #des_pitch_rate = float(self.cmd_att[1]/ref_sampling_dt)
 
-        des_roll_raterate = float(des_roll_rate/ref_sampling_dt)
-        des_pitch_raterate = float(des_pitch_rate/ref_sampling_dt)
+        #des_roll_raterate = float(des_roll_rate/ref_sampling_dt)
+        #des_pitch_raterate = float(des_pitch_rate/ref_sampling_dt)
 
         #cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
         #cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
