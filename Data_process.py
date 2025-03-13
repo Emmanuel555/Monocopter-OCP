@@ -431,14 +431,18 @@ class RealTimeProcessor(object):
             self.central_diff_roll_rate.append(roll)
             self.central_diff_pitch_rate.append(pitch)
             self.tpp_rate_cd += 1.0
+
+            rollrate_x = 0.0
+            pitchrate_y = 0.0
+
         else:
             self.central_diff_roll_rate.pop(0)
             self.central_diff_pitch_rate.pop(0)
             self.central_diff_roll_rate.append(roll)
             self.central_diff_pitch_rate.append(pitch)
 
-        rollrate_x = (self.central_diff_roll_rate[-1] - self.central_diff_roll_rate[0])/(self.sample_time*2.0)
-        pitchrate_y = (self.central_diff_pitch_rate[-1] - self.central_diff_pitch_rate[0])/(self.sample_time*2.0)
+            rollrate_x = (self.central_diff_roll_rate[-1] - self.central_diff_roll_rate[0])/(self.sample_time*2.0)
+            pitchrate_y = (self.central_diff_pitch_rate[-1] - self.central_diff_pitch_rate[0])/(self.sample_time*2.0)
         
 
         ## tpp raterate:
@@ -446,14 +450,19 @@ class RealTimeProcessor(object):
             self.central_diff_roll_raterate.append(roll)
             self.central_diff_pitch_raterate.append(pitch)
             self.tpp_raterate_cd += 1.0
+
+            rollraterate_x = 0.0
+            pitchraterate_y = 0.0
+
         else:
             self.central_diff_roll_raterate.pop(0)
             self.central_diff_pitch_raterate.pop(0)
             self.central_diff_roll_raterate.append(roll)
             self.central_diff_pitch_raterate.append(pitch)
 
-        rollraterate_x = (self.central_diff_roll_raterate[-1] - (2*self.central_diff_roll_raterate[-3]) + self.central_diff_roll_raterate[0])/(np.power(self.sample_time,2)*4.0)
-        pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[-3]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
+            rollraterate_x = (self.central_diff_roll_raterate[-1] - (2*self.central_diff_roll_raterate[2]) + self.central_diff_roll_raterate[0])/(np.power(self.sample_time,2)*4.0)
+            pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[2]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
+
 
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
         self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z

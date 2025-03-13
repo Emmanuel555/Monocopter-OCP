@@ -47,8 +47,12 @@ if __name__ == '__main__':
 
     raterate_loop = 1 # 360/3 = 120hz
     rate_loop = raterate_loop * 2 # 120 hz
-    att_loop = rate_loop * 5 # 10, 60 hz
-    pid_loop = rate_loop * 5 # 10, 60 hz
+
+    #att_loop = rate_loop * 3 # 6, 60 hz
+    #pid_loop = rate_loop * 3 # 6, 60 hz
+
+    att_loop = rate_loop * 5 # 10, 36 hz
+    pid_loop = rate_loop * 5 # 10, 36 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
@@ -80,7 +84,7 @@ if __name__ == '__main__':
     kr = [1.0, 1.0]
     krd = [0.1, 0.1]
     kri = [0.1, 0.1]
-    krr = [0.0001, 0.0001] # 0.00005, sim = 0.0091
+    krr = [0.001, 0.001] # 0.00005, sim = 0.0091
     krrd = [0.0, 0.0]
     krri = [0.1, 0.1] # 0.1, sim = 0.976
 
@@ -139,8 +143,8 @@ if __name__ == '__main__':
             data_processor.data_unpack_filtered(data)
 
             # processed tpp data/feedback
-            rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
-            #rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
+            # rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
+            rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
             linear_state_vector = data_processor.pos_vel_acc_filtered()
             body_pitch = data_processor.body_pitch
             # tpp_angle = data_processor.tpp
@@ -284,5 +288,5 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_pid_tuning'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_tuning_cd_5_test_INDI222_official_30s'
 #data_saver.save_data(path)

@@ -245,6 +245,9 @@ class att_ctrl(object):
         # body raterate controller
         cmd_bod_acc_final = kprr*(cmd_bod_acc_error) + kprrd*(cmd_bod_acc_error_rate) + kprri*(cmd_bod_acc_error*self.dt)
         self.raterate_error_last = cmd_bod_acc_error 
+
+        # NDI
+        # cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
         return (cmd_bod_acc_final)
     
 
@@ -295,6 +298,7 @@ class att_ctrl(object):
         #cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
         #cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
 
+        
         final_des_roll_raterate = float(cmd_bod_acc[0])
         final_des_pitch_raterate = float(cmd_bod_acc[1])
 
@@ -310,6 +314,11 @@ class att_ctrl(object):
         ## when involving pitch roll
         des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/10000 # convert to linear term cos of inner cyclic ctrl
         des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/10000
+
+
+        ## compare against cyclic control
+        #des_x = self.control_signal[0]/100
+        #des_y = self.control_signal[1]/100
         
         
         if abs(des_x) > 1.0:
