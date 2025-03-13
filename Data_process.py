@@ -63,6 +63,15 @@ class RealTimeProcessor(object):
         self.start = 0.0
         self.start_tpp = 0.0
 
+
+        # Central difference tester
+        self.tpp_rate_cd = 0.0
+        self.tpp_raterate_cd = 0.0
+        self.central_diff_roll_rate = []
+        self.central_diff_pitch_rate = []
+        self.central_diff_roll_raterate = []
+        self.central_diff_pitch_raterate = []
+
         # omega and omega_dot
         #self.Omega = np.array([0, 0, 0])  # flat array
         #self.Omega_dot = np.array([0, 0, 0])  # flat array
@@ -363,105 +372,6 @@ class RealTimeProcessor(object):
         # self.tpp[2] = abt_z # disk yaw
 
 
-    def get_Omega_dot_dotdot(self): # taken from shane
-        self.get_rotm()
-        self.get_tpp_angle_xy() # in radians
-
-        diff_qx = self.quat_x - self.qx_last
-        diff_qy = self.quat_y - self.qy_last
-        diff_qz = self.quat_z - self.qz_last
-        diff_qw = self.quat_w - self.qw_last
-
-        diff_diff_qx = diff_qx - self.diff_qx_last
-        diff_diff_qy = diff_qy - self.diff_qy_last
-        diff_diff_qz = diff_qz - self.diff_qz_last
-        diff_diff_qw = diff_qw - self.diff_qz_last
-
-        self.qx_last = self.quat_x
-        self.qy_last = self.quat_y
-        self.qz_last = self.quat_z
-        self.qw_last = self.quat_w
-
-        self.diff_qx_last = diff_qx
-        self.diff_qy_last = diff_qy
-        self.diff_qz_last = diff_qz
-        self.diff_qw_last = diff_qw
-
-        dot_quat = [diff_qw/self.sample_time, diff_qx/self.sample_time, diff_qy/self.sample_time, diff_qz/self.sample_time]
-        dot_dot_quat = [diff_diff_qw/self.sample_time, diff_diff_qx/self.sample_time, diff_diff_qy/self.sample_time, diff_diff_qz/self.sample_time]
-        # the convention for quat here is quat rot mat * qw qx qy qz 
-        E_q_trans = [[-self.quat_x, self.quat_w, self.quat_z, -self.quat_y],
-                     [-self.quat_y, -self.quat_z, self.quat_w, self.quat_x],
-                     [-self.quat_z, self.quat_y, -self.quat_x, self.quat_w]]
-
-        self.Omega = 2 * np.dot(E_q_trans, dot_quat) # 3 x 1 - about x, y, z
-        self.Omega_dot = 2 * np.dot(E_q_trans, dot_dot_quat) # 3 x 1 - about x, y, z
-
-        roll = self.tpp[0]
-        pitch = self.tpp[1]
-
-        rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
-                             [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
-                             [0, -math.sin(roll), math.cos(pitch)*math.cos(roll)]]
-        
-        self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
-        self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
-
-        return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
-
-
-    def get_Omega_dot_dotdot_filt(self):
-        self.get_rotm_filtered()
-        self.get_tpp_angle_xy()
-
-        diff_qx = self.quat_x_filted - self.qx_last
-        diff_qy = self.quat_y_filted - self.qy_last
-        diff_qz = self.quat_z_filted - self.qz_last
-        diff_qw = self.quat_w_filted - self.qw_last
-
-        diff_diff_qx = diff_qx - self.diff_qx_last
-        diff_diff_qy = diff_qy - self.diff_qy_last
-        diff_diff_qz = diff_qz - self.diff_qz_last
-        diff_diff_qw = diff_qw - self.diff_qz_last
-
-        self.qx_last = self.quat_x_filted
-        self.qy_last = self.quat_y_filted
-        self.qz_last = self.quat_z_filted
-        self.qw_last = self.quat_w_filted
-
-        self.diff_qx_last = diff_qx
-        self.diff_qy_last = diff_qy
-        self.diff_qz_last = diff_qz
-        self.diff_qw_last = diff_qw
-
-        dot_quat = [diff_qw/self.sample_time, diff_qx/self.sample_time, diff_qy/self.sample_time, diff_qz/self.sample_time]
-        dot_dot_quat = [diff_diff_qw/self.sample_time, diff_diff_qx/self.sample_time, diff_diff_qy/self.sample_time, diff_diff_qz/self.sample_time]
-        
-        # the convention for quat here is quat rot mat * qw qx qy qz 
-        E_q_trans_filted = [[-self.quat_x_filted, self.quat_w_filted, self.quat_z_filted, -self.quat_y_filted],
-                     [-self.quat_y_filted, -self.quat_z_filted, self.quat_w_filted, self.quat_x_filted],
-                     [-self.quat_z_filted, self.quat_y_filted, -self.quat_x_filted, self.quat_w_filted]]
-        
-        self.Omega = 2 * np.dot(E_q_trans_filted, dot_quat) # 3 x 1 - about x, y, z
-        self.Omega_dot = 2 * np.dot(E_q_trans_filted, dot_dot_quat) # 3 x 1 - about x, y, z
-
-        roll = self.tpp[0]
-        pitch = self.tpp[1]
-
-        rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
-                             [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
-                             [0, -math.sin(roll), math.cos(pitch)*math.cos(roll)]]
-        
-        self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
-        self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
-    
-        self.Omega[1,1] = self.FilterX.filter(self.Omega[1,1])
-        self.Omega[2,1] = self.FilterX.filter(self.Omega[2,1])
-        self.Omega[3,1] = self.FilterX.filter(self.Omega[3,1])
-
-        return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
-
-
     def get_Omega_dot_dotdot_filt_eul(self):
         self.get_rotm_filtered()
         self.get_tpp_angle_xy()
@@ -508,6 +418,62 @@ class RealTimeProcessor(object):
     
         return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
 
+
+    def get_Omega_dot_dotdot_filt_eul_central_diff(self):
+        self.get_rotm_filtered()
+        self.get_tpp_angle_xy()
+        
+        roll = self.tpp[0]
+        pitch = self.tpp[1]
+
+        ## tpp rate:
+        if self.tpp_rate_cd < 3.0:
+            self.central_diff_roll_rate.append(roll)
+            self.central_diff_pitch_rate.append(pitch)
+            self.tpp_rate_cd += 1.0
+        else:
+            self.central_diff_roll_rate.pop(0)
+            self.central_diff_pitch_rate.pop(0)
+            self.central_diff_roll_rate.append(roll)
+            self.central_diff_pitch_rate.append(pitch)
+
+        rollrate_x = (self.central_diff_roll_rate[-1] - self.central_diff_roll_rate[0])/(self.sample_time*2.0)
+        pitchrate_y = (self.central_diff_pitch_rate[-1] - self.central_diff_pitch_rate[0])/(self.sample_time*2.0)
+        
+
+        ## tpp raterate:
+        if self.tpp_raterate_cd < 5.0: # polls every 5 times
+            self.central_diff_roll_raterate.append(roll)
+            self.central_diff_pitch_raterate.append(pitch)
+            self.tpp_raterate_cd += 1.0
+        else:
+            self.central_diff_roll_raterate.pop(0)
+            self.central_diff_pitch_raterate.pop(0)
+            self.central_diff_roll_raterate.append(roll)
+            self.central_diff_pitch_raterate.append(pitch)
+
+        rollraterate_x = (self.central_diff_roll_raterate[-1] - (2*self.central_diff_roll_raterate[-3]) + self.central_diff_roll_raterate[0])/(np.power(self.sample_time,2)*4.0)
+        pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[-3]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
+
+        self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
+        self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z
+
+        rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
+                             [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
+                             [0, -math.sin(roll), math.cos(pitch)*math.cos(roll)]]
+        
+        #self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
+        #self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
+
+        #self.Omega[0] = self.rX.filter(self.Omega[0])
+        #self.Omega[1] = self.pY.filter(self.Omega[1])
+        #self.Omega[2] = self.yZ.filter(self.Omega[2])
+
+        #self.Omega_dot[0] = self.rX.filter(self.Omega_dot[0])
+        #self.Omega_dot[1] = self.pY.filter(self.Omega_dot[1])
+        #self.Omega_dot[2] = self.yZ.filter(self.Omega_dot[2])
+    
+        return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
     
     
     def get_RPY(self): # for body frame

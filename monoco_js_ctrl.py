@@ -45,10 +45,10 @@ if __name__ == '__main__':
     # loop rates
     loop_counter = 1
 
-    raterate_loop = 1 # 360 hz
-    rate_loop = raterate_loop * 3 # 5, 72 hz
-    att_loop = rate_loop * 1 # 25, 14.4 hz
-    pid_loop = rate_loop * 1 # 25, 14.4 hz
+    raterate_loop = 1 # 360/3 = 120hz
+    rate_loop = raterate_loop * 2 # 120 hz
+    att_loop = rate_loop * 5 # 10, 60 hz
+    pid_loop = rate_loop * 5 # 10, 60 hz
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
@@ -140,6 +140,7 @@ if __name__ == '__main__':
 
             # processed tpp data/feedback
             rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
+            #rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
             linear_state_vector = data_processor.pos_vel_acc_filtered()
             body_pitch = data_processor.body_pitch
             # tpp_angle = data_processor.tpp
