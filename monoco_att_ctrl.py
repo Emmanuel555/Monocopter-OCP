@@ -316,7 +316,7 @@ class att_ctrl(object):
         des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/10000
 
 
-        ## compare against cyclic control
+        ## compare against pid control
         #des_x = self.control_signal[0]/100
         #des_y = self.control_signal[1]/100
         

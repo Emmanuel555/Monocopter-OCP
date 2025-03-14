@@ -24,10 +24,12 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status')
                                    
     logging.basicConfig(level=logging.ERROR)
-    
+
+    # status
+    status = "pending for state estimation"
     
     # reference offset for xyz
     x_offset = 0.0
@@ -48,6 +50,9 @@ if __name__ == '__main__':
     raterate_loop = 1 # 360/3 = 120hz
     rate_loop = raterate_loop * 2 # 120 hz
 
+    #att_loop = rate_loop * 1.5 # 3, 120 hz
+    #pid_loop = rate_loop * 1.5 # 3, 120 hz
+
     #att_loop = rate_loop * 3 # 6, 60 hz
     #pid_loop = rate_loop * 3 # 6, 60 hz
 
@@ -62,10 +67,11 @@ if __name__ == '__main__':
     speedX = 2.0
     laps = 5
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
+    alt = 1.2
 
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
 
     # collective z - reduce this tmr 
     kpz = 30.5 # 7.5
@@ -187,7 +193,7 @@ if __name__ == '__main__':
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
-            # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,1.2)
+            # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
             # ref_pos = ref_derivatives[0]
             # ref_vel = ref_derivatives[1]
             # ref_acc = ref_derivatives[2]
@@ -262,10 +268,13 @@ if __name__ == '__main__':
             rmse_num_y = rmse_num_y + (ref_pos[1]-y_offset-linear_state_vector[1])**2
             rmse_num_z = rmse_num_z + (ref_pos[2]-z_offset-linear_state_vector[2])**2
             rmse_num = [rmse_num_x, rmse_num_y, rmse_num_z]
+
+            if count > (5 * max_sample_rate): # 5 seconds
+                status = "experiment started"
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0)
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status)
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -274,6 +283,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
             
             # final rmse calculation
+            status = "Emergency stop"
+            ref_msg = "traj ended..."
             final_rmse_x = math.sqrt(rmse_num_x/count)
             final_rmse_y = math.sqrt(rmse_num_y/count)
             final_rmse_z = math.sqrt(rmse_num_z/count)
@@ -282,7 +293,7 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse)
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status)
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             

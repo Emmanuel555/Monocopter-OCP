@@ -10,6 +10,25 @@ import matplotlib.animation as animation
 from matplotlib import style
 from mpl_toolkits.mplot3d import Axes3D
 
+alt = 1.2
+total_parts = 9
+z_1 = np.linspace(alt, alt+0.6, total_parts)
+z_2 = np.linspace(alt+0.6, alt*2, total_parts)
+z_2 = z_2[1:]
+z_3 = np.linspace(alt*2, alt+0.6, total_parts)
+z_3 = z_3[1:]
+z_4 = np.linspace(alt+0.6, alt, total_parts)
+z_4 = z_4[1:]
+z = np.array([])
+z_suites = np.append(z_1,z_2)
+z_suites = np.append(z_suites,z_3)
+z = np.append(z_suites,z_4)
+
+
+#z_suites = np.append(z,z_suites)
+
+
+print(np.shape(z))
 
 
 start = timeit.default_timer() 
@@ -34,14 +53,20 @@ num_points = int(num_points/speedX) # 0.1 m/s baseline
 # compute x1 and x2
 x = r*np.cos(theta)
 y = r*np.sin(theta) 
+x_test = np.array([])
 
+for i in range(4):
+    if i == 0:
+        x_test = np.append(x_test,x)
+    else:    
+        x_test = np.append(x_test,x[1:])
 #x = np.flip(x)
 #y = np.flip(y)
 
-print(np.shape(x))
+print(np.shape(x_test))
 
 fig, ax = plt.subplots(1)
-ax.plot(x[0:3], y[0:3])
+ax.plot(x[0:], y[0:])
 ax.set_aspect(1)
 plt.show()
 
@@ -122,7 +147,7 @@ snap_y = pva[4,:,1] # snap
 print("original x coordinates: ", x) """
 traj_gen = trajectory_generator.trajectory_generator()
 #derivatives = traj_gen.jerk_snap_9pt_circle(0, 0.4, 0, 1)
-pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(1.16,-0.29,0.9,1,5)
+pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(1.16,-0.29,0.9,1,5,1)
 
 #derivatives = traj_gen.jerk_snap_circle(0.5,0,0,1) .....
 #pos = derivatives[0]

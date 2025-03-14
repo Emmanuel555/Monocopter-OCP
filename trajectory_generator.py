@@ -255,7 +255,7 @@ class trajectory_generator(object):
         return (pva,num_points)
     
 
-    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw):
+    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw,alt):
         # theta goes from 0 to 2pi
         parts = 9 # octagon lap x 5
         theta = np.linspace(0, 2*np.pi, parts)
@@ -287,7 +287,7 @@ class trajectory_generator(object):
         for i in range(total_parts):
             refs.append(ms.Waypoint(
                 time=(total_time/(total_parts-1))*i,
-                position=np.array([x[i], y[i], 1.0]),
+                position=np.array([x[i], y[i], alt]), # altitude used to be 1.0
             ))
 
         polys = ms.generate_trajectory(
@@ -435,6 +435,79 @@ class trajectory_generator(object):
         ref_pos = np.array([ref_x, ref_y, ref_z])
 
         return (ref_pos,msg)
+    
+
+    # 21 laps for 5 times helix
+    def compute_jerk_snap_9pt_helix_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw,alt):
+        # theta goes from 0 to 2pi
+        parts = 9 # octagon lap x 5
+        theta = np.linspace(0, 2*np.pi, parts)
+        total_parts = parts + ((parts -1)*(laps-1)) 
+
+        # the radius of the circle
+        r = radius
+        circumference = 2*np.pi*r
+        total_time = laps*((circumference/0.1)/speedX)
+        num_points = int(laps*((circumference/0.1)*pid_update_rate)) # 0.1 m/s baseline, pid_update_rate = 100 as of now for pid
+        num_points = int(num_points/speedX) # 0.1 m/s baseline
+
+        # z values for helix
+        z_1 = np.linspace(alt, alt+0.6, total_parts)
+        z_2 = np.linspace(alt+0.6, alt*2, total_parts)
+        z_2 = z_2[1:]
+        z_3 = np.linspace(alt*2, alt+0.6, total_parts)
+        z_3 = z_3[1:]
+        z_4 = np.linspace(alt+0.6, alt, total_parts)
+        z_4 = z_4[1:]
+        z_suite = np.append(z_1,z_2)
+        z_suite = np.append(z_suite,z_3)
+        z = np.append(z_suite,z_4)
+        
+
+        # compute x1 and x2
+        x_coordinates = r*np.cos(theta) + x_offset
+        y_coordinates = r*np.sin(theta) + y_offset
+
+
+        if reverse_cw == 1:
+            x_coordinates = np.flip(x_coordinates)
+            y_coordinates = np.flip(y_coordinates)
+
+
+        x = np.array([])
+        y = np.array([])
+        refs = []
+
+
+        for i in range(laps):
+            if i == 0:
+                x = np.append(x,x_coordinates)
+                y = np.append(y,y_coordinates) 
+            else:
+                x = np.append(x,x_coordinates[1:])
+                y = np.append(y,y_coordinates[1:])            
+            if (i+1) % 4.0 == 0:  
+                z = np.append(z,z)
+                
+
+        for i in range(total_parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(total_parts-1))*i,
+                position=np.array([x[i], y[i], z[i]]),
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_points)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
+        return (pva,num_points)
 
 
     
