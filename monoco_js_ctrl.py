@@ -44,34 +44,43 @@ if __name__ == '__main__':
     rmse_num_z = 0.0
     final_rmse_z = 0.0
 
+    # must always start from the ground
     # loop rates
     loop_counter = 1
 
     raterate_loop = 1 # 360/3 = 120hz
-    rate_loop = raterate_loop * 2 # 120 hz
 
-    #att_loop = rate_loop * 1.5 # 3, 120 hz
-    #pid_loop = rate_loop * 1.5 # 3, 120 hz
+    rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
+    att_loop = rate_loop * 5 # 10, 36 hz best so far
+    pid_loop = rate_loop * 5 # 10, 36 hz best so far
 
-    #att_loop = rate_loop * 3 # 6, 60 hz
-    #pid_loop = rate_loop * 3 # 6, 60 hz
 
-    att_loop = rate_loop * 5 # 10, 36 hz
-    pid_loop = rate_loop * 5 # 10, 36 hz
+    # rate_loop = raterate_loop * 3 # 90 hz, nt good 
+    # att_loop = rate_loop * 1 # 120  nt good
+    # pid_loop = rate_loop * 1 # 120, nt good
+
+    #att_loop = rate_loop * 1.5 # 3, 120 hz not good
+    #pid_loop = rate_loop * 1.5 # 3, 120 hz not good 
+
+    #att_loop = rate_loop * 3 # 6, 60 hz second best 
+    #pid_loop = rate_loop * 3 # 6, 60 hz second best
+
+    #att_loop = rate_loop * 6 # 30, 12 hz not good
+    #pid_loop = rate_loop * 6 # 30, 12 hz not good
 
     # trajectory generator
     traj_gen = trajectory_generator.trajectory_generator()
 
     # circle parameters
-    radius = 1.2
-    speedX = 2.0
-    laps = 5
+    radius = 0.5 
+    speedX = 2.0 # 2 still the best
+    laps = 30
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
-    alt = 1.2
+    alt = 1.5
 
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
 
     # collective z - reduce this tmr 
     kpz = 30.5 # 7.5
@@ -111,7 +120,7 @@ if __name__ == '__main__':
     time_end = time.time() + (60*100*minutes) 
     
     # flatness option
-    flatness_option = 0
+    flatness_option = 1  # this is a must!
 
     # Monocopter UDP IP & Port
     UDP_IP = "192.168.65.221"
@@ -178,28 +187,28 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                ref = traj_gen.hover_test(x_offset,y_offset)
+                # ref = traj_gen.hover_test(x_offset,y_offset)
                 
-                hovering_ff = np.array([0.0, 0.0, 0.0])
-                ref_pos = ref[0]
-                ref_vel = hovering_ff
-                ref_acc = hovering_ff
-                ref_jerk = hovering_ff
-                ref_snap = hovering_ff
-                ref_msg = ref[1]
+                # hovering_ff = np.array([0.0, 0.0, 0.0])
+                # ref_pos = ref[0]
+                # ref_vel = hovering_ff
+                # ref_acc = hovering_ff
+                # ref_jerk = hovering_ff
+                # ref_snap = hovering_ff
+                # ref_msg = ref[1]
 
                 
 
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
-            # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-            # ref_pos = ref_derivatives[0]
-            # ref_vel = ref_derivatives[1]
-            # ref_acc = ref_derivatives[2]
-            # ref_jerk = ref_derivatives[3]
-            # ref_snap = ref_derivatives[4]
-            # ref_msg = ref_derivatives[5]
+                ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                ref_pos = ref_derivatives[0]
+                ref_vel = ref_derivatives[1]
+                ref_acc = ref_derivatives[2]
+                ref_jerk = ref_derivatives[3]
+                ref_snap = ref_derivatives[4]
+                ref_msg = ref_derivatives[5]
 
                 # update references for PID loop
                 monoco.update_ref_pos(ref_pos)
@@ -269,7 +278,7 @@ if __name__ == '__main__':
             rmse_num_z = rmse_num_z + (ref_pos[2]-z_offset-linear_state_vector[2])**2
             rmse_num = [rmse_num_x, rmse_num_y, rmse_num_z]
 
-            if count > (5 * max_sample_rate): # 5 seconds
+            if count > (20 * max_sample_rate): # 5 seconds
                 status = "experiment started"
             
             # save data
@@ -299,5 +308,5 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_tuning_cd_5_test_INDI222_official_30s'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
+data_saver.save_data(path)

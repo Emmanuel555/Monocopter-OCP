@@ -194,6 +194,8 @@ class att_ctrl(object):
         # position pid controller
         self.control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
 
+        # add in vel control?
+
         # w acceleration references, velocity not needed as d term from position compensates that already
         self.control_signal = self.control_signal + self.ref_acc
 
