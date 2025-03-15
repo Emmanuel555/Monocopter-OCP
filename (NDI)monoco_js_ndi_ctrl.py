@@ -50,9 +50,12 @@ if __name__ == '__main__':
 
     raterate_loop = 1 # 360/3 = 120hz
 
-    rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
-    att_loop = rate_loop * 5 # 10, 36 hz best so far
-    pid_loop = rate_loop * 5 # 10, 36 hz best so far
+    rate_loop = 1 # max 180hz
+    att_loop = rate_loop * 2 # same as rate loop, try first
+    # att_loop = rate_loop * 5 # 10, 36 hz best so far
+    vel_loop = rate_loop * 3 # 90hz
+    pid_loop = rate_loop * 4 # 90hz
+
 
 
     # rate_loop = raterate_loop * 3 # 90 hz, nt good 
@@ -80,19 +83,24 @@ if __name__ == '__main__':
 
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
 
     # collective z - reduce this tmr 
     kpz = 30.5 # 7.5
     kdz = 10.5 # 2.5
     kiz = 0.0
     
-    # cyclic xyz
+    # cyclic xyz (position)
     kp = [0.8,0.8,kpz] # 0.45 - 1.5 * 0.1m/s 0.02
     kd = [0.025,0.025,kdz] # 0.2 - 1.5 * 0.1m/s 0.032
     ki = [0.003,0.003,kiz] # 0.0015
 
-    # cyclic xy
+    # cyclic xyz (velocity)
+    kvp = [1.0,1.0,1.0] 
+    kvd = [0.0,0.0,0.0] 
+    kvi = [0.0,0.0,0.0] 
+
+    # cyclic xy (attitude)
     ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
     kad = [0.0, 0.0]
     kai = [0.0, 0.0]
@@ -110,7 +118,7 @@ if __name__ == '__main__':
     cl = 0.5
     cd = 0.052
     
-    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, ka, kad, kai, kr, krd, kri, krr, krrd, krri)
+    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, kvd, kvi, ka, kad, kai, kr, krd, kri, krr, krrd, krri)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd)        
     
     time_last = 0
@@ -120,7 +128,7 @@ if __name__ == '__main__':
     time_end = time.time() + (60*100*minutes) 
     
     # flatness option
-    flatness_option = 1  # this is a must!
+    flatness_option = 0  # this is a must!
 
     # Monocopter UDP IP & Port
     UDP_IP = "192.168.65.221"
@@ -158,7 +166,7 @@ if __name__ == '__main__':
             data_processor.data_unpack_filtered(data)
 
             # processed tpp data/feedback
-            # rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
+            # rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_finite_diff()
             rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
             linear_state_vector = data_processor.pos_vel_acc_filtered()
             body_pitch = data_processor.body_pitch
@@ -187,28 +195,28 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                # ref = traj_gen.hover_test(x_offset,y_offset)
+                ref = traj_gen.hover_test(x_offset,y_offset)
                 
-                # hovering_ff = np.array([0.0, 0.0, 0.0])
-                # ref_pos = ref[0]
-                # ref_vel = hovering_ff
-                # ref_acc = hovering_ff
-                # ref_jerk = hovering_ff
-                # ref_snap = hovering_ff
-                # ref_msg = ref[1]
+                hovering_ff = np.array([0.0, 0.0, 0.0])
+                ref_pos = ref[0]
+                ref_vel = hovering_ff
+                ref_acc = hovering_ff
+                ref_jerk = hovering_ff
+                ref_snap = hovering_ff
+                ref_msg = ref[1]
 
                 
 
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
-                ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                ref_pos = ref_derivatives[0]
-                ref_vel = ref_derivatives[1]
-                ref_acc = ref_derivatives[2]
-                ref_jerk = ref_derivatives[3]
-                ref_snap = ref_derivatives[4]
-                ref_msg = ref_derivatives[5]
+                # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                # ref_pos = ref_derivatives[0]
+                # ref_vel = ref_derivatives[1]
+                # ref_acc = ref_derivatives[2]
+                # ref_jerk = ref_derivatives[3]
+                # ref_snap = ref_derivatives[4]
+                # ref_msg = ref_derivatives[5]
 
                 # update references for PID loop
                 monoco.update_ref_pos(ref_pos)
@@ -217,7 +225,7 @@ if __name__ == '__main__':
                 monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
 
                 # control input
-                monoco.control_input(1/(max_sample_rate/pid_loop))
+                monoco.p_control_input(1/(max_sample_rate/pid_loop))
 
                 # final control input (INDI loop)
                 #final_cmd = monoco.get_angles_and_thrust(flatness_option)
@@ -226,7 +234,12 @@ if __name__ == '__main__':
                 #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
 
+
+            if loop_counter % vel_loop == 0:
+                monoco.v_control_input(1/(max_sample_rate/vel_loop))    
+
             
+
             if loop_counter % att_loop == 0:
 
                 # get angle
@@ -237,23 +250,13 @@ if __name__ == '__main__':
 
                 # send to monocopter via INDI
                 # data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+      
 
-
-
-            if loop_counter % rate_loop == 0:
-
-                # bod rates
-                monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
-            
-                # final control input (INDI loop)
-                #final_cmd = monoco.get_angles_and_thrust(flatness_option)
-
-                # send to monocopter via INDI
-                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
-
-
+            # bod rates
+            monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
+        
             # final control input (INDI loop)
-            final_cmd = monoco.get_angles_and_thrust(flatness_option)
+            final_cmd = monoco.NDI_get_angles_and_thrust(flatness_option)
 
             # send to monocopter via INDI
             data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
@@ -308,5 +311,5 @@ if __name__ == '__main__':
             
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-data_saver.save_data(path)
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
+#data_saver.save_data(path)

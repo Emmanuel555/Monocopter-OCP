@@ -59,12 +59,12 @@ class RealTimeProcessor(object):
         self.quat_w_filted = 0
 
 
-        # trigger to start tracking
+        # trigger to start tracking for finite difference
         self.start = 0.0
         self.start_tpp = 0.0
 
 
-        # Central difference tester
+        # Central difference 
         self.tpp_rate_cd = 0.0
         self.tpp_raterate_cd = 0.0
         self.central_diff_roll_rate = []
@@ -72,9 +72,20 @@ class RealTimeProcessor(object):
         self.central_diff_roll_raterate = []
         self.central_diff_pitch_raterate = []
 
+        self.vel_cd = 0.0
+        self.acc_cd = 0.0
+        self.central_diff_x_vel = []
+        self.central_diff_y_vel = []
+        self.central_diff_z_vel = []
+        self.central_diff_x_acc = []
+        self.central_diff_y_acc = []
+        self.central_diff_z_acc = []
+
+
         # omega and omega_dot
         #self.Omega = np.array([0, 0, 0])  # flat array
         #self.Omega_dot = np.array([0, 0, 0])  # flat array
+
 
         # component of rotation matrix
         self.R11 = 0
@@ -141,6 +152,7 @@ class RealTimeProcessor(object):
         self.raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
         #return raw_data
 
+
     def data_unpack_filtered(self,udp_data):
         x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
 
@@ -194,23 +206,56 @@ class RealTimeProcessor(object):
         self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
 
     
-    def pos_vel_acc_filtered(self):
-        self.vx = (self.px_filted - self.px_last)/self.sample_time
-        self.vy = (self.py_filted - self.py_last)/self.sample_time
-        self.vz = (self.pz_filted - self.pz_last)/self.sample_time
+    def pos_vel_acc_filtered(self): ## central difference
 
-        self.ax = (self.vx - self.vx_last)/self.sample_time
-        self.ay = (self.vy - self.vy_last)/self.sample_time
-        self.az = (self.vz - self.vz_last)/self.sample_time
+        ## velocity:
+        if self.vel_cd < 3.0:
+            self.central_diff_x_vel.append(self.px_filted)
+            self.central_diff_y_vel.append(self.py_filted)
+            self.central_diff_z_vel.append(self.pz_filted)
+            self.vel_cd += 1.0
 
-        self.px_last = self.px_filted
-        self.py_last = self.py_filted
-        self.pz_last = self.pz_filted
+            self.vx = 0.0
+            self.vy = 0.0
+            self.vz = 0.0
 
-        self.vx_last = self.vx
-        self.vy_last = self.vy
-        self.vz_last = self.vz
+        else:
+            self.central_diff_x_vel.pop(0)
+            self.central_diff_y_vel.pop(0)
+            self.central_diff_z_vel.pop(0)
+            self.central_diff_x_vel.append(self.px_filted)
+            self.central_diff_y_vel.append(self.py_filted)
+            self.central_diff_z_vel.append(self.pz_filted)
 
+            self.vx = (self.central_diff_x_vel[-1] - self.central_diff_x_vel[0])/(self.sample_time*2.0)
+            self.vy = (self.central_diff_y_vel[-1] - self.central_diff_y_vel[0])/(self.sample_time*2.0)
+            self.vz = (self.central_diff_z_vel[-1] - self.central_diff_z_vel[0])/(self.sample_time*2.0)
+            
+
+        ## acceleration:
+        if self.acc_cd < 5.0: # polls every 5 times
+            self.central_diff_x_acc.append(self.px_filted)
+            self.central_diff_y_acc.append(self.py_filted)
+            self.central_diff_z_acc.append(self.pz_filted)
+            self.acc_cd += 1.0
+
+            self.ax = 0.0
+            self.ay = 0.0
+            self.az = 0.0
+
+        else:
+            self.central_diff_x_acc.pop(0)
+            self.central_diff_y_acc.pop(0)
+            self.central_diff_z_acc.pop(0)
+            self.central_diff_x_acc.append(self.px_filted)
+            self.central_diff_y_acc.append(self.py_filted)
+            self.central_diff_z_acc.append(self.pz_filted)
+
+            self.ax = (self.central_diff_x_acc[-1] - (2*self.central_diff_x_acc[2]) + self.central_diff_x_acc[0])/(np.power(self.sample_time,2)*4.0)
+            self.ay = (self.central_diff_y_acc[-1] - (2*self.central_diff_y_acc[2]) + self.central_diff_y_acc[0])/(np.power(self.sample_time,2)*4.0)
+            self.az = (self.central_diff_z_acc[-1] - (2*self.central_diff_z_acc[2]) + self.central_diff_z_acc[0])/(np.power(self.sample_time,2)*4.0)
+
+            
         pos_vel_acc = np.array([self.px_filted, self.py_filted, self.pz_filted, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
         
         #return vel_acc
@@ -372,7 +417,7 @@ class RealTimeProcessor(object):
         # self.tpp[2] = abt_z # disk yaw
 
 
-    def get_Omega_dot_dotdot_filt_eul(self):
+    def get_Omega_dot_dotdot_filt_eul_finite_diff(self):
         self.get_rotm_filtered()
         self.get_tpp_angle_xy()
         

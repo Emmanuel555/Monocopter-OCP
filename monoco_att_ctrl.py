@@ -13,7 +13,7 @@ import numpy.linalg as la
 
 
 class att_ctrl(object):
-    def __init__(self,p_gains,d_gains,i_gains,angle_gains,angle_gains_d,angle_gains_i,body_rate_gains,body_rate_gains_d,body_rate_gains_i,body_rate_rate_gains,body_rate_rate_gains_d,body_rate_rate_gains_i):
+    def __init__(self,p_gains,d_gains,i_gains,vel_gains,vel_gains_d,vel_gains_i,angle_gains,angle_gains_d,angle_gains_i,body_rate_gains,body_rate_gains_d,body_rate_gains_i,body_rate_rate_gains,body_rate_rate_gains_d,body_rate_rate_gains_i):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -27,6 +27,10 @@ class att_ctrl(object):
         self.kp = np.array(p_gains) 
         self.kd = np.array(d_gains) 
         self.ki = np.array(i_gains) 
+        # vel
+        self.kpvel = np.array(vel_gains) 
+        self.kdvel = np.array(vel_gains_d) 
+        self.kivel = np.array(vel_gains_i) 
         # attitude/angle
         # self.kpa = np.array([10, 10]) # abt x y
         self.kpa = np.array(angle_gains) # abt x y
@@ -67,10 +71,12 @@ class att_ctrl(object):
 
         ## control signals
         self.position_error_last = np.array([0.0, 0.0, 0.0])
+        self.velocity_error_last = np.array([0.0, 0.0, 0.0])
         self.angle_error_last = np.array([0.0, 0.0])
         self.rate_error_last = np.array([0.0, 0.0])
         self.raterate_error_last = np.array([0.0, 0.0])
-        self.control_signal = np.array([0.0,0.0,0.0]) 
+        self.p_control_signal = np.array([0.0,0.0,0.0]) 
+        self.v_control_signal = np.array([0.0,0.0,0.0]) 
         self.z_offset = 0.0
         self.cmd_z = 0.0
         self.cmd_att = np.array([0.0,0.0])
@@ -160,7 +166,7 @@ class att_ctrl(object):
         return (cmd_att_final)
     
 
-    def control_input(self,sampling_dt):
+    def p_control_input(self,sampling_dt):
         # control gains
         # kpx = 12_000
         # kpy = 12_000
@@ -192,25 +198,40 @@ class att_ctrl(object):
         robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
 
         # position pid controller
-        self.control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
-
-        # add in vel control?
-
-        # w acceleration references, velocity not needed as d term from position compensates that already
-        self.control_signal = self.control_signal + self.ref_acc
-
+        self.p_control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
+        
         # collective thrust - linearised
-        self.collective_thrust()
-    
+        self.collective_thrust(self.p_control_signal[2])
 
-    def collective_thrust(self): 
-        if self.control_signal[2] == 0:
+        # to velocity controller
+        self.p_control_signal = self.p_control_signal/sampling_dt
+
+
+    def v_control_input(self,sampling_dt):
+        vel_gains_p = self.kpvel
+        vel_gains_d = self.kdvel
+        vel_gains_i = self.kivel
+
+        # add in vel controller
+        v_ref = self.p_control_signal
+        v_error = v_ref - self.robot_vel
+        v_rate_error = (v_error - self.velocity_error_last)/sampling_dt
+        v_integral_error = (v_error*sampling_dt)
+        self.velocity_error_last = v_error
+        self.v_control_signal = (vel_gains_p * v_error) + (vel_gains_d * v_rate_error) + (vel_gains_i * v_integral_error)
+        
+        # w acceleration references
+        self.v_control_signal = self.v_control_signal + self.ref_acc
+
+
+    def collective_thrust(self,p_error_z): 
+        if p_error_z == 0:
             self.des_rps = 0.0
         else:
             if self.lift_rotation_wo_rps == 0.0:
                 self.des_rps = 0.0
             else:
-                self.des_rps = (self.control_signal[2]/abs(self.control_signal[2]))*np.sqrt((float(abs(self.control_signal[2])))/self.lift_rotation_wo_rps) # input to motor
+                self.des_rps = (p_error_z/abs(p_error_z))*np.sqrt((float(abs(p_error_z)))/self.lift_rotation_wo_rps) # input to motor
         
         des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
         self.cmd_z = des_thrust
@@ -254,7 +275,7 @@ class att_ctrl(object):
     
 
     def get_angle(self,sampling_dt):
-        self.cmd_att = self.attitude_loop(self.robot_quat, self.control_signal, sampling_dt)
+        self.cmd_att = self.attitude_loop(self.robot_quat, self.v_control_signal, sampling_dt)
         self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
@@ -336,7 +357,72 @@ class att_ctrl(object):
         ## final cmd at the end
         final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
+        return (final_cmd)
+    
 
+    def NDI_get_angles_and_thrust(self,flatness_option):
+        # self.control_input()
+        # cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
+
+        if flatness_option == 0:
+            #cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
+            cmd_bod_acc = self.kprr*(self.cascaded_ref_bod_rates)
+        else:
+            cmd_bod_acc = self.kprr*(self.cascaded_ref_bod_rates)
+            cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
+           
+        #cmd_bod_acc = cmd_bod_acc/self.dt
+        # angles
+        #des_roll = float(self.cmd_att[0])
+        #des_pitch = float(self.cmd_att[1])
+
+
+        # testing INDI
+        #des_roll_rate = float(self.cmd_att[0]/ref_sampling_dt)
+        #des_pitch_rate = float(self.cmd_att[1]/ref_sampling_dt)
+
+        #des_roll_raterate = float(des_roll_rate/ref_sampling_dt)
+        #des_pitch_raterate = float(des_pitch_rate/ref_sampling_dt)
+
+        #cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
+        #cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
+
+        
+        final_des_roll_raterate = float(cmd_bod_acc[0])
+        final_des_pitch_raterate = float(cmd_bod_acc[1])
+
+
+        # output saturation/normalisation
+        des_rps = self.des_rps/1000
+        
+
+        if abs(des_rps) > 1.0:
+            des_rps = 1.0*(des_rps/abs(des_rps))
+
+
+        ## when involving pitch roll
+        des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/10000 # convert to linear term cos of inner cyclic ctrl
+        des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/10000
+
+
+        ## compare against pid control
+        #des_x = self.control_signal[0]/100
+        #des_y = self.control_signal[1]/100
+        
+        
+        if abs(des_x) > 1.0:
+            des_x = 1.0*(des_x/abs(des_x))
+
+        if abs(des_y) > 1.0:
+            des_y = 1.0*(des_y/abs(des_y))
+        
+
+        cyclic_gain = 1000000
+        collective_gain = 1000000
+
+        ## final cmd at the end
+        final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+        
         return (final_cmd)
     
 
