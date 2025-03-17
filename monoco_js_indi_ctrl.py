@@ -272,7 +272,9 @@ if __name__ == '__main__':
             data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             loop_counter = loop_counter + 1
-            # normal counter
+
+
+            # normal counter to visibly see the updates on terminal
             count = count + 1
             if count % 10 == 0:
                 
@@ -285,15 +287,18 @@ if __name__ == '__main__':
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
                 #print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
+
+            # start experiment
+            if count > (20 * max_sample_rate): # 5 seconds
+                status = "experiment started"
+
+
             # rmse accumulation
             rmse_num_x = rmse_num_x + (ref_pos[0]-x_offset-linear_state_vector[0])**2
             rmse_num_y = rmse_num_y + (ref_pos[1]-y_offset-linear_state_vector[1])**2
             rmse_num_z = rmse_num_z + (ref_pos[2]-z_offset-linear_state_vector[2])**2
             rmse_num = [rmse_num_x, rmse_num_y, rmse_num_z]
 
-            if count > (20 * max_sample_rate): # 5 seconds
-                status = "experiment started"
-            
             # save data
             data_saver.add_item(abs_time,
                                 linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status)
