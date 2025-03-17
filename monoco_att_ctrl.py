@@ -204,7 +204,7 @@ class att_ctrl(object):
         self.collective_thrust(self.p_control_signal[2])
 
         # to velocity controller
-        self.p_control_signal = self.p_control_signal/sampling_dt
+        # self.p_control_signal = self.p_control_signal/sampling_dt
 
 
     def v_control_input(self,sampling_dt):
@@ -275,7 +275,7 @@ class att_ctrl(object):
     
 
     def get_angle(self,sampling_dt):
-        self.cmd_att = self.attitude_loop(self.robot_quat, self.v_control_signal, sampling_dt)
+        self.cmd_att = self.attitude_loop(self.robot_quat, self.p_control_signal, sampling_dt)
         self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)

@@ -51,9 +51,9 @@ if __name__ == '__main__':
     raterate_loop = 1 # 360/3 = 120hz
 
     rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
-    att_loop = rate_loop * 1.5 # same as rate loop, try next wk on pos hold
-    # att_loop = rate_loop * 5 # 10, 36 hz best so far
-    vel_loop = rate_loop * 3 # 8, 36 hz best so far
+    #att_loop = rate_loop * 1.5 # same as rate loop, try next wk on pos hold
+    att_loop = rate_loop * 5 # 10, 36 hz best so far
+    #vel_loop = rate_loop * 5 # 8, 36 hz best so far
     pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
 
 
@@ -91,9 +91,9 @@ if __name__ == '__main__':
     kiz = 0.0
     
     # cyclic xyz (position)
-    kp = [0.8,0.8,kpz] # 0.45 - 1.5 * 0.1m/s 0.02
-    kd = [0.025,0.025,kdz] # 0.2 - 1.5 * 0.1m/s 0.032
-    ki = [0.003,0.003,kiz] # 0.0015
+    kp = [0.8,0.8,kpz] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
+    kd = [0.025,0.025,kdz] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
+    ki = [0.003,0.003,kiz] # 0.0015   0.003
 
     # cyclic xyz (velocity)
     kvp = [1.0,1.0,1.0] 
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     kad = [0.0, 0.0]
     kai = [0.0, 0.0]
     kr = [1.0, 1.0]
-    krd = [0.1, 0.1]
-    kri = [0.1, 0.1]
+    krd = [0.1, 0.1] # 0.1
+    kri = [0.1, 0.1] # 0.1
     krr = [0.001, 0.001] # 0.00005, sim = 0.0091
     krrd = [0.0, 0.0]
     krri = [0.1, 0.1] # 0.1, sim = 0.976
@@ -235,8 +235,8 @@ if __name__ == '__main__':
 
 
 
-            if loop_counter % vel_loop == 0:
-                monoco.v_control_input(1/(max_sample_rate/vel_loop))    
+            #if loop_counter % vel_loop == 0:
+            #    monoco.v_control_input(1/(max_sample_rate/vel_loop))    
 
             
 
