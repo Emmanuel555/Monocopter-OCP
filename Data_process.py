@@ -333,7 +333,7 @@ class RealTimeProcessor(object):
 
         bod_roll = np.pi/2 - bod_roll
 
-        shift = np.pi/4
+        shift = 0.0
         
         ## tpp roll   
         tpp_roll = math.cos(yaw-shift)*bod_roll

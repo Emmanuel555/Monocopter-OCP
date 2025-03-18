@@ -51,7 +51,7 @@ if __name__ == '__main__':
             pos = data_processor.filted_data
             
             # processed tpp data/feedback
-            state_vector = data_processor.get_Omega_dot_dotdot_filt_eul()
+            state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
             
             # needa find pitch angle of the body during hover
             # data_processor.get_rotm_filtered()
@@ -96,7 +96,7 @@ if __name__ == '__main__':
                 print("tpp bodypitch:", body_pitch)
                 #print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
-                #print("position: ", pos[0:3])
+                print("position: ", pos[0:3])
                 #print("tpp quaternion: ", tpp_quat)
 
                 

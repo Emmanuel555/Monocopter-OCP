@@ -340,8 +340,8 @@ class att_ctrl(object):
 
 
         ## compare against pid control
-        #des_x = self.control_signal[0]/100
-        #des_y = self.control_signal[1]/100
+        #des_x = self.p_control_signal[0]/50
+        #des_y = self.p_control_signal[1]/50
         
         
         if abs(des_x) > 1.0:
@@ -355,12 +355,12 @@ class att_ctrl(object):
         collective_gain = 1000000
 
         ## final cmd at the end
-        final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+        final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, 0*des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         return (final_cmd)
     
 
-    def NDI_get_angles_and_thrust(self,flatness_option):
+    """ def NDI_get_angles_and_thrust(self,flatness_option):
         # self.control_input()
         # cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
 
@@ -423,7 +423,7 @@ class att_ctrl(object):
         ## final cmd at the end
         final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
-        return (final_cmd)
+        return (final_cmd) """
     
 
     def include_jerk_bod_rates(self):

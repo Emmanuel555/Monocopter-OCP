@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     
     # cyclic xyz (position)
     kp = [0.8,0.8,kpz] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
-    kd = [0.025,0.025,kdz] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
-    ki = [0.003,0.003,kiz] # 0.0015   0.003
+    kd = [0.0,0.0,kdz] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
+    ki = [0.0,0.0,kiz] # 0.0015   0.003
 
     # cyclic xyz (velocity)
     kvp = [1.0,1.0,1.0] 
@@ -301,7 +301,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status)
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd)
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -320,11 +320,12 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status)
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd)
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/indi_sim_test_180'
+data_saver.save_data(path)
