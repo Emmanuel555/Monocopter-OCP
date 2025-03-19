@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -57,6 +57,9 @@ if __name__ == '__main__':
     pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
 
 
+    att_loop = 1
+    pid_loop = 5
+
 
     # rate_loop = raterate_loop * 3 # 90 hz, nt good 
     # att_loop = rate_loop * 1 # 120  nt good
@@ -86,14 +89,14 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
 
     # collective z - reduce this tmr 
-    kpz = 30.5 # 7.5
-    kdz = 10.5 # 2.5
+    kpz = 0.0 # 7.5, 30.5
+    kdz = 0.0 # 2.5, 10.5
     kiz = 0.0
     
     # cyclic xyz (position)
-    kp = [0.8,0.8,kpz] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
+    kp = [1.0,1.0,kpz] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
     kd = [0.0,0.0,kdz] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
-    ki = [0.0,0.0,kiz] # 0.0015   0.003
+    ki = [0.1,0.1,kiz] # 0.0015   0.003
 
     # cyclic xyz (velocity)
     kvp = [1.0,1.0,1.0] 
@@ -101,15 +104,15 @@ if __name__ == '__main__':
     kvi = [0.0,0.0,0.0] 
 
     # cyclic xy (attitude)
-    ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
+    ka = [0.1, 0.1]  # 0.08 - 1.5 * 0.1m/s
     kad = [0.0, 0.0]
-    kai = [0.0, 0.0]
+    kai = [0.01, 0.01]
     kr = [1.0, 1.0]
-    krd = [0.1, 0.1] # 0.1
-    kri = [0.1, 0.1] # 0.1
-    krr = [0.001, 0.001] # 0.00005, sim = 0.0091
+    krd = [0.0, 0.0] # 0.1
+    kri = [0.0, 0.0] # 0.1
+    krr = [0.0001, 0.0001] # 0.00005, sim = 0.0091, 0.001
     krrd = [0.0, 0.0]
-    krri = [0.1, 0.1] # 0.1, sim = 0.976
+    krri = [0.0, 0.0] # 0.1, sim = 0.976
 
     # physical params
     wing_radius = 200/1000 # change to 700 next round
@@ -170,7 +173,7 @@ if __name__ == '__main__':
             rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
             linear_state_vector = data_processor.pos_vel_acc_filtered()
             body_pitch = data_processor.body_pitch
-            # tpp_angle = data_processor.tpp
+            tpp_angle = data_processor.tpp
             # tpp_omega = data_processor.Omega
             # tpp_omega_dot = data_processor.Omega_dot
             tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
@@ -301,7 +304,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd)
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle)
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -320,12 +323,12 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd)
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle)
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/indi_sim_test_180'
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/movemove_collective0.0_clean_gains0.1,0.0,0.01_att360_1.0,0.0,0.1pid72_tpp_sim_-90'
 data_saver.save_data(path)
