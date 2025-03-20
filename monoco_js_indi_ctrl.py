@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -174,6 +174,9 @@ if __name__ == '__main__':
             linear_state_vector = data_processor.pos_vel_acc_filtered()
             body_pitch = data_processor.body_pitch
             tpp_angle = data_processor.tpp
+            tpp_omega = data_processor.Omega
+            tpp_omega_dot = data_processor.Omega_dot
+            body_yaw = data_processor.yaw
             # tpp_omega = data_processor.Omega
             # tpp_omega_dot = data_processor.Omega_dot
             tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
@@ -183,7 +186,7 @@ if __name__ == '__main__':
             time_last = time.time()
 
             # update positions etc.
-            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, z_offset)
+            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat, dt, z_offset, body_yaw)
 
             # compute bem thrust
             monoco.compute_bem_wo_rps(body_pitch)
@@ -304,7 +307,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle)
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot)
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -323,7 +326,7 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle)
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot)
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             

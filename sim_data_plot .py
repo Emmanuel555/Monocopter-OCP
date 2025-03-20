@@ -21,7 +21,7 @@ time = mat_data['Data_time']
 #position = mat_data['data']
 cmd = mat_data['cmd']
 tpp = mat_data['tpp_angle']
-print(tpp[1])
+#print(tpp[1])
 
 cmds = [row for row in cmd] # column vector
 
@@ -29,7 +29,7 @@ cmd_x = [row[0][0] for row in cmds] # column vector
 cmd_y = [row[0][1] for row in cmds]
 
 tpp_roll = [row[0] for row in tpp] # column vector
-tpp_pitch = [row[0] for row in tpp]
+tpp_pitch = [row[1] for row in tpp]
 
 cmd_x = np.array([cmd_x])
 cmd_y = np.array([cmd_y])
@@ -37,8 +37,9 @@ cmd_y = np.array([cmd_y])
 tpp_roll = np.array([tpp_roll])
 tpp_pitch = np.array([tpp_pitch])
 
-print(type(time))
-print(type(cmd_x))
+#print(type(time))
+print(tpp_roll[0]*(180/np.pi))
+print(tpp_pitch[0]*(180/np.pi))
 
 #plt.figure(figsize=(10, 5))
 fig, ((ax1), (ax2)) = plt.subplots(2, 1, figsize=(40, 10))

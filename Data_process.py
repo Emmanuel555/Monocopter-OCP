@@ -48,6 +48,9 @@ class RealTimeProcessor(object):
 
         # tpp angle
         self.tpp = np.array([0.0, 0.0, 0.0])  # flat array 
+        
+        # body yaw
+        self.yaw = 0.0
 
         # filtered data with IIR2Filter
         self.px_filted = 0
@@ -344,6 +347,7 @@ class RealTimeProcessor(object):
         self.tpp[0] = tpp_roll
         self.tpp[1] = tpp_pitch
         self.tpp[2] = 0.0
+        self.yaw = yaw
         
         # print(round(roll_rad,3), round(pitch_rad,3))
 

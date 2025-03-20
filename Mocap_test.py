@@ -139,7 +139,7 @@ if __name__ == '__main__':
                 #print("tpp_pitch: ", tpp_pitch)
                                 
                 #print(round(roll*(180/np.pi),3), round(roll*(180/np.pi),3))
-                print("yaw_deg: ", yaw_deg)
+                print("sin yaw: ", math.sin(yaw))
             
     
                 #time.sleep(0.05) # impt to pause and see information

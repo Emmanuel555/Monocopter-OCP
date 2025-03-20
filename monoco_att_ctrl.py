@@ -21,6 +21,7 @@ class att_ctrl(object):
         self.robot_quat = np.array([0.0,0.0,0.0,0.0]) # x y z w
         self.robot_tpp_bod_rate = np.array([0.0,0.0,0.0]) # x y z
         self.robot_tpp_bod_raterate = np.array([0.0,0.0,0.0]) # x y z
+        self.yaw = 0.0
         
         ## gains
         # pos
@@ -110,7 +111,7 @@ class att_ctrl(object):
         self.ref_sna = ref_sna 
 
 
-    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset):
+    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset,yaw):
         self.z_offset = z_offset
         self.robot_pos = np.array(linear_pos[0:3])
         self.robot_vel = np.array(linear_pos[3:6])
@@ -119,6 +120,7 @@ class att_ctrl(object):
         self.robot_tpp_bod_rate = np.array(rotational_pos[1])
         self.robot_tpp_bod_raterate = np.array(rotational_pos[2])
         self.dt = dt
+        self.yaw = yaw
         
 
     def update_ref_pos(self, ref_pos):
@@ -334,9 +336,14 @@ class att_ctrl(object):
             des_rps = 1.0*(des_rps/abs(des_rps))
 
 
+        ## precession sign change
+        x_sign = abs(math.sin(self.yaw))
+        y_sign = abs(math.cos(self.yaw))
+
+
         ## when involving pitch roll
-        des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/10000 # convert to linear term cos of inner cyclic ctrl
-        des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/10000
+        des_x = x_sign*(final_des_pitch_raterate/(self.wing_radius*self.mass))/100000 # convert to linear term cos of inner cyclic ctrl
+        des_y = y_sign*(-1*final_des_roll_raterate/(self.wing_radius*self.mass))/100000
 
 
         ## compare against pid control
