@@ -21,6 +21,8 @@ time = mat_data['Data_time']
 #position = mat_data['data']
 cmd = mat_data['cmd']
 tpp = mat_data['tpp_angle']
+tpp_omega = mat_data['tpp_omega']
+tpp_omega_dot = mat_data['tpp_omega_dot']
 #print(tpp[1])
 
 cmds = [row for row in cmd] # column vector
@@ -31,18 +33,31 @@ cmd_y = [row[0][1] for row in cmds]
 tpp_roll = [row[0] for row in tpp] # column vector
 tpp_pitch = [row[1] for row in tpp]
 
+tpp_roll_rate = [row[0] for row in tpp_omega] # column vector
+tpp_pitch_rate = [row[1] for row in tpp_omega]
+
+tpp_roll_raterate = [row[0] for row in tpp_omega_dot] # column vector
+tpp_pitch_raterate = [row[1] for row in tpp_omega_dot]
+
 cmd_x = np.array([cmd_x])
 cmd_y = np.array([cmd_y])
 
 tpp_roll = np.array([tpp_roll])
 tpp_pitch = np.array([tpp_pitch])
 
+tpp_roll_rate = np.array([tpp_roll_rate])
+tpp_pitch_rate = np.array([tpp_pitch_rate])
+
+tpp_roll_raterate = np.array([tpp_roll_raterate])
+tpp_pitch_raterate = np.array([tpp_pitch_raterate])
+
+
 #print(type(time))
-print(tpp_roll[0]*(180/np.pi))
-print(tpp_pitch[0]*(180/np.pi))
+#print(tpp_roll[0]*(180/np.pi))
+#print(tpp_pitch[0]*(180/np.pi))
 
 #plt.figure(figsize=(10, 5))
-fig, ((ax1), (ax2)) = plt.subplots(2, 1, figsize=(40, 10))
+fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
 #print(cmd_x[0])
 
 ax1.plot(time[0], cmd_x[0], label='cmd_x', color='blue',linewidth=2)
@@ -52,14 +67,29 @@ ax1.set_title('Control signal vs time', fontsize=20)
 ax1.set_xlabel('Time(s)')
 ax1.set_ylabel('Cmd')
 
-plt.subplots_adjust(hspace=0.34, wspace=0.7)
+plt.subplots_adjust(hspace=0.34, wspace=0.2)
 
 ax2.plot(time[0], np.round((tpp_roll[0]*(180/np.pi)),3), label='tpp_roll', color='blue')
 ax2.plot(time[0], np.round((tpp_pitch[0]*(180/np.pi)),3), label='tpp_pitch', color='red')
 ax2.legend()
-ax2.set_title('TPP angles(deg) vs time', fontsize=20)
+ax2.set_title('TPP angle(deg) vs time', fontsize=20)
 ax2.set_xlabel('Time(s)')
-ax2.set_ylabel('Angles(deg)')
+ax2.set_ylabel('Angle(deg)')
+
+ax3.plot(time[0], np.round((tpp_roll_rate[0]*(180/np.pi)),3), label='tpp_roll_rate', color='blue')
+ax3.plot(time[0], np.round((tpp_pitch_rate[0]*(180/np.pi)),3), label='tpp_pitch_rate', color='red')
+ax3.legend()
+ax3.set_title('TPP angle/s(deg) vs time', fontsize=20)
+ax3.set_xlabel('Time(s)')
+ax3.set_ylabel('Angle/s(deg)')
+
+
+ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
+ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
+ax4.legend()
+ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('Angle/s^2(deg)')
 
 
 # Show the figure
