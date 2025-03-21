@@ -56,9 +56,9 @@ if __name__ == '__main__':
     #vel_loop = rate_loop * 5 # 8, 36 hz best so far
     pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
 
-
+    rate_loop = 1
     att_loop = 1
-    pid_loop = 5
+    pid_loop = 10
 
 
     # rate_loop = raterate_loop * 3 # 90 hz, nt good 
@@ -107,12 +107,12 @@ if __name__ == '__main__':
     ka = [0.1, 0.1]  # 0.08 - 1.5 * 0.1m/s
     kad = [0.0, 0.0]
     kai = [0.01, 0.01]
-    kr = [1.0, 1.0]
+    kr = [0.1, 0.1]
     krd = [0.0, 0.0] # 0.1
-    kri = [0.0, 0.0] # 0.1
-    krr = [0.0001, 0.0001] # 0.00005, sim = 0.0091, 0.001
+    kri = [0.01, 0.01] # 0.1
+    krr = [0.1, 0.1] # 0.00005, sim = 0.0091, 0.001
     krrd = [0.0, 0.0]
-    krri = [0.0, 0.0] # 0.1, sim = 0.976
+    krri = [0.01, 0.01] # 0.1, sim = 0.976
 
     # physical params
     wing_radius = 200/1000 # change to 700 next round
@@ -333,5 +333,5 @@ if __name__ == '__main__':
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/movemove_collective0.0_clean_gains0.1,0.0,0.01_att360_1.0,0.0,0.1pid72_tpp_sim_-90'
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/actually_movemove_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_1.0,0.0,0.1_pid36_tpp_sim_0'
 data_saver.save_data(path)

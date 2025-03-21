@@ -307,12 +307,7 @@ class att_ctrl(object):
             cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
             #cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
         
-        #cmd_bod_acc = cmd_bod_acc/self.dt
-        # angles
-        #des_roll = float(self.cmd_att[0])
-        #des_pitch = float(self.cmd_att[1])
-
-
+        
         # testing INDI
         #des_roll_rate = float(self.cmd_att[0]/ref_sampling_dt)
         #des_pitch_rate = float(self.cmd_att[1]/ref_sampling_dt)
@@ -323,7 +318,8 @@ class att_ctrl(object):
         #cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
         #cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
 
-        cmd_bod_acc = self.cmd_att
+        #cmd_bod_acc = self.cmd_att
+        #cmd_bod_acc = self.cascaded_ref_bod_rates
         final_des_roll_raterate = float(cmd_bod_acc[0])
         final_des_pitch_raterate = float(cmd_bod_acc[1])
 

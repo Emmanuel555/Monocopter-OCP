@@ -36,6 +36,7 @@ class Udp(object):
     #     return udp_data
 
     def get_data(self):
+        #udp_data, addr = self.sock_rx.recvfrom(28)
         udp_data, addr = self.sock_rx.recvfrom(14) # ubuntu is very exact with this number, 7*2, 7*2*3
         return udp_data
     

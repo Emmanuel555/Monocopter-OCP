@@ -68,7 +68,7 @@ design = 'butter'
 filter = IIR2Filter(order, [cutoff], ftype, design=design, fs=sample_rate)
 
 
-c = 0
+""" c = 0
 for i in tpp_roll_rate[0]:
     # print(tpp_roll_rate[0][c])
     tpp_roll_rate[0][c] = filter.filter(tpp_roll_rate[0][c])
@@ -87,7 +87,7 @@ for i in tpp_roll_raterate[0]:
 b = 0
 for i in px:
     #px[b] = filter.filter(px[b])
-    b += 1
+    b += 1 """
 
 
 #print(type(tpp_roll_rate[0]))
