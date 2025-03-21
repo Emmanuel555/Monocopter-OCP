@@ -110,6 +110,13 @@ class RealTimeProcessor(object):
         self.pY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.yZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
+        self.FilterVX = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterVY = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterVZ = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+
+        self.FilterAX = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterAY = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterAZ = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
         #self.FilterX = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
         #self.FilterY = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
@@ -120,13 +127,13 @@ class RealTimeProcessor(object):
         self.FilterQZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterQW = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
-        """ self.FilterOmega_x = IIR2Filter(5, [50], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterOmega_y = IIR2Filter(5, [50], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterOmega_z = IIR2Filter(5, [50], ftype, design=design, rs=rs, fs=sample_rate)
+        self.FilterOmega_x = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_y = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
-        self.FilterOmega_dot_x = IIR2Filter(5, [70], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterOmega_dot_y = IIR2Filter(5, [70], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterOmega_dot_z = IIR2Filter(5, [70], ftype, design=design, rs=rs, fs=sample_rate) """
+        self.FilterOmega_dot_x = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_dot_y = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_dot_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
         
     def data_unpack(self, udp_data): ## qns abt this
@@ -512,6 +519,12 @@ class RealTimeProcessor(object):
             rollraterate_x = (self.central_diff_roll_raterate[-1] - (2*self.central_diff_roll_raterate[2]) + self.central_diff_roll_raterate[0])/(np.power(self.sample_time,2)*4.0)
             pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[2]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
 
+
+        rollrate_x = self.FilterOmega_x.filter(rollrate_x)
+        pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
+        rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
+        pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
+        
 
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
         self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z

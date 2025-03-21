@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
 from numpy import linalg as la
+from Filter import IIR2Filter
 
 file_path = '/home/emmanuel/Monocopter-OCP/sim_data/'
 files = os.listdir(file_path)
@@ -19,6 +20,10 @@ mat_data = loadmat(os.path.join(file_path, last_file))
 #print(mat_data)
 time = mat_data['Data_time']
 #position = mat_data['data']
+position = mat_data['Monocopter_XYZ']
+px = [row[0] for row in position] # column vector
+py = [row[1] for row in position]
+pz = [row[2] for row in position]
 cmd = mat_data['cmd']
 tpp = mat_data['tpp_angle']
 tpp_omega = mat_data['tpp_omega']
@@ -51,11 +56,47 @@ tpp_pitch_rate = np.array([tpp_pitch_rate])
 tpp_roll_raterate = np.array([tpp_roll_raterate])
 tpp_pitch_raterate = np.array([tpp_pitch_raterate])
 
+px = np.array([px])
+py = np.array([py])
+pz = np.array([pz])
 
+sample_rate = 360
+order = 10
+cutoff = 2
+ftype = 'lowpass'
+design = 'butter'
+filter = IIR2Filter(order, [cutoff], ftype, design=design, fs=sample_rate)
+
+
+c = 0
+for i in tpp_roll_rate[0]:
+    # print(tpp_roll_rate[0][c])
+    tpp_roll_rate[0][c] = filter.filter(tpp_roll_rate[0][c])
+    tpp_pitch_rate[0][c] = filter.filter(tpp_pitch_rate[0][c])
+    c += 1
+
+
+a = 0
+for i in tpp_roll_raterate[0]:
+    # print(tpp_roll_rate[0][c])
+    tpp_roll_raterate[0][a] = filter.filter(tpp_roll_raterate[0][a])
+    tpp_pitch_raterate[0][a] = filter.filter(tpp_pitch_raterate[0][a])
+    a += 1
+
+
+b = 0
+for i in px:
+    #px[b] = filter.filter(px[b])
+    b += 1
+
+
+#print(type(tpp_roll_rate[0]))
 #print(type(time))
 #print(tpp_roll[0]*(180/np.pi))
 #print(tpp_pitch[0]*(180/np.pi))
 
+
+## generate the plot
 #plt.figure(figsize=(10, 5))
 fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
 #print(cmd_x[0])
@@ -91,6 +132,11 @@ ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
 ax4.set_xlabel('Time(s)')
 ax4.set_ylabel('Angle/s^2(deg)')
 
+# ax4.plot(time[0], px[0], label='px', color='red')
+# ax4.legend()
+# ax4.set_title('px', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('m')
 
 # Show the figure
 plt.show()

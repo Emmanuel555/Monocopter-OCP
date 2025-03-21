@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -307,7 +307,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot)
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6])
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -326,7 +326,7 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot)
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6])
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             
