@@ -21,9 +21,15 @@ mat_data = loadmat(os.path.join(file_path, last_file))
 time = mat_data['Data_time']
 #position = mat_data['data']
 position = mat_data['Monocopter_XYZ']
+velocity = mat_data['velocity']
 px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
 pz = [row[2] for row in position]
+
+vx = [row[0] for row in velocity] # column vector
+vy = [row[1] for row in velocity]
+vz = [row[2] for row in velocity]
+
 cmd = mat_data['cmd']
 tpp = mat_data['tpp_angle']
 tpp_omega = mat_data['tpp_omega']
@@ -60,9 +66,13 @@ px = np.array([px])
 py = np.array([py])
 pz = np.array([pz])
 
+vx = np.array([vx])
+vy = np.array([vy])
+vz = np.array([vz])
+
 sample_rate = 360
 order = 10
-cutoff = 2
+cutoff = 1
 ftype = 'lowpass'
 design = 'butter'
 filter = IIR2Filter(order, [cutoff], ftype, design=design, fs=sample_rate)
@@ -81,13 +91,15 @@ for i in tpp_roll_raterate[0]:
     # print(tpp_roll_rate[0][c])
     tpp_roll_raterate[0][a] = filter.filter(tpp_roll_raterate[0][a])
     tpp_pitch_raterate[0][a] = filter.filter(tpp_pitch_raterate[0][a])
-    a += 1
+    a += 1 """
 
 
 b = 0
-for i in px:
-    #px[b] = filter.filter(px[b])
-    b += 1 """
+for i in vx[0]:
+    vx[0][b] = filter.filter(vx[0][b])
+    vy[0][b] = filter.filter(vy[0][b])
+    vz[0][b] = filter.filter(vz[0][b])
+    b += 1
 
 
 #print(type(tpp_roll_rate[0]))
@@ -125,18 +137,24 @@ ax3.set_xlabel('Time(s)')
 ax3.set_ylabel('Angle/s(deg)')
 
 
-ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
-ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
-ax4.legend()
-ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
-ax4.set_xlabel('Time(s)')
-ax4.set_ylabel('Angle/s^2(deg)')
+# ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
+# ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
+# ax4.legend()
+# ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Angle/s^2(deg)')
 
 # ax4.plot(time[0], px[0], label='px', color='red')
 # ax4.legend()
 # ax4.set_title('px', fontsize=20)
 # ax4.set_xlabel('Time(s)')
 # ax4.set_ylabel('m')
+
+ax4.plot(time[0][50:], vy[0][50:], label='vx', color='red')
+ax4.legend()
+ax4.set_title('vx', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('m/s')
 
 # Show the figure
 plt.show()

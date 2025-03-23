@@ -110,13 +110,13 @@ class RealTimeProcessor(object):
         self.pY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.yZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
-        self.FilterVX = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterVY = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterVZ = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterVX = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
+        self.FilterVY = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
+        self.FilterVZ = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
 
-        self.FilterAX = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterAY = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterAZ = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterAX = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
+        self.FilterAY = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
+        self.FilterAZ = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
 
         #self.FilterX = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
         #self.FilterY = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
@@ -271,7 +271,14 @@ class RealTimeProcessor(object):
             self.ay = (self.central_diff_y_acc[-1] - (2*self.central_diff_y_acc[2]) + self.central_diff_y_acc[0])/(np.power(self.sample_time,2)*4.0)
             self.az = (self.central_diff_z_acc[-1] - (2*self.central_diff_z_acc[2]) + self.central_diff_z_acc[0])/(np.power(self.sample_time,2)*4.0)
 
-            
+        self.vx = self.FilterVX.filter(self.vx)
+        self.vy = self.FilterVY.filter(self.vy)
+        self.vz = self.FilterVZ.filter(self.vz)
+
+        self.ax = self.FilterAX.filter(self.ax)
+        self.ay = self.FilterAY.filter(self.ay)
+        self.az = self.FilterAZ.filter(self.az)
+
         pos_vel_acc = np.array([self.px_filted, self.py_filted, self.pz_filted, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
         
         #return vel_acc

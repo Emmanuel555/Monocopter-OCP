@@ -84,6 +84,8 @@ class att_ctrl(object):
         self.cmd_bod_rates_final = np.array([0.0,0.0])
         self.cascaded_ref_bod_rates = np.array([0.0,0.0])
         self.des_rps = 0.0
+        self.z_error = 0.0
+        self.z_error_
 
 
     def physical_params(self,wing_radius,chord_length,mass,cl,cd):
@@ -100,7 +102,10 @@ class att_ctrl(object):
         # pitch = pitch angle in degrees 
         # original formula for lift: (cl*pitch*(rps^2)*rho*chord_length*(wing_radius^3))/6
         self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside, not needed atm
-        self.lift_rotation_wo_rps = (self.cl*abs(pitch)*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
+        if pitch <= 0.0:
+            self.lift_rotation_wo_rps = 0.0
+        else:
+            self.lift_rotation_wo_rps = (self.cl*(pitch)*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 
 
     def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna):
@@ -196,37 +201,33 @@ class att_ctrl(object):
         integral_error = (position_error*sampling_dt) + I_term_prior
         self.position_error_last = position_error
         
-        # weight of the robot
-        robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
-
         # position pid controller
-        self.p_control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) + robot_mg
+        self.p_control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) 
         
-        # collective thrust - linearised
-        self.collective_thrust(self.p_control_signal[2])
-
         # to velocity controller
         # self.p_control_signal = self.p_control_signal/sampling_dt
 
 
-    def v_control_input(self,sampling_dt):
+    def v_control_input(self):
         vel_gains_p = self.kpvel
-        vel_gains_d = self.kdvel
-        vel_gains_i = self.kivel
 
         # add in vel controller
-        v_ref = self.p_control_signal
+        v_ref = self.ref_vel
         v_error = v_ref - self.robot_vel
-        v_rate_error = (v_error - self.velocity_error_last)/sampling_dt
-        v_integral_error = (v_error*sampling_dt)
-        self.velocity_error_last = v_error
-        self.v_control_signal = (vel_gains_p * v_error) + (vel_gains_d * v_rate_error) + (vel_gains_i * v_integral_error)
+        #v_rate_error = (v_error - self.velocity_error_last)/sampling_dt
+        #v_integral_error = (v_error*sampling_dt)
+        #self.velocity_error_last = v_error
+        self.v_control_signal = vel_gains_p * v_error
         
         # w acceleration references
-        self.v_control_signal = self.v_control_signal + self.ref_acc
+        self.v_control_signal = self.v_control_signal + self.ref_acc[0:2] # abt x y z
 
 
-    def collective_thrust(self,p_error_z): 
+    def collective_thrust(self,kpz,kdz): 
+        # weight of the robot
+        robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
+        self.z_error = self.ref_pos[2] - self.robot_pos[2]
+        p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg + self.ref_acc[2] # z error
         if p_error_z == 0:
             self.des_rps = 0.0
         else:
@@ -277,7 +278,7 @@ class att_ctrl(object):
     
 
     def get_angle(self,sampling_dt):
-        self.cmd_att = self.attitude_loop(self.robot_quat, self.p_control_signal, sampling_dt)
+        self.cmd_att = self.attitude_loop(self.robot_quat, self.p_control_signal + self.v_control_signal, sampling_dt)
         self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)

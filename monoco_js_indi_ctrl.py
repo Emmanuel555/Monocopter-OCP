@@ -89,17 +89,17 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
 
     # collective z - reduce this tmr 
-    kpz = 0.0 # 7.5, 30.5
-    kdz = 0.0 # 2.5, 10.5
+    kpz = 7.5 # 7.5, 30.5
+    kdz = 2.5 # 2.5, 10.5
     kiz = 0.0
     
     # cyclic xyz (position)
-    kp = [1.0,1.0,kpz] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
-    kd = [0.0,0.0,kdz] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
-    ki = [0.1,0.1,kiz] # 0.0015   0.003
+    kp = [1.0,1.0,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
+    kd = [0.0,0.0,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
+    ki = [0.1,0.1,0.0] # 0.0015   0.003
 
     # cyclic xyz (velocity)
-    kvp = [1.0,1.0,1.0] 
+    kvp = [0.1,0.1,0.0] 
     kvd = [0.0,0.0,0.0] 
     kvi = [0.0,0.0,0.0] 
 
@@ -230,46 +230,25 @@ if __name__ == '__main__':
                 # ff references
                 monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
 
-                # control input
+                # control input (position + velocity)
                 monoco.p_control_input(1/(max_sample_rate/pid_loop))
+                monoco.v_control_input()
 
-                # final control input (INDI loop)
-                #final_cmd = monoco.get_angles_and_thrust(flatness_option)
-
-                # send to monocopter via INDI
-                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
-
-
-
-            #if loop_counter % vel_loop == 0:
-            #    monoco.v_control_input(1/(max_sample_rate/vel_loop))    
-
-            
 
             if loop_counter % att_loop == 0:
 
                 # get angle
                 cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
 
-                # final control input (INDI loop)
-                # final_cmd = monoco.get_angles_and_thrust(flatness_option)
-
-                # send to monocopter via INDI
-                # data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
-
-
-
+            
             if loop_counter % rate_loop == 0:
 
                 # bod rates
                 monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
             
-                # final control input (INDI loop)
-                #final_cmd = monoco.get_angles_and_thrust(flatness_option)
 
-                # send to monocopter via INDI
-                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
-
+            # collective thrust
+            monoco.collective_thrust(kpz,kdz)
 
             # final control input (INDI loop)
             final_cmd = monoco.get_angles_and_thrust(flatness_option)
