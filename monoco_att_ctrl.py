@@ -85,7 +85,6 @@ class att_ctrl(object):
         self.cascaded_ref_bod_rates = np.array([0.0,0.0])
         self.des_rps = 0.0
         self.z_error = 0.0
-        self.z_error_
 
 
     def physical_params(self,wing_radius,chord_length,mass,cl,cd):
@@ -218,17 +217,20 @@ class att_ctrl(object):
         #v_integral_error = (v_error*sampling_dt)
         #self.velocity_error_last = v_error
         self.v_control_signal = vel_gains_p * v_error
+
+        # ref acceleration
+        ref_acc = np.array([self.ref_acc[0],self.ref_acc[1],0.0])
         
         # w acceleration references
-        self.v_control_signal = self.v_control_signal + self.ref_acc[0:2] # abt x y z
+        self.v_control_signal = self.v_control_signal + ref_acc # abt x y z
 
 
     def collective_thrust(self,kpz,kdz): 
         # weight of the robot
         robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
         self.z_error = self.ref_pos[2] - self.robot_pos[2]
-        p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg + self.ref_acc[2] # z error
-        if p_error_z == 0:
+        p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg[2] + self.ref_acc[2] # z error
+        if p_error_z == 0.0:
             self.des_rps = 0.0
         else:
             if self.lift_rotation_wo_rps == 0.0:
@@ -319,7 +321,7 @@ class att_ctrl(object):
         #cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
         #cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
 
-        #cmd_bod_acc = self.cmd_att
+        cmd_bod_acc = self.cmd_att
         #cmd_bod_acc = self.cascaded_ref_bod_rates
         final_des_roll_raterate = float(cmd_bod_acc[0])
         final_des_pitch_raterate = float(cmd_bod_acc[1])
@@ -355,7 +357,7 @@ class att_ctrl(object):
             des_y = 1.0*(des_y/abs(des_y))
         
 
-        cyclic_gain = 1000000
+        cyclic_gain = 2000000
         collective_gain = 1000000
 
         ## final cmd at the end

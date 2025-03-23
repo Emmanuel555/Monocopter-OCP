@@ -94,12 +94,12 @@ for i in tpp_roll_raterate[0]:
     a += 1 """
 
 
-b = 0
-for i in vx[0]:
-    vx[0][b] = filter.filter(vx[0][b])
-    vy[0][b] = filter.filter(vy[0][b])
-    vz[0][b] = filter.filter(vz[0][b])
-    b += 1
+# b = 0
+# for i in vx[0]:
+#     vx[0][b] = filter.filter(vx[0][b])
+#     vy[0][b] = filter.filter(vy[0][b])
+#     vz[0][b] = filter.filter(vz[0][b])
+#     b += 1
 
 
 #print(type(tpp_roll_rate[0]))
@@ -137,12 +137,12 @@ ax3.set_xlabel('Time(s)')
 ax3.set_ylabel('Angle/s(deg)')
 
 
-# ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
-# ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
-# ax4.legend()
-# ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
-# ax4.set_xlabel('Time(s)')
-# ax4.set_ylabel('Angle/s^2(deg)')
+ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
+ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
+ax4.legend()
+ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('Angle/s^2(deg)')
 
 # ax4.plot(time[0], px[0], label='px', color='red')
 # ax4.legend()
@@ -150,11 +150,11 @@ ax3.set_ylabel('Angle/s(deg)')
 # ax4.set_xlabel('Time(s)')
 # ax4.set_ylabel('m')
 
-ax4.plot(time[0][50:], vy[0][50:], label='vx', color='red')
-ax4.legend()
-ax4.set_title('vx', fontsize=20)
-ax4.set_xlabel('Time(s)')
-ax4.set_ylabel('m/s')
+# ax4.plot(time[0][50:], vy[0][50:], label='vx', color='red')
+# ax4.legend()
+# ax4.set_title('vx', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('m/s')
 
 # Show the figure
 plt.show()

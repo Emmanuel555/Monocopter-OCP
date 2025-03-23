@@ -50,11 +50,11 @@ if __name__ == '__main__':
 
     raterate_loop = 1 # 360/3 = 120hz
 
-    rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
+    #rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
     #att_loop = rate_loop * 1.5 # same as rate loop, try next wk on pos hold
-    att_loop = rate_loop * 5 # 10, 36 hz best so far
+    #att_loop = rate_loop * 5 # 10, 36 hz best so far
     #vel_loop = rate_loop * 5 # 8, 36 hz best so far
-    pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
+    #pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
 
     rate_loop = 1
     att_loop = 1
@@ -94,19 +94,19 @@ if __name__ == '__main__':
     kiz = 0.0
     
     # cyclic xyz (position)
-    kp = [1.0,1.0,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
+    kp = [1.0,0.0,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
     kd = [0.0,0.0,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
-    ki = [0.1,0.1,0.0] # 0.0015   0.003
+    ki = [0.1,0.0,0.0] # 0.0015   0.003
 
     # cyclic xyz (velocity)
-    kvp = [0.1,0.1,0.0] 
+    kvp = [0.1,0.0,0.0] 
     kvd = [0.0,0.0,0.0] 
     kvi = [0.0,0.0,0.0] 
 
     # cyclic xy (attitude)
-    ka = [0.1, 0.1]  # 0.08 - 1.5 * 0.1m/s
+    ka = [0.0, 0.1]  # 0.08 - 1.5 * 0.1m/s
     kad = [0.0, 0.0]
-    kai = [0.01, 0.01]
+    kai = [0.0, 0.01]
     kr = [0.1, 0.1]
     krd = [0.0, 0.0] # 0.1
     kri = [0.01, 0.01] # 0.1
@@ -312,5 +312,5 @@ if __name__ == '__main__':
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/actually_movemove_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_1.0,0.0,0.1_pid36_tpp_sim_0'
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/-90_no_y_pvela_hh_x2_orig_motor_testing_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
 data_saver.save_data(path)
