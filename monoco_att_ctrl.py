@@ -19,6 +19,8 @@ class att_ctrl(object):
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
         self.robot_acc = np.array([0.0,0.0,0.0]) # x y z
         self.robot_quat = np.array([0.0,0.0,0.0,0.0]) # x y z w
+        self.robot_quat_x = np.array([0.0,0.0,0.0,0.0]) # x y z w
+        self.robot_quat_y = np.array([0.0,0.0,0.0,0.0]) # x y z w
         self.robot_tpp_bod_rate = np.array([0.0,0.0,0.0]) # x y z
         self.robot_tpp_bod_raterate = np.array([0.0,0.0,0.0]) # x y z
         self.yaw = 0.0
@@ -101,6 +103,7 @@ class att_ctrl(object):
         # pitch = pitch angle in degrees 
         # original formula for lift: (cl*pitch*(rps^2)*rho*chord_length*(wing_radius^3))/6
         self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside, not needed atm
+        # print ("pitch: ", pitch)
         if pitch <= 0.0:
             self.lift_rotation_wo_rps = 0.0
         else:
@@ -125,13 +128,15 @@ class att_ctrl(object):
         self.robot_tpp_bod_raterate = np.array(rotational_pos[2])
         self.dt = dt
         self.yaw = yaw
+        #self.robot_quat_x = quat_x
+        #self.robot_quat_y = quat_y
         
 
     def update_ref_pos(self, ref_pos):
         self.ref_pos = ref_pos 
 
 
-    def attitude_loop(self, quat, control_input, sampling_dt):
+    def attitude_loop(self, quat, control_input, sampling_dt,zd_d):
         kpa = self.kpa # abt x y
         kpad = self.kpad # abt x y
         kpai = self.kpai # abt x y
@@ -142,17 +147,25 @@ class att_ctrl(object):
         disk_vector = quaternion.apply_to_vector(qz, ez) # flattened array
         disk_vector = np.array([[disk_vector[0],disk_vector[1],disk_vector[2]]])  # 1 x 3 - row based simulated disk vector
         
-        # pos control input here
-        if la.norm(control_input,2) == 0:
-            zd = np.array([0.0,0.0,0.0])
-        else:
-            zd = control_input/la.norm(control_input,2)
-        zd = np.array([[zd[0],zd[1],zd[2]]]) # 1 x 3 - row based simulated zd which is desired vector 
-        num = np.dot(disk_vector,np.transpose(zd)) # 1 x 1
-        den = la.norm(disk_vector,2)*la.norm(zd,2) # L2 norm of a and b
+        ## pos control input here
+        # if la.norm(control_input,2) == 0:
+        #     zd = np.array([0.0,0.0,0.0])
+        # else:
+        #     zd = control_input/la.norm(control_input,2) # unit vector
+
+        zd_n = control_input   
+        zd_n = np.array([[zd_n[0],zd_n[1],zd_n[2]]]) # 1 x 3 - row based simulated zd which is desired vector 
+        
+        #print ("zd_n: ", zd_n)
+        #zd_d = zd_n/la.norm(zd_n,2)
+        #print ("disk vector: ", disk_vector)
+        #print ("control_input: ", control_input)
+        
+        num = np.dot(disk_vector,np.transpose(zd_n)) # 1 x 1
+        den = la.norm(disk_vector,2)*la.norm(zd_d,2) # L2 norm of a and b
         angle = math.acos(num/den) # angle in radians
 
-        n = np.cross(disk_vector,zd)/la.norm(np.cross(disk_vector,zd)) # cross product of a and b - 1 x 3
+        n = np.cross(disk_vector,zd_n)/la.norm(np.cross(disk_vector,zd_d)) # cross product of a and b - 1 x 3
         n = list(n.flat) # flattened array
         B = quaternion.apply_to_vector(qzi, n) # inverse of qz applied to n
         error_quat = np.array([math.cos(angle/2), B[0]*math.sin(angle/2), B[1]*math.sin(angle/2), B[2]*math.sin(angle/2)]) # abt w x y z
@@ -230,6 +243,7 @@ class att_ctrl(object):
         robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
         self.z_error = self.ref_pos[2] - self.robot_pos[2]
         p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg[2] + self.ref_acc[2] # z error
+        #print ("p_error_z: ", p_error_z)
         if p_error_z == 0.0:
             self.des_rps = 0.0
         else:
@@ -280,7 +294,16 @@ class att_ctrl(object):
     
 
     def get_angle(self,sampling_dt):
-        self.cmd_att = self.attitude_loop(self.robot_quat, self.p_control_signal + self.v_control_signal, sampling_dt)
+        control_input_x = np.array([self.p_control_signal[0]+self.v_control_signal[0],0.0,0.0])
+        control_input_y = np.array([0.0,self.p_control_signal[1]+self.v_control_signal[1],0.0])
+        
+        zd_dx = np.array([1.0,0.0,0.0])
+        zd_dy = np.array([0.0,1.0,0.0])
+
+        cmd_att_y = self.attitude_loop(self.robot_quat, control_input_x, sampling_dt,zd_dx)
+        cmd_att_x = self.attitude_loop(self.robot_quat, control_input_y, sampling_dt, zd_dy)
+
+        self.cmd_att = cmd_att_x + cmd_att_y
         self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
@@ -321,7 +344,7 @@ class att_ctrl(object):
         #cascaded_ref_bod_rates = np.array([des_roll_raterate, des_pitch_raterate])
         #cmd_bod_acc = self.INDI_loop(cascaded_ref_bod_rates)
 
-        cmd_bod_acc = self.cmd_att
+        #cmd_bod_acc = self.cmd_att
         #cmd_bod_acc = self.cascaded_ref_bod_rates
         final_des_roll_raterate = float(cmd_bod_acc[0])
         final_des_pitch_raterate = float(cmd_bod_acc[1])
@@ -336,13 +359,13 @@ class att_ctrl(object):
 
 
         ## precession sign change
-        x_sign = abs(math.sin(self.yaw))
-        y_sign = abs(math.cos(self.yaw))
+        #x_sign = abs(math.sin(self.yaw))
+        #y_sign = abs(math.cos(self.yaw))
 
 
         ## when involving pitch roll
-        des_x = x_sign*(final_des_pitch_raterate/(self.wing_radius*self.mass))/100000 # convert to linear term cos of inner cyclic ctrl
-        des_y = y_sign*(-1*final_des_roll_raterate/(self.wing_radius*self.mass))/100000
+        des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/100000 # convert to linear term cos of inner cyclic ctrl
+        des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/100000
 
 
         ## compare against pid control
@@ -357,11 +380,11 @@ class att_ctrl(object):
             des_y = 1.0*(des_y/abs(des_y))
         
 
-        cyclic_gain = 2000000
+        cyclic_gain = 800000
         collective_gain = 1000000
 
         ## final cmd at the end
-        final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, 0*des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
+        final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
         return (final_cmd)
     

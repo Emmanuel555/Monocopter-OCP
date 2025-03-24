@@ -112,11 +112,15 @@ if __name__ == '__main__':
                 # x_vector = np.array([0, 1, 0])
                 # roll = np.dot(roll_vector,z_vector) # 1 x 1
                 # pitch = np.dot(pitch_vector,z_vector)
+
+                tpp_quat_y = np.array([tpp_quat[2][0], tpp_quat[2][1], tpp_quat[2][2], 1.0]) # xy0w
                 
-                tpp_quat = np.array([tpp_quat[0], tpp_quat[1], tpp_quat[2], 1.0]) # xyzw
-                tpp_quat_inverse = quaternion.inverse(tpp_quat)
+                #tpp_quat = np.array([tpp_quat[0], tpp_quat[1], tpp_quat[2], 1.0]) # xyzw
+                tpp_quat_inverse = quaternion.inverse(tpp_quat_y)
                 ez = np.array([0, 0, 1])
-                disk_vector = quaternion.apply_to_vector(tpp_quat, ez) # flattened array
+                disk_vector = quaternion.apply_to_vector(tpp_quat_y, ez) # flattened array
+
+                
                 print (disk_vector)
                 yaw = math.atan2(r11,r21)
                 # denominator is 1 as its a unit vector (quaternion mag is 1)

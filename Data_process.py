@@ -48,7 +48,9 @@ class RealTimeProcessor(object):
 
         # tpp angle
         self.tpp = np.array([0.0, 0.0, 0.0])  # flat array 
-        
+        self.tpp_x = np.array([0.0, 0.0, 0.0])  # flat array 
+        self.tpp_y = np.array([0.0, 0.0, 0.0])  # flat array
+
         # body yaw
         self.yaw = 0.0
 
@@ -559,7 +561,12 @@ class RealTimeProcessor(object):
     
         return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
     
-    
+
+    def tpp_xy(self):
+        self.tpp_x = np.array([0.0,self.tpp[1],0.0]) # pitch only
+        self.tpp_y = np.array([self.tpp[0],0.0,0.0])  # roll only  
+
+
     def get_RPY(self): # for body frame
         # roll - rotating about x axis
         roll_a = 2 * (self.quat_w_filted * self.quat_x_filted + self.quat_y_filted * self.quat_z_filted)
@@ -583,6 +590,8 @@ class RealTimeProcessor(object):
     
 
     def tpp_eulerAnglesToQuaternion(self):
+        self.tpp_xy()
+
         """
         Converts the TPP Euler angle to a TPP quaternion angle to prepare quaternion rotation of vector 001
         
@@ -629,6 +638,30 @@ class RealTimeProcessor(object):
         
         tpp_quaternion = np.array([tpp_qx, tpp_qy, tpp_qz, tpp_qw])
 
+        # quat_x
+        roll = self.tpp_x[0]
+        pitch = self.tpp_x[1]
+        yaw = self.tpp_x[2]
+        
+        tpp_qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        tpp_qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        tpp_qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        tpp_qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        
+        tpp_quat_x = np.array([tpp_qx, tpp_qy, tpp_qz, tpp_qw])
+
+        # quat_y
+        roll = self.tpp_y[0]
+        pitch = self.tpp_y[1]
+        yaw = self.tpp_y[2]
+        
+        tpp_qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        tpp_qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        tpp_qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        tpp_qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        
+        tpp_quat_y = np.array([tpp_qx, tpp_qy, tpp_qz, tpp_qw])
+
         # alternative from pyrr same formula as above 
         ## formula:
         ##  
@@ -652,7 +685,7 @@ class RealTimeProcessor(object):
 
         # tpp_quaternion = quaternion.create_from_eulers(roll, pitch, yaw) # actual line of code to use
         
-        return tpp_quaternion
+        return (tpp_quaternion, tpp_quat_x, tpp_quat_y)
     
 
     def vector_axis_to_quaternion(self, vector, axis):
