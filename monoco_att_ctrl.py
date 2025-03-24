@@ -118,7 +118,7 @@ class att_ctrl(object):
         self.ref_sna = ref_sna 
 
 
-    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset,yaw):
+    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset,yaw,quat_x,quat_y):
         self.z_offset = z_offset
         self.robot_pos = np.array(linear_pos[0:3])
         self.robot_vel = np.array(linear_pos[3:6])
@@ -128,8 +128,8 @@ class att_ctrl(object):
         self.robot_tpp_bod_raterate = np.array(rotational_pos[2])
         self.dt = dt
         self.yaw = yaw
-        #self.robot_quat_x = quat_x
-        #self.robot_quat_y = quat_y
+        self.robot_quat_x = quat_x
+        self.robot_quat_y = quat_y
         
 
     def update_ref_pos(self, ref_pos):

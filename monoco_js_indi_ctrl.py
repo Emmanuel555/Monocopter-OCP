@@ -186,7 +186,7 @@ if __name__ == '__main__':
             time_last = time.time()
 
             # update positions etc.
-            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw)
+            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2])
 
             # compute bem thrust
             monoco.compute_bem_wo_rps(body_pitch)
