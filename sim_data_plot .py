@@ -22,6 +22,9 @@ time = mat_data['Data_time']
 #position = mat_data['data']
 position = mat_data['Monocopter_XYZ']
 velocity = mat_data['velocity']
+z_control = mat_data['z_control']
+des_thrust = mat_data['des_thrust']
+
 px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
 pz = [row[2] for row in position]
@@ -34,12 +37,13 @@ cmd = mat_data['cmd']
 tpp = mat_data['tpp_angle']
 tpp_omega = mat_data['tpp_omega']
 tpp_omega_dot = mat_data['tpp_omega_dot']
-#print(tpp[1])
+ref_rates = mat_data['ref_rates']
+ref_raterates = mat_data['ref_raterates']
 
 cmds = [row for row in cmd] # column vector
-
 cmd_x = [row[0][0] for row in cmds] # column vector
 cmd_y = [row[0][1] for row in cmds]
+collective_z = [row[0][2] for row in cmds]
 
 tpp_roll = [row[0] for row in tpp] # column vector
 tpp_pitch = [row[1] for row in tpp]
@@ -50,8 +54,18 @@ tpp_pitch_rate = [row[1] for row in tpp_omega]
 tpp_roll_raterate = [row[0] for row in tpp_omega_dot] # column vector
 tpp_pitch_raterate = [row[1] for row in tpp_omega_dot]
 
+ref_rates_abt_x = [row[0] for row in ref_rates] # column vector
+ref_rates_abt_y = [row[1] for row in ref_rates]
+
+ref_raterates_abt_x = [row[0] for row in ref_raterates] # column vector
+ref_raterates_abt_y = [row[1] for row in ref_raterates]
+
 cmd_x = np.array([cmd_x])
 cmd_y = np.array([cmd_y])
+collective_z = np.array([collective_z])
+
+#z_control = np.array([z_control])
+#print(np.size(z_control))
 
 tpp_roll = np.array([tpp_roll])
 tpp_pitch = np.array([tpp_pitch])
@@ -61,6 +75,11 @@ tpp_pitch_rate = np.array([tpp_pitch_rate])
 
 tpp_roll_raterate = np.array([tpp_roll_raterate])
 tpp_pitch_raterate = np.array([tpp_pitch_raterate])
+
+ref_rates_abt_x = np.array([ref_rates_abt_x])
+ref_rates_abt_y = np.array([ref_rates_abt_y])
+ref_raterates_abt_x = np.array([ref_raterates_abt_x])
+ref_raterates_abt_y = np.array([ref_raterates_abt_y])
 
 px = np.array([px])
 py = np.array([py])
@@ -137,12 +156,12 @@ ax3.set_xlabel('Time(s)')
 ax3.set_ylabel('Angle/s(deg)')
 
 
-ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
-ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
-ax4.legend()
-ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
-ax4.set_xlabel('Time(s)')
-ax4.set_ylabel('Angle/s^2(deg)')
+# ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
+# ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
+# ax4.legend()
+# ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Angle/s^2(deg)')
 
 # ax4.plot(time[0], px[0], label='px', color='red')
 # ax4.legend()
@@ -155,6 +174,28 @@ ax4.set_ylabel('Angle/s^2(deg)')
 # ax4.set_title('vx', fontsize=20)
 # ax4.set_xlabel('Time(s)')
 # ax4.set_ylabel('m/s')
+
+# ax4.plot(time[0], ref_rates_abt_x[0], label='ref_rates_abt_x', color='blue')
+# ax4.plot(time[0], ref_rates_abt_y[0], label='ref_rates_abt_y', color='red')
+# ax4.legend()
+# ax4.set_title('Flatness for rates', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Angle/s(rad/s)')
+
+# ax4.plot(time[0], ref_raterates_abt_x[0], label='ref_raterates_abt_x', color='blue')
+# ax4.plot(time[0], ref_raterates_abt_y[0], label='ref_raterates_abt_y', color='red')
+# ax4.legend()
+# ax4.set_title('Flatness for raterates', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Angle/s^2(rad/s^2)')
+
+ax4.plot(time[0], collective_z[0], label='Collective input', color='blue')
+#ax4.plot(time[0], z_control[0], label='z_control_input', color='red')
+#ax4.plot(time[0], des_thrust[0], label='des_thrust', color='green')
+ax4.legend()
+ax4.set_title('Collective control', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('Signal')
 
 # Show the figure
 plt.show()

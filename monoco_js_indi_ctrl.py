@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.5 
-    speedX = 2.0 # 2 still the best
+    speedX = 1.0 # 2 still the best
     laps = 30
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
     alt = 1.5
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     # collective z - reduce this tmr 
     kpz = 7.5 # 7.5, 30.5
-    kdz = 2.5 # 2.5, 10.5
+    kdz = 0.5 # 2.5, 10.5
     kiz = 0.0
     
     # cyclic xyz (position)
@@ -132,6 +132,7 @@ if __name__ == '__main__':
     
     # flatness option
     flatness_option = 0  # this is a must!
+    amplitude = 1
 
     # Monocopter UDP IP & Port
     UDP_IP = "192.168.65.221"
@@ -148,6 +149,10 @@ if __name__ == '__main__':
     # Control Loop Commands
     cmd_att = np.array([0.0,0.0])
     cmd_bod_rates = np.array([0.0,0.0])
+
+    # initial flatness terms
+    ref_rates = np.array([0.0,0.0])
+    ref_raterates = np.array([0.0,0.0])
 
 
     try:
@@ -234,6 +239,10 @@ if __name__ == '__main__':
                 monoco.p_control_input(1/(max_sample_rate/pid_loop))
                 monoco.v_control_input()
 
+                # flatness terms
+                ref_rates = monoco.ref_rates
+                ref_raterates = monoco.ref_raterates
+
 
             if loop_counter % att_loop == 0:
 
@@ -244,14 +253,16 @@ if __name__ == '__main__':
             if loop_counter % rate_loop == 0:
 
                 # bod rates
-                monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop))
+                monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop),amplitude)
             
 
             # collective thrust
-            monoco.collective_thrust(kpz,kdz)
+            z_controls = monoco.collective_thrust(kpz,kdz,kiz)
+            z_control_signal = z_controls[0]
+            des_thrust = z_controls[1]
 
             # final control input (INDI loop)
-            final_cmd = monoco.get_angles_and_thrust(flatness_option)
+            final_cmd = monoco.get_angles_and_thrust(flatness_option,amplitude)
 
             # send to monocopter via INDI
             data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
@@ -286,7 +297,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6])
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -305,12 +316,12 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6])
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/rot_orig_motor_testing_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_rot_collective_ref_vel_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
+data_saver.save_data(path)
