@@ -74,7 +74,7 @@ int pendulum_ode_acados_sim_create(pendulum_ode_sim_solver_capsule * capsule)
     bool tmp_bool;
 
     
-    double Tsim = 0.05;
+    double Tsim = 0.02;
 
     
     capsule->sim_impl_dae_fun = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
@@ -127,7 +127,7 @@ int pendulum_ode_acados_sim_create(pendulum_ode_sim_solver_capsule * capsule)
     // sim opts
     sim_opts *pendulum_ode_sim_opts = sim_opts_create(pendulum_ode_sim_config, pendulum_ode_sim_dims);
     capsule->acados_sim_opts = pendulum_ode_sim_opts;
-    int tmp_int = 3;
+    int tmp_int = 10;
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "newton_iter", &tmp_int);
     double tmp_double = 0;
     sim_opts_set(pendulum_ode_sim_config, pendulum_ode_sim_opts, "newton_tol", &tmp_double);

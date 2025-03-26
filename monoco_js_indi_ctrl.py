@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     rate_loop = 1
     att_loop = 1
-    pid_loop = 10
+    pid_loop = 5 # 5 is the minimum
 
 
     # rate_loop = raterate_loop * 3 # 90 hz, nt good 
@@ -88,31 +88,31 @@ if __name__ == '__main__':
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
 
-    # collective z - reduce this tmr 
-    kpz = 7.5 # 7.5, 30.5
-    kdz = 0.5 # 2.5, 10.5
-    kiz = 0.0
+    # collective z 
+    kpz = 9.6 # 7.5, 30.5 |  9.6
+    kdz = 5.0 # 2.5, 10.5 | 5.0
+    kiz = 128 # | 128
     
     # cyclic xyz (position)
-    kp = [1.0,1.0,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
-    kd = [0.0,0.0,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
-    ki = [0.05,0.05,0.0] # 0.0015   0.003
+    kp = [0.5,0.5,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
+    kd = [0.3,0.3,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
+    ki = [0.0,0.0,0.0] # 0.0015   0.003
 
-    # cyclic xyz (velocity)
-    kvp = [0.1,0.1,0.0] 
+    # cyclic xyz (velocity) - monocopter doesnt like lol
+    kvp = [0.0,0.0,0.0] 
     kvd = [0.0,0.0,0.0] 
     kvi = [0.0,0.0,0.0] 
 
     # cyclic xy (attitude)
-    ka = [0.1, 0.1]  # 0.08 - 1.5 * 0.1m/s
+    ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
     kad = [0.0, 0.0]
-    kai = [0.01, 0.01]
-    kr = [0.1, 0.1]
+    kai = [0.0, 0.0]
+    kr = [1.0, 1.0]
     krd = [0.0, 0.0] # 0.1
-    kri = [0.01, 0.01] # 0.1
-    krr = [0.1, 0.1] # 0.00005, sim = 0.0091, 0.001
+    kri = [0.0, 0.0] # 0.1
+    krr = [0.001, 0.001] # 0.00005, sim = 0.0091, 0.001
     krrd = [0.0, 0.0]
-    krri = [0.01, 0.01] # 0.1, sim = 0.976
+    krri = [0.1, 0.1] # 0.1, sim = 0.976
 
     # physical params
     wing_radius = 200/1000 # change to 700 next round
@@ -323,5 +323,5 @@ if __name__ == '__main__':
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_rot_collective_ref_vel_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
-data_saver.save_data(path)
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_rot_collective_ref_vel_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
+#data_saver.save_data(path)

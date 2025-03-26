@@ -167,7 +167,13 @@ class att_ctrl(object):
         
         num = np.dot(disk_vector,np.transpose(zd_n)) # 1 x 1
         den = la.norm(disk_vector,2)*la.norm(zd_d,2) # L2 norm of a and b
-        angle = math.acos(num/den) # angle in radians
+        num_den = num/den 
+        #print ("num/den: ", num/den)
+
+        if abs(num_den) > 1.0:
+            num_den = 1.0*(num_den/abs(num_den))
+        
+        angle = math.acos(num_den) # angle in radians
 
         n = np.cross(disk_vector,zd_n)/la.norm(np.cross(disk_vector,zd_d)) # cross product of a and b - 1 x 3
         n = list(n.flat) # flattened array
@@ -250,9 +256,9 @@ class att_ctrl(object):
         integral_error_z = (self.z_error*self.dt)
         self.position_error_last[2] = self.z_error 
 
-        #p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
+        p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
         #p_error_z = kpz*(self.z_error) - kdz*(self.robot_vel[2]) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # xy vel
-        p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
+        #p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
         #print ("p_error_z: ", p_error_z)
         
         # if p_error_z == 0.0:
@@ -367,7 +373,7 @@ class att_ctrl(object):
 
 
         # output saturation/normalisation
-        des_rps = self.des_rps/50
+        des_rps = self.des_rps/30
         
 
         if abs(des_rps) > 1.0:
@@ -396,7 +402,7 @@ class att_ctrl(object):
             des_y = 1.0*(des_y/abs(des_y))
         
 
-        cyclic_gain = 800000
+        cyclic_gain = 100000 # 800000
         collective_gain = 1000000
 
         ## final cmd at the end
