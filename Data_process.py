@@ -169,11 +169,11 @@ class RealTimeProcessor(object):
 
 
     def data_unpack_filtered(self,udp_data):
-        #x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
+        x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhh", udp_data) # h refers to python type integer of byte size 2
 
         # Uncomment when sharing w ryan 
         #rx, ry, rz, rqx, rqy, rqz, rqw, x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhhhhhhhhh", udp_data)
-        rx, ry, rz, rqx, rqy, rqz, rqw, r1x, r1y, r1z, r1qx, r1qy, r1qz, r1qw, x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhhhhhhhhhhhhhhhh", udp_data)
+        #rx, ry, rz, rqx, rqy, rqz, rqw, r1x, r1y, r1z, r1qx, r1qy, r1qz, r1qw, x, y, z, qx, qy, qz, qw = struct.unpack("hhhhhhhhhhhhhhhhhhhhh", udp_data)
 
         # 0.0005 is the scale factor for the position data
         self.px = x * 0.0005  # position px 
