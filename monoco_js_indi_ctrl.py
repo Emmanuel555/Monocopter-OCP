@@ -50,15 +50,15 @@ if __name__ == '__main__':
 
     raterate_loop = 1 # 360/3 = 120hz
 
-    #rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
+    rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
     #att_loop = rate_loop * 1.5 # same as rate loop, try next wk on pos hold
-    #att_loop = rate_loop * 5 # 10, 36 hz best so far
+    att_loop = rate_loop * 10 # 10, 36 hz best so far
     #vel_loop = rate_loop * 5 # 8, 36 hz best so far
-    #pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
+    pid_loop = rate_loop * 10 # 10, 36 hz best so far, position
 
-    rate_loop = 1
-    att_loop = 1
-    pid_loop = 5 # 5 is the minimum
+    #rate_loop = 1
+    #att_loop = 1
+    #pid_loop = 5 # 5 is the minimum
 
 
     # rate_loop = raterate_loop * 3 # 90 hz, nt good 
@@ -94,8 +94,8 @@ if __name__ == '__main__':
     kiz = 128 # | 128
     
     # cyclic xyz (position)
-    kp = [0.5,0.5,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
-    kd = [0.3,0.3,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
+    kp = [0.8,0.8,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
+    kd = [0.03,0.03,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
     ki = [0.0,0.0,0.0] # 0.0015   0.003
 
     # cyclic xyz (velocity) - monocopter doesnt like lol
@@ -108,8 +108,8 @@ if __name__ == '__main__':
     kad = [0.0, 0.0]
     kai = [0.0, 0.0]
     kr = [1.0, 1.0]
-    krd = [0.0, 0.0] # 0.1
-    kri = [0.0, 0.0] # 0.1
+    krd = [0.3, 0.3] # 0.1
+    kri = [0.1, 0.1] # 0.1
     krr = [0.001, 0.001] # 0.00005, sim = 0.0091, 0.001
     krrd = [0.0, 0.0]
     krri = [0.1, 0.1] # 0.1, sim = 0.976
@@ -206,28 +206,28 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                ref = traj_gen.hover_test(x_offset,y_offset)
+                # ref = traj_gen.hover_test(x_offset,y_offset)
                 
-                hovering_ff = np.array([0.0, 0.0, 0.0])
-                ref_pos = ref[0]
-                ref_vel = hovering_ff
-                ref_acc = hovering_ff
-                ref_jerk = hovering_ff
-                ref_snap = hovering_ff
-                ref_msg = ref[1]
+                # hovering_ff = np.array([0.0, 0.0, 0.0])
+                # ref_pos = ref[0]
+                # ref_vel = hovering_ff
+                # ref_acc = hovering_ff
+                # ref_jerk = hovering_ff
+                # ref_snap = hovering_ff
+                # ref_msg = ref[1]
 
                 
 
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
-                # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                # ref_pos = ref_derivatives[0]
-                # ref_vel = ref_derivatives[1]
-                # ref_acc = ref_derivatives[2]
-                # ref_jerk = ref_derivatives[3]
-                # ref_snap = ref_derivatives[4]
-                # ref_msg = ref_derivatives[5]
+                ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                ref_pos = ref_derivatives[0]
+                ref_vel = ref_derivatives[1]
+                ref_acc = ref_derivatives[2]
+                ref_jerk = ref_derivatives[3]
+                ref_snap = ref_derivatives[4]
+                ref_msg = ref_derivatives[5]
 
                 # update references for PID loop
                 monoco.update_ref_pos(ref_pos)
@@ -322,6 +322,7 @@ if __name__ == '__main__':
             
 
 # save data
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_rot_collective_ref_vel_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
-#data_saver.save_data(path)
+data_saver.save_data(path)

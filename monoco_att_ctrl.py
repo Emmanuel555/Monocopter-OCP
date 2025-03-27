@@ -402,7 +402,7 @@ class att_ctrl(object):
             des_y = 1.0*(des_y/abs(des_y))
         
 
-        cyclic_gain = 100000 # 800000
+        cyclic_gain = 1000000 # 800000
         collective_gain = 1000000
 
         ## final cmd at the end

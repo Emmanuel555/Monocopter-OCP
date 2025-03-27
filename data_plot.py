@@ -24,7 +24,7 @@ px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
 pz = [row[2] for row in position]
 
-
+print('Px: ', np.size(px))
 #gains = mat_data['gains']
 
 ref_position = mat_data['ref_position']
@@ -46,7 +46,7 @@ time_flat_list = [item for sublist in time for item in sublist]
 max_sampling_rate = 360
 
 start = 20*max_sampling_rate
-end = 32*max_sampling_rate
+end = 100*max_sampling_rate
 
 rmse_num_x = x_error_squared[start:end]
 rmse_num_y = y_error_squared[start:end]
@@ -96,12 +96,16 @@ px_des_graph = px_des[start:end]
 py_des_graph = py_des[start:end]
 pz_des_graph = pz_des[start:end]
 
-median_filtered_px = ndimage.median_filter(px, size=1000)
-median_filtered_py = ndimage.median_filter(py, size=1000)
+# median_filtered_px = ndimage.median_filter(px, size=200)
+# median_filtered_py = ndimage.median_filter(py, size=200)
+
+median_filtered_px = ndimage.median_filter(px_graph, size=200)
+median_filtered_py = ndimage.median_filter(py_graph, size=200)
 
 print(np.shape(median_filtered_px))
 #print('ref pos: ', px_des[0], py_des[0], pz_des[0])
-plt.plot(median_filtered_px, median_filtered_py, label='measurements', color='orange')
+plt.plot(median_filtered_px, median_filtered_py, label='measurements', color='red')
+plt.plot(0.0, 0.0, label='Target_point', color='blue', marker="*", markersize=20)
 #plt.plot(time[0]*10, pz_des, label='reference', linestyle='dashed')
 #plt.plot(time[0], altitude_error, label='pz_des', linestyle='dashed')
 

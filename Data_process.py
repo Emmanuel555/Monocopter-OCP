@@ -535,11 +535,11 @@ class RealTimeProcessor(object):
             rollraterate_x = (self.central_diff_roll_raterate[-1] - (2*self.central_diff_roll_raterate[2]) + self.central_diff_roll_raterate[0])/(np.power(self.sample_time,2)*4.0)
             pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[2]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
 
-
-        rollrate_x = self.FilterOmega_x.filter(rollrate_x)
-        pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
-        rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
-        pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
+        ## not good
+        # rollrate_x = self.FilterOmega_x.filter(rollrate_x)
+        # pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
+        # rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
+        # pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
         
 
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
