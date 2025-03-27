@@ -110,7 +110,7 @@ class att_ctrl(object):
         self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside, not needed atm
         # print ("pitch: ", pitch)
         if pitch <= 0.0:
-            pitch = 3.0
+            pitch = 10.0
         
         self.lift_rotation_wo_rps = (self.cl*(pitch)*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 

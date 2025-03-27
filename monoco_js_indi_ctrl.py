@@ -86,10 +86,13 @@ if __name__ == '__main__':
     alt = 1.5
     elevated_alt = 0.8
 
+    # hover parameters
+    hover_offset = radius
+    
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
     ## circle
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## elevated circle
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, elevated_alt)
     ## helix
@@ -216,31 +219,31 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                ref = traj_gen.hover_test(x_offset,y_offset)
+                ref = traj_gen.hover_test(hover_offset,hover_offset)
                 
                 hovering_ff = np.array([0.0, 0.0, 0.0])
                 ref_pos = ref[0]
                 ref_pos_z = ref_pos[2]
-                #ref_vel = hovering_ff
-                #ref_acc = hovering_ff
-                #ref_jerk = hovering_ff
-                #ref_snap = hovering_ff
-                #ref_msg = ref[1]
+                ref_vel = hovering_ff
+                ref_acc = hovering_ff
+                ref_jerk = hovering_ff
+                ref_snap = hovering_ff
+                ref_msg = ref[1]
 
                 
 
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
-                # trajectory inputs
-                ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                ref_pos_circle = ref_derivatives[0]
-                ref_pos_z = ref_pos_circle[2]
-                ref_vel = ref_derivatives[1]
-                ref_acc = ref_derivatives[2]
-                ref_jerk = ref_derivatives[3]
-                ref_snap = ref_derivatives[4]
-                ref_msg = ref_derivatives[5]
+                ## trajectory inputs
+                # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                # ref_pos_circle = ref_derivatives[0]
+                # ref_pos_z = ref_pos_circle[2]
+                # ref_vel = ref_derivatives[1]
+                # ref_acc = ref_derivatives[2]
+                # ref_jerk = ref_derivatives[3]
+                # ref_snap = ref_derivatives[4]
+                # ref_msg = ref_derivatives[5]
 
                 # update references for PID loop
                 monoco.update_ref_pos(ref_pos)

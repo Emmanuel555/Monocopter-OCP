@@ -111,8 +111,8 @@ plt.plot(0.0, 0.0, label='Target_point', color='blue', marker="o", markersize=20
 
 plt.title('(Median filter: X vs Y) ' + text_label, fontsize=20)
 plt.legend()
-plt.xlim(-10, 10)
-plt.ylim(-10, 10)
+plt.xlim(-5, 5)
+plt.ylim(-5, 5)
 plt.xlabel('X (m)')
 plt.ylabel('Y (m)')
 
