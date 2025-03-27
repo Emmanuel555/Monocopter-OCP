@@ -54,6 +54,7 @@ class att_ctrl(object):
 
         ## references
         self.ref_pos = np.array([0.0,0.0,0.0]) 
+        self.ref_pos_z = 0.0
         self.ref_vel = np.array([0.0,0.0,0.0]) 
         self.ref_acc = np.array([0.0,0.0,0.0]) 
         self.ref_jer = np.array([0.0,0.0,0.0]) 
@@ -114,8 +115,9 @@ class att_ctrl(object):
         self.lift_rotation_wo_rps = (self.cl*(pitch)*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 
 
-    def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna):
+    def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,ref_pos_z):
         self.ref_pos = ref_pos
+        self.ref_pos_z = ref_pos_z
         self.ref_vel = ref_vel
         self.ref_acc = ref_acc    
         self.ref_jer = ref_jer
@@ -251,7 +253,7 @@ class att_ctrl(object):
     def collective_thrust(self,kpz,kdz,kiz): 
         # weight of the robot
         robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
-        self.z_error = self.ref_pos[2] - self.robot_pos[2]
+        self.z_error = self.ref_pos_z - self.robot_pos[2]
         rate_position_error_z = (self.z_error - self.position_error_last[2])/self.dt
         integral_error_z = (self.z_error*self.dt)
         self.position_error_last[2] = self.z_error 
@@ -322,7 +324,7 @@ class att_ctrl(object):
         zd_dx = np.array([1.0,0.0,0.0])
         zd_dy = np.array([0.0,1.0,0.0])
 
-        cmd_att_y = self.attitude_loop(self.robot_quat, control_input_x, sampling_dt,zd_dx)
+        cmd_att_y = self.attitude_loop(self.robot_quat, control_input_x, sampling_dt, zd_dx)
         cmd_att_x = self.attitude_loop(self.robot_quat, control_input_y, sampling_dt, zd_dy)
 
         self.cmd_att = cmd_att_x + cmd_att_y

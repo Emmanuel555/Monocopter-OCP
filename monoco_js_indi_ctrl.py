@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates')
+                                   'Monocopter_XYZ','ref_position','ref_position_traj','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -78,15 +78,23 @@ if __name__ == '__main__':
     traj_gen = trajectory_generator.trajectory_generator()
 
     # circle parameters
-    radius = 0.5 
-    speedX = 1.0 # 2 still the best
+    radius = 0.8 
+    speedX = 2.0 # 2 still the best
     laps = 30
+    helix_laps = 32
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
     alt = 1.5
+    elevated_alt = 0.8
 
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    ## circle
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    ## elevated circle
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, elevated_alt)
+    ## helix
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
+
 
     # collective z 
     kpz = 9.6 # 7.5, 30.5 |  9.6
@@ -139,7 +147,9 @@ if __name__ == '__main__':
     UDP_PORT = 1234
 
     # Initialize references
+    ref_pos_circle = np.array([0.0,0.0,0.0])
     ref_pos = np.array([0.0,0.0,0.0])
+    ref_pos_z = 0.0
     ref_vel = np.array([0.0,0.0,0.0])
     ref_acc = np.array([0.0,0.0,0.0])
     ref_jerk = np.array([0.0,0.0,0.0])
@@ -206,23 +216,26 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                # ref = traj_gen.hover_test(x_offset,y_offset)
+                ref = traj_gen.hover_test(x_offset,y_offset)
                 
-                # hovering_ff = np.array([0.0, 0.0, 0.0])
-                # ref_pos = ref[0]
-                # ref_vel = hovering_ff
-                # ref_acc = hovering_ff
-                # ref_jerk = hovering_ff
-                # ref_snap = hovering_ff
-                # ref_msg = ref[1]
+                hovering_ff = np.array([0.0, 0.0, 0.0])
+                ref_pos = ref[0]
+                ref_pos_z = ref_pos[2]
+                #ref_vel = hovering_ff
+                #ref_acc = hovering_ff
+                #ref_jerk = hovering_ff
+                #ref_snap = hovering_ff
+                #ref_msg = ref[1]
 
                 
 
             #ref_pos_1 = traj_gen.helix(0, 0.4, count, 5)
             #ref_pos = ref_pos_1[0]
 
+                # trajectory inputs
                 ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                ref_pos = ref_derivatives[0]
+                ref_pos_circle = ref_derivatives[0]
+                ref_pos_z = ref_pos_circle[2]
                 ref_vel = ref_derivatives[1]
                 ref_acc = ref_derivatives[2]
                 ref_jerk = ref_derivatives[3]
@@ -233,7 +246,7 @@ if __name__ == '__main__':
                 monoco.update_ref_pos(ref_pos)
 
                 # ff references
-                monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
+                monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap,ref_pos_z)
 
                 # control input (position + velocity)
                 monoco.p_control_input(1/(max_sample_rate/pid_loop))
@@ -297,7 +310,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
+                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -316,7 +329,7 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
+                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             
