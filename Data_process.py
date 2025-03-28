@@ -4,7 +4,7 @@ from Filter import IIR2Filter
 import math
 import numpy as np
 from pyrr import quaternion
-
+from scipy.ndimage import median_filter
 
 class RealTimeProcessor(object):
     def __init__(self, order, cutoff, ftype, design, rs, sample_rate):
@@ -85,6 +85,15 @@ class RealTimeProcessor(object):
         self.central_diff_x_acc = []
         self.central_diff_y_acc = []
         self.central_diff_z_acc = []
+
+        # median filter
+        self.tpp_rate_med = 0.0
+        self.tpp_raterate_med = 0.0
+        self.med_diff_roll_rate = []
+        self.med_diff_pitch_rate = []
+        self.med_diff_roll_raterate = []
+        self.med_diff_pitch_raterate = []
+
 
 
         # omega and omega_dot
@@ -540,6 +549,43 @@ class RealTimeProcessor(object):
         # pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
         # rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
         # pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
+
+        if self.tpp_rate_cd >= 3.0:
+            if self.tpp_rate_med < 5.0:
+                self.med_diff_roll_rate.append(rollrate_x)
+                self.med_diff_pitch_rate.append(pitchrate_y)
+                self.tpp_rate_med += 1.0
+
+                rollrate_x = 0.0
+                pitchrate_y = 0.0
+
+            else:
+                self.med_diff_roll_rate.pop(0)
+                self.med_diff_pitch_rate.pop(0)
+                self.med_diff_roll_rate.append(rollrate_x)
+                self.med_diff_pitch_rate.append(pitchrate_y)
+
+                rollrate_x = median_filter(self.med_diff_roll_rate,5)
+                pitchrate_y = median_filter(self.med_diff_pitch_rate,5)
+
+
+        if self.tpp_raterate_cd >= 5.0:
+            if self.tpp_raterate_med < 5.0:
+                self.med_diff_roll_raterate.append(rollraterate_x)
+                self.med_diff_pitch_raterate.append(pitchraterate_y)
+                self.tpp_raterate_med += 1.0
+
+                rollraterate_x = 0.0
+                pitchraterate_y = 0.0
+
+            else:
+                self.med_diff_roll_raterate.pop(0)
+                self.med_diff_pitch_raterate.pop(0)
+                self.med_diff_roll_raterate.append(rollraterate_x)
+                self.med_diff_pitch_raterate.append(pitchraterate_y)
+
+                rollraterate_x = median_filter(self.med_diff_roll_raterate,5)
+                pitchraterate_y = median_filter(self.med_diff_pitch_raterate,5)
         
 
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z

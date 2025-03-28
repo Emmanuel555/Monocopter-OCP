@@ -78,8 +78,8 @@ if __name__ == '__main__':
     traj_gen = trajectory_generator.trajectory_generator()
 
     # circle parameters
-    radius = 0.8 
-    speedX = 2.0 # 2 still the best
+    radius = 0.5 # 0.5
+    speedX = 1.0 # 2 still the best
     laps = 30
     helix_laps = 32
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
@@ -87,7 +87,8 @@ if __name__ == '__main__':
     elevated_alt = 0.8
 
     # hover parameters
-    hover_offset = radius
+    x_hover_offset = 0.0
+    y_hover_offset = 0.0
     
     # traj generator for min snap circle, ####### pre computed points
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
@@ -219,7 +220,7 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                ref = traj_gen.hover_test(hover_offset,hover_offset)
+                ref = traj_gen.hover_test(x_hover_offset,y_hover_offset)
                 
                 hovering_ff = np.array([0.0, 0.0, 0.0])
                 ref_pos = ref[0]
@@ -338,7 +339,8 @@ if __name__ == '__main__':
             
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_hgt_1.5'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_test_0.0_hgt_1.5'
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_1x_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_rot_collective_ref_vel_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
 data_saver.save_data(path)
