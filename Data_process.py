@@ -53,6 +53,8 @@ class RealTimeProcessor(object):
 
         # body yaw
         self.yaw = 0.0
+        self.yaw_last = 0.0
+        self.yaw_counter = 0.0
 
         # filtered data with IIR2Filter
         self.px_filted = 0
@@ -612,6 +614,16 @@ class RealTimeProcessor(object):
     def tpp_xy(self):
         self.tpp_x = np.array([0.0,self.tpp[1],0.0]) # pitch only
         self.tpp_y = np.array([self.tpp[0],0.0,0.0])  # roll only  
+
+
+    def get_yawrate(self):
+        if self.yaw_counter == 0.0:
+            self.yaw_last = self.yaw
+            self.start_yaw = 1.0
+        yawrate = (self.yaw - self.yaw_last)/self.sample_time
+        self.yaw_last = self.yaw
+        yawrate = abs(yawrate) * -1
+        return yawrate
 
 
     def get_RPY(self): # for body frame

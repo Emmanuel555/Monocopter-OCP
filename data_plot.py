@@ -45,7 +45,7 @@ time_flat_list = [item for sublist in time for item in sublist]
 
 max_sampling_rate = 360
 
-start = 10*max_sampling_rate
+start = 0*max_sampling_rate
 end = 100*max_sampling_rate
 
 rmse_num_x = x_error_squared[start:end]

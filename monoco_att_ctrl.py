@@ -24,6 +24,7 @@ class att_ctrl(object):
         self.robot_tpp_bod_rate = np.array([0.0,0.0,0.0]) # x y z
         self.robot_tpp_bod_raterate = np.array([0.0,0.0,0.0]) # x y z
         self.yaw = 0.0
+        self.yawrate = 0.0
         
         ## gains
         # pos
@@ -68,6 +69,7 @@ class att_ctrl(object):
         self.mass = 0
         self.cl = 0
         self.cd = 0
+        self.J = np.array([0.0,0.0,0.0]) # inertia matrix
 
         ## bem
         self.drag_rotation_wo_rps = 0
@@ -94,7 +96,7 @@ class att_ctrl(object):
         self.ref_raterates = np.array([0.0,0.0])
 
 
-    def physical_params(self,wing_radius,chord_length,mass,cl,cd):
+    def physical_params(self,wing_radius,chord_length,mass,cl,cd, J):
         # cl = lift coefficient
         # cd = drag coefficient
         self.wing_radius = wing_radius
@@ -102,6 +104,7 @@ class att_ctrl(object):
         self.mass = mass
         self.cl = cl
         self.cd = cd
+        self.J = J
 
 
     def compute_bem_wo_rps(self,pitch):
@@ -124,7 +127,7 @@ class att_ctrl(object):
         self.ref_sna = ref_sna 
 
 
-    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset,yaw,quat_x,quat_y):
+    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset, yaw, quat_x, quat_y, yawrate):
         self.z_offset = z_offset
         self.robot_pos = np.array(linear_pos[0:3])
         self.robot_vel = np.array(linear_pos[3:6])
@@ -136,6 +139,7 @@ class att_ctrl(object):
         self.yaw = yaw
         self.robot_quat_x = quat_x
         self.robot_quat_y = quat_y
+        self.yawrate = yawrate
         
 
     def update_ref_pos(self, ref_pos):
@@ -370,6 +374,9 @@ class att_ctrl(object):
 
         #cmd_bod_acc = self.cmd_att
         #cmd_bod_acc = self.cascaded_ref_bod_rates
+
+        ## resultant precession control
+        cmd_bod_acc = (cmd_bod_acc*self.J[0])/(self.J[2]*self.yawrate)
         final_des_roll_raterate = float(cmd_bod_acc[0])
         final_des_pitch_raterate = float(cmd_bod_acc[1])
 
@@ -388,8 +395,8 @@ class att_ctrl(object):
 
 
         ## when involving pitch roll
-        des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/100000 # convert to linear term cos of inner cyclic ctrl
-        des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/100000
+        des_x = (final_des_pitch_raterate/(self.wing_radius))/100000 # convert to linear term cos of inner cyclic ctrl
+        des_y = (-1*final_des_roll_raterate/(self.wing_radius))/100000
 
 
         ## compare against pid control
@@ -484,8 +491,8 @@ class att_ctrl(object):
             wy = 0
             wx = 0
         else:    
-            wy = self.ref_jer[0]/self.cmd_z
-            wx = self.ref_jer[1]/(-1*self.cmd_z)
+            wy = self.ref_jer[0]/self.g
+            wx = self.ref_jer[1]/(-1*self.g)
         
         ref_bod_rates = np.array([wx,wy]) # flattened array abt x y z
         self.ref_rates = ref_bod_rates 
@@ -499,8 +506,8 @@ class att_ctrl(object):
             wy_dot = 0
             wx_dot = 0
         else:    
-            wy_dot = self.ref_sna[0]/self.cmd_z
-            wx_dot = self.ref_sna[1]/(-1*self.cmd_z)
+            wy_dot = self.ref_sna[0]/self.g
+            wx_dot = self.ref_sna[1]/(-1*self.g)
         
         ref_bod_raterate = np.array([wx_dot,wy_dot]) # flattened array abt x y z
         self.ref_raterates = ref_bod_raterate

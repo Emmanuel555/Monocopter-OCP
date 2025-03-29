@@ -132,9 +132,10 @@ if __name__ == '__main__':
     mass = 75/1000
     cl = 0.5
     cd = 0.052
+    J = np.array([0.1,0.1,0.1]) # moment of inertia
     
     monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, kvd, kvi, ka, kad, kai, kr, krd, kri, krr, krrd, krri)
-    monoco.physical_params(wing_radius, chord_length, mass, cl, cd)        
+    monoco.physical_params(wing_radius, chord_length, mass, cl, cd, J)        
     
     time_last = 0
     count = 0        
@@ -196,6 +197,7 @@ if __name__ == '__main__':
             tpp_omega = data_processor.Omega
             tpp_omega_dot = data_processor.Omega_dot
             body_yaw = data_processor.yaw
+            yawrate = data_processor.get_yawrate()
             # tpp_omega = data_processor.Omega
             # tpp_omega_dot = data_processor.Omega_dot
             tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
@@ -205,7 +207,7 @@ if __name__ == '__main__':
             time_last = time.time()
 
             # update positions etc.
-            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2])
+            monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
 
             # compute bem thrust
             monoco.compute_bem_wo_rps(body_pitch)
