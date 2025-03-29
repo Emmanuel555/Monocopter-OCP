@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','ref_position_traj','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates')
+                                   'Monocopter_XYZ','ref_position','ref_position_traj','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates','precession_rate','yawrate')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     mass = 75/1000
     cl = 0.5
     cd = 0.052
-    J = np.array([0.1,0.1,0.1]) # moment of inertia
+    J = np.array([0.1,0.1,0.01]) # moment of inertia
     
     monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, kvd, kvi, ka, kad, kai, kr, krd, kri, krr, krrd, krri)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd, J)        
@@ -280,6 +280,9 @@ if __name__ == '__main__':
             z_control_signal = z_controls[0]
             des_thrust = z_controls[1]
 
+            # precession rate
+            precession_yaw_rate = monoco.precession_rate()
+
             # final control input (INDI loop)
             final_cmd = monoco.get_angles_and_thrust(flatness_option,amplitude)
 
@@ -316,7 +319,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
+                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -335,7 +338,7 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates)
+                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             

@@ -486,6 +486,11 @@ class att_ctrl(object):
         return (final_cmd) """
     
 
+    def precession_rate(self):
+        precession_rate = (self.J[0]*la.norm(self.robot_tpp_bod_raterate,2))/(self.J[2]*self.yawrate)
+        return (precession_rate,self.yawrate)
+
+
     def include_jerk_bod_rates(self,amplitude):
         if self.cmd_z == 0:
             wy = 0
