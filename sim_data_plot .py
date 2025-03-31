@@ -40,7 +40,6 @@ tpp_omega_dot = mat_data['tpp_omega_dot']
 ref_rates = mat_data['ref_rates']
 ref_raterates = mat_data['ref_raterates']
 
-
 cmds = [row for row in cmd] # column vector
 cmd_x = [row[0][0] for row in cmds] # column vector
 cmd_y = [row[0][1] for row in cmds]
@@ -71,6 +70,8 @@ collective_z = np.array([collective_z])
 
 tpp_roll = np.array([tpp_roll])
 tpp_pitch = np.array([tpp_pitch])
+
+
 
 tpp_roll_rate = np.array([tpp_roll_rate])
 tpp_pitch_rate = np.array([tpp_pitch_rate])
@@ -134,8 +135,8 @@ for i in tpp_roll_raterate[0]:
 fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
 #print(cmd_x[0])
 
-ax1.plot(time[0][200:], cmd_x[0][200:]/1000000, label='cmd_x', color='blue',linewidth=2)
-ax1.plot(time[0][200:], cmd_y[0][200:]/1000000, label='cmd_y', color='red',linewidth=2)
+ax1.plot(time[0][:], cmd_x[0][:]/1000000, label='cmd_x', color='blue',linewidth=2)
+ax1.plot(time[0][:], cmd_y[0][:]/1000000, label='cmd_y', color='red',linewidth=2)
 ax1.legend()
 ax1.set_title('Control signal vs time', fontsize=20)
 ax1.set_xlabel('Time(s)')
@@ -158,12 +159,12 @@ ax3.set_xlabel('Time(s)')
 ax3.set_ylabel('Angle/s(deg)')
 
 
-# ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
-# ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
-# ax4.legend()
-# ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
-# ax4.set_xlabel('Time(s)')
-# ax4.set_ylabel('Angle/s^2(deg)')
+ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
+ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
+ax4.legend()
+ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('Angle/s^2(deg)')
 
 # ax4.plot(time[0], px[0], label='px', color='red')
 # ax4.legend()
@@ -193,11 +194,12 @@ ax3.set_ylabel('Angle/s(deg)')
 
 #ax4.plot(time[0], collective_z[0], label='Collective input', color='blue')
 #ax4.plot(time[0], z_control[0], label='z_control_input', color='red')
-ax4.plot(time[0][200:], des_thrust[0][200:], label='des_thrust', color='green')
-ax4.legend()
-ax4.set_title('Collective control', fontsize=20)
-ax4.set_xlabel('Time(s)')
-ax4.set_ylabel('Signal')
+# ax4.plot(time[0][200:], des_thrust[0][200:], label='des_thrust', color='green')
+# ax4.legend()
+# ax4.set_title('Collective control', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Signal')
+
 
 # Show the figure
 plt.show()

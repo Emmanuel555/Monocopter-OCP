@@ -4,7 +4,7 @@ from Filter import IIR2Filter
 import math
 import numpy as np
 from pyrr import quaternion
-from scipy.ndimage import median_filter
+
 
 class RealTimeProcessor(object):
     def __init__(self, order, cutoff, ftype, design, rs, sample_rate):
@@ -47,9 +47,9 @@ class RealTimeProcessor(object):
         self.quat_w = 0  
 
         # tpp angle
-        self.tpp = np.array([0.0, 0.0, 0.0])  # flat array 
-        self.tpp_x = np.array([0.0, 0.0, 0.0])  # flat array 
-        self.tpp_y = np.array([0.0, 0.0, 0.0])  # flat array
+        self.tpp = np.array([0.0,0.0,0.0])  # flat array 
+        self.tpp_x = np.array([0.0,0.0,0.0])  # flat array 
+        self.tpp_y = np.array([0.0,0.0,0.0])  # flat array
 
         # body yaw
         self.yaw = 0.0
@@ -378,11 +378,8 @@ class RealTimeProcessor(object):
         ## tpp pitch
         tpp_pitch = math.sin(yaw-shift)*-1*bod_roll
 
-        self.tpp[0] = tpp_roll
-        self.tpp[1] = tpp_pitch
-        self.tpp[2] = 0.0
         self.yaw = yaw
-        
+        self.tpp = np.array([tpp_roll, tpp_pitch, 0.0])
         # print(round(roll_rad,3), round(pitch_rad,3))
 
         return self.tpp
@@ -481,6 +478,7 @@ class RealTimeProcessor(object):
         self.rollrate_x_last = rollrate_x 
         self.pitchrate_y_last = pitchrate_y
          
+        tpp_angle = [roll, pitch, 0.0] 
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
         self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z
 
@@ -499,7 +497,7 @@ class RealTimeProcessor(object):
         #self.Omega_dot[1] = self.pY.filter(self.Omega_dot[1])
         #self.Omega_dot[2] = self.yZ.filter(self.Omega_dot[2])
     
-        return (self.tpp, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
+        return (tpp_angle, self.Omega, self.Omega_dot) # convention is abt x, y, z - rpy world frame w heading zero facing x
 
 
     def get_Omega_dot_dotdot_filt_eul_central_diff(self):
@@ -546,11 +544,13 @@ class RealTimeProcessor(object):
             rollraterate_x = (self.central_diff_roll_raterate[-1] - (2*self.central_diff_roll_raterate[2]) + self.central_diff_roll_raterate[0])/(np.power(self.sample_time,2)*4.0)
             pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[2]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
 
+
         ## not good
         # rollrate_x = self.FilterOmega_x.filter(rollrate_x)
         # pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
         # rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
         # pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
+
 
         if self.tpp_rate_cd >= 3.0:
             if self.tpp_rate_med < 5.0:
@@ -567,8 +567,8 @@ class RealTimeProcessor(object):
                 self.med_diff_roll_rate.append(rollrate_x)
                 self.med_diff_pitch_rate.append(pitchrate_y)
 
-                rollrate_x = median_filter(self.med_diff_roll_rate,5)
-                pitchrate_y = median_filter(self.med_diff_pitch_rate,5)
+                rollrate_x = np.median(self.med_diff_roll_rate)
+                pitchrate_y = np.median(self.med_diff_pitch_rate)
 
 
         if self.tpp_raterate_cd >= 5.0:
@@ -586,10 +586,10 @@ class RealTimeProcessor(object):
                 self.med_diff_roll_raterate.append(rollraterate_x)
                 self.med_diff_pitch_raterate.append(pitchraterate_y)
 
-                rollraterate_x = median_filter(self.med_diff_roll_raterate,5)
-                pitchraterate_y = median_filter(self.med_diff_pitch_raterate,5)
+                rollraterate_x = np.median(self.med_diff_roll_raterate)
+                pitchraterate_y = np.median(self.med_diff_pitch_raterate)
         
-
+        tpp_angle = [roll, pitch, 0.0] 
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
         self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z
 

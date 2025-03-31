@@ -109,6 +109,7 @@ if __name__ == '__main__':
     #     print(word)
         
     
-    a = np.array([1.0,1.0])
+    a = np.array([1.4,1.2,3.0,6.0,1.0])
     a = a*4.0
+    a = np.median(a)
     print(a)

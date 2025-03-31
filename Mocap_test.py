@@ -93,8 +93,8 @@ if __name__ == '__main__':
                 
                 #print("sampling period and freq: ", t_diff, 1/t_diff) 
                 print("tpp angles in degrees:", round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3)) # rpy
-                print("tpp bodypitch:", body_pitch)
-                #print("tpp bodyrates:", tpp_omega) # rpy
+                #print("tpp bodypitch:", body_pitch)
+                print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
                 print("position: ", pos[0:3])
                 #print("tpp quaternion: ", tpp_quat)
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                 disk_vector = quaternion.apply_to_vector(tpp_quat_y, ez) # flattened array
 
                 
-                print (disk_vector)
+                print(disk_vector)
                 yaw = math.atan2(r11,r21)
                 # denominator is 1 as its a unit vector (quaternion mag is 1)
                 # bod_pitch = math.acos(pitch) 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
                 #print("tpp_pitch: ", tpp_pitch)
                                 
                 #print(round(roll*(180/np.pi),3), round(roll*(180/np.pi),3))
-                print("sin yaw: ", math.sin(yaw))
+                print("cos yaw: ", math.cos(yaw))
             
     
                 #time.sleep(0.05) # impt to pause and see information

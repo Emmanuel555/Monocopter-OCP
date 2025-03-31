@@ -376,7 +376,7 @@ class att_ctrl(object):
         #cmd_bod_acc = self.cascaded_ref_bod_rates
 
         ## resultant precession control
-        cmd_bod_acc = (cmd_bod_acc*self.J[0])/(self.J[2]*self.yawrate)
+        # cmd_bod_acc = (cmd_bod_acc*self.J[0])/(self.J[2]*self.yawrate)
         final_des_roll_raterate = float(cmd_bod_acc[0])
         final_des_pitch_raterate = float(cmd_bod_acc[1])
 
@@ -394,9 +394,9 @@ class att_ctrl(object):
         #y_sign = abs(math.cos(self.yaw))
 
 
-        ## when involving pitch roll
-        des_x = (final_des_pitch_raterate/(self.wing_radius))/100000 # convert to linear term cos of inner cyclic ctrl
-        des_y = (-1*final_des_roll_raterate/(self.wing_radius))/100000
+        ## when involving pitch roll - 1/100000 = moment of inertia
+        des_x = (final_des_pitch_raterate/(self.wing_radius*self.mass))/100000 # convert to linear term cos of inner cyclic ctrl
+        des_y = (-1*final_des_roll_raterate/(self.wing_radius*self.mass))/100000
 
 
         ## compare against pid control
@@ -487,7 +487,10 @@ class att_ctrl(object):
     
 
     def precession_rate(self):
-        precession_rate = (self.J[0]*la.norm(self.robot_tpp_bod_raterate,2))/(self.J[2]*self.yawrate)
+        if self.yawrate == 0:
+            precession_rate = 0
+        else:
+            precession_rate = (self.J[0]*la.norm(self.robot_tpp_bod_raterate,2))/(self.J[2]*self.yawrate)
         return (precession_rate,self.yawrate)
 
 

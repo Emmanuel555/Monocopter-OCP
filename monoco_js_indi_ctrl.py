@@ -132,7 +132,7 @@ if __name__ == '__main__':
     mass = 75/1000
     cl = 0.5
     cd = 0.052
-    J = np.array([0.1,0.1,0.01]) # moment of inertia
+    J = np.array([1/100000,1/100000,1/1000000]) # moment of inertia
     
     monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, kvd, kvi, ka, kad, kai, kr, krd, kri, krr, krrd, krri)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd, J)        
@@ -300,8 +300,10 @@ if __name__ == '__main__':
                 print(ref_msg) 
                 #print('shapes: ', np.shape(final_cmd))
                 print('cmd info sent: ', final_cmd)
-                print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
-                #print('tpp_angle', rotational_state_vector[0][0], rotational_state_vector[0][1], rotational_state_vector[0][2])
+                #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                #print('tpp_angle_from_rotational', rotational_state_vector[0][0], rotational_state_vector[0][1], rotational_state_vector[0][2])
+                print('tpp_angle', tpp_angle)
+                #print('tpp_omega', type(tpp_omega),type(rotational_state_vector[1]))
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
                 #print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
@@ -345,7 +347,7 @@ if __name__ == '__main__':
 
 # save data
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_test_0.0_hgt_1.5'
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_1x_0.5_hgt_1.5'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_1x_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_rot_collective_ref_vel_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/pid_tpp_tracking_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
 data_saver.save_data(path)
