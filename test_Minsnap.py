@@ -86,30 +86,30 @@ if __name__ == '__main__':
     # print(test_x)
 
 
-    # word = 'hello'
+    word = 'hello'
 
-    # # Setup keyboard listener
-    # def on_press(key):
-    #     global word
-    #     try:
-    #         if key.char == 'a':  # Check if 'a' is pressed
-    #             word = 'world'
-    #         elif key.char == 'b':  # Check if 'b' is pressed
-    #             word = 'bitch'
-    #         elif key.char == 'c':  # Check if 'b' is pressed
-    #             word = 'hello'
-    #     except AttributeError:
-    #         pass  # Ignore special keys
+    # Setup keyboard listener
+    def on_press(key):
+        global word
+        try:
+            if key.char == 'a':  # Check if 'a' is pressed
+                word = 'world'
+            elif key.char == 'b':  # Check if 'b' is pressed
+                word = 'bitch'
+            elif key.char == 'c':  # Check if 'b' is pressed
+                word = 'hello'
+        except AttributeError:
+            pass  # Ignore special keys
 
-    # # Start listening for key presses
-    # listener = keyboard.Listener(on_press=on_press)
-    # listener.start()
+    # Start listening for key presses
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
 
-    # while True:
-    #     print(word)
+    while True:
+        print(word)
         
     
-    a = np.array([1.4,1.2,3.0,6.0,1.0])
-    a = a*4.0
-    a = np.median(a)
-    print(a)
+    # a = np.array([1.4,1.2,3.0,6.0,1.0])
+    # a = a*4.0
+    # a = np.median(a)
+    # print(a)

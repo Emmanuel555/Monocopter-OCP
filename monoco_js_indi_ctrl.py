@@ -13,9 +13,24 @@ import numpy.linalg as la
 import monoco_att_ctrl
 import trajectory_generator
 import timeit
+from pynput import keyboard
 
 
 if __name__ == '__main__':
+
+    # Setup keyboard listener
+    stage = 'hover'
+    def on_press(key):
+        global stage
+        try:
+            if key.char == 'g':  # Check if 'g' is pressed
+                stage = 'trajectory on'
+        except AttributeError:
+            pass  # Ignore special keys
+
+    # Start listening for key presses
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
 
     data_receiver_sender = Mocap.Udp()
     max_sample_rate = 360
@@ -24,7 +39,7 @@ if __name__ == '__main__':
     data_processor = Data_process.RealTimeProcessor(5, [36], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','ref_position_traj','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates','precession_rate','yawrate')
+                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates','precession_rate','yawrate')
                                    
     logging.basicConfig(level=logging.ERROR)
 
@@ -89,7 +104,9 @@ if __name__ == '__main__':
     x_hover_offset = 0.0
     y_hover_offset = 0.0
     
-    # traj generator for min snap circle, ####### pre computed points
+    ## traj generator for min snap circle, ####### pre computed points
+    ## 2 pt line
+    pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
     ## circle
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
@@ -221,16 +238,17 @@ if __name__ == '__main__':
             #ref_pos = traj_gen.elevated_circle(0, 0.6, count)
             
                 # hovering test
-                ref = traj_gen.hover_test(x_hover_offset,y_hover_offset)
-                
-                hovering_ff = np.array([0.0, 0.0, 0.0])
-                ref_pos = ref[0]
-                ref_pos_z = ref_pos[2]
-                ref_vel = hovering_ff
-                ref_acc = hovering_ff
-                ref_jerk = hovering_ff
-                ref_snap = hovering_ff
-                ref_msg = ref[1]
+                if stage == 'hover':
+                    ref = traj_gen.hover_test(x_hover_offset,y_hover_offset)
+                    
+                    hovering_ff = np.array([0.0, 0.0, 0.0])
+                    ref_pos = ref[0]
+                    ref_pos_z = ref_pos[2]
+                    ref_vel = hovering_ff
+                    ref_acc = hovering_ff
+                    ref_jerk = hovering_ff
+                    ref_snap = hovering_ff
+                    ref_msg = ref[1]
 
                 
 
@@ -238,15 +256,15 @@ if __name__ == '__main__':
             #ref_pos = ref_pos_1[0]
 
                 ## trajectory inputs
-                # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                # ref_pos_circle = ref_derivatives[0]
-                # ref_pos = ref_derivatives[0]
-                # ref_pos_z = ref_pos_circle[2]
-                # ref_vel = ref_derivatives[1]
-                # ref_acc = ref_derivatives[2]
-                # ref_jerk = ref_derivatives[3]
-                # ref_snap = ref_derivatives[4]
-                # ref_msg = ref_derivatives[5]
+                if stage == 'trajectory on':
+                    ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                    ref_pos = ref_derivatives[0]
+                    ref_pos_z = ref_pos[2]
+                    ref_vel = ref_derivatives[1]
+                    ref_acc = ref_derivatives[2]
+                    ref_jerk = ref_derivatives[3]
+                    ref_snap = ref_derivatives[4]
+                    ref_msg = ref_derivatives[5]
 
                 # update references for PID loop
                 monoco.update_ref_pos(ref_pos)
@@ -321,7 +339,7 @@ if __name__ == '__main__':
 
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
+                                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
             
             stop = timeit.default_timer()
             #print('Program Runtime: ', stop - start)  
@@ -340,7 +358,7 @@ if __name__ == '__main__':
             
             # save data
             data_saver.add_item(abs_time,
-                                linear_state_vector[0:3],ref_pos,ref_pos_circle,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
+                                linear_state_vector[0:3],ref_pos,rmse_num,final_rmse,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
 
             print('Emergency Stopped and final rmse produced: ', final_rmse)
             

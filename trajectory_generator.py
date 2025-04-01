@@ -304,6 +304,36 @@ class trajectory_generator(object):
         return (pva,num_points)
 
 
+    def two_pt_line(self,speed,pid_update_rate,alt):
+        x = [0.0,0.0,0.0,0.0,0.0]
+        y = [1.0,0.5,0.0,-0.5,-1.0]
+        parts = len(x)
+        distance = abs(y[0])*2
+        speed = 0.1 * speed # default is 0.1
+        total_time = distance/speed
+        num_pts = int(total_time*pid_update_rate)
+        refs = []
+
+        for i in range(parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(parts-1))*i,
+                position=np.array([x[i], y[i], alt]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_pts)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6)
+        return (pva,num_pts)
+    
+
     def jerk_snap_circle(self, pva, num_points, count, landing_hgt):
         all_pos = np.array([pva[0,:,0],pva[0,:,1],pva[0,:,2]]) # position
         all_vel = np.array([pva[1,:,0],pva[1,:,1],pva[1,:,2]]) # velocity
@@ -312,11 +342,11 @@ class trajectory_generator(object):
         all_sna = np.array([pva[4,:,0],pva[4,:,1],pva[4,:,2]]) # snap
 
         if count >= num_points:
-            ref_pos = np.array([0,0,landing_hgt]) # position
-            ref_vel = np.array([0,0,0]) # velocity
-            ref_acc = np.array([0,0,0]) # acceleration
-            ref_jer = np.array([0,0,0]) # jerk
-            ref_sna = np.array([0,0,0]) # snap
+            ref_pos = np.array([pva[0,-1,0],pva[0,-1,1],pva[0,-1,2]]) # position
+            ref_vel = np.array([pva[1,-1,0],pva[1,-1,1],pva[1,-1,2]]) # velocity
+            ref_acc = np.array([pva[2,-1,0],pva[2,-1,1],pva[2,-1,2]]) # acceleration
+            ref_jer = np.array([pva[3,-1,0],pva[3,-1,1],pva[3,-1,2]]) # jerk
+            ref_sna = np.array([pva[4,-1,0],pva[4,-1,1],pva[4,-1,2]]) # snap
             msg = "traj ended..."
         else:
             ref_pos = np.array([pva[0,count,0],pva[0,count,1],pva[0,count,2]]) # ref position
@@ -333,6 +363,9 @@ class trajectory_generator(object):
         ref_sna = list(ref_sna.flat)
 
         return (ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,msg)
+    
+
+
         
  
     def simple_circle(self, x_offset, radius, count, speedX):
