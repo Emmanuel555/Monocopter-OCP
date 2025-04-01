@@ -400,8 +400,8 @@ class att_ctrl(object):
 
 
         ## compare against pid control
-        #des_x = self.p_control_signal[0]/50
-        #des_y = self.p_control_signal[1]/50
+        #des_x = self.p_control_signal[0]/500
+        #des_y = self.p_control_signal[1]/500
         
         
         if abs(des_x) > 1.0:

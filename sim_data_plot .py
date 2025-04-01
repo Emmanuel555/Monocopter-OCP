@@ -8,7 +8,7 @@ from scipy import ndimage
 from numpy import linalg as la
 from Filter import IIR2Filter
 
-file_path = '/home/emmanuel/Monocopter-OCP/sim_data/'
+file_path = '/home/emmanuel/Monocopter-OCP/data_selected/'
 files = os.listdir(file_path)
 files.sort(key=lambda x: os.path.getmtime(os.path.join(file_path, x)), reverse=True)
 
@@ -135,8 +135,10 @@ for i in tpp_roll_raterate[0]:
 fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
 #print(cmd_x[0])
 
-ax1.plot(time[0][:], cmd_x[0][:]/1000000, label='cmd_x', color='blue',linewidth=2)
-ax1.plot(time[0][:], cmd_y[0][:]/1000000, label='cmd_y', color='red',linewidth=2)
+cmd_x[0] = ndimage.median_filter(cmd_x[0], size=1000)
+cmd_y[0] = ndimage.median_filter(cmd_y[0], size=1000)
+ax1.plot(time[0], cmd_x[0]/1000000, label='cmd_x', color='blue',linewidth=2)
+ax1.plot(time[0], cmd_y[0]/1000000, label='cmd_y', color='red',linewidth=2)
 ax1.legend()
 ax1.set_title('Control signal vs time', fontsize=20)
 ax1.set_xlabel('Time(s)')

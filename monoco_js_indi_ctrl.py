@@ -21,7 +21,7 @@ if __name__ == '__main__':
     max_sample_rate = 360
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Data_process.RealTimeProcessor(5, [36], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
                                    'Monocopter_XYZ','ref_position','ref_position_traj','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates','precession_rate','yawrate')
@@ -52,14 +52,13 @@ if __name__ == '__main__':
 
     rate_loop = raterate_loop * 2 # 120 hz, 2 is the best thus far
     #att_loop = rate_loop * 1.5 # same as rate loop, try next wk on pos hold
-    att_loop = rate_loop * 10 # 10, 36 hz best so far
+    att_loop = rate_loop * 5 # 10, 36 hz best so far
     #vel_loop = rate_loop * 5 # 8, 36 hz best so far
-    pid_loop = rate_loop * 10 # 10, 36 hz best so far, position
+    pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
 
     #rate_loop = 1
     #att_loop = 1
     #pid_loop = 5 # 5 is the minimum
-
 
     # rate_loop = raterate_loop * 3 # 90 hz, nt good 
     # att_loop = rate_loop * 1 # 120  nt good
@@ -78,8 +77,8 @@ if __name__ == '__main__':
     traj_gen = trajectory_generator.trajectory_generator()
 
     # circle parameters
-    radius = 0.5 # 0.5
-    speedX = 1.0 # 2 still the best
+    radius = 0.8 # 0.5
+    speedX = 2.0 # 2 still the best
     laps = 30
     helix_laps = 32
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
@@ -241,6 +240,7 @@ if __name__ == '__main__':
                 ## trajectory inputs
                 # ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
                 # ref_pos_circle = ref_derivatives[0]
+                # ref_pos = ref_derivatives[0]
                 # ref_pos_z = ref_pos_circle[2]
                 # ref_vel = ref_derivatives[1]
                 # ref_acc = ref_derivatives[2]
@@ -346,8 +346,8 @@ if __name__ == '__main__':
             
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_test_0.0_hgt_1.5'
+path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_test_0.0,0.0_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_1x_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/pid_tpp_tracking_tracking_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/att_tracking_not_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
 data_saver.save_data(path)
