@@ -345,8 +345,41 @@ class att_ctrl(object):
         self.cascaded_ref_bod_rates = self.cascaded_ref_bod_rates/sampling_dt
         return (self.cascaded_ref_bod_rates)
     
+
+    def CF_SAM_get_angles_and_thrust(self,enable):
+        # output saturation/normalisation
+        des_rps = self.des_rps/30
+        
+        if abs(des_rps) > 1.0:
+            des_rps = 1.0*(des_rps/abs(des_rps))
+
+        ## precession sign change
+        #x_sign = abs(math.sin(self.yaw))
+        #y_sign = abs(math.cos(self.yaw))
+
+        ## compare against pid control
+        des_x = self.p_control_signal[0]/50
+        des_y = self.p_control_signal[1]/50
+
+        # output saturation
+        # if des_roll > 25:
+        #     des_roll = 25
+        
+        if abs(des_x) > 1.0:
+            des_x = 1.0*(des_x/abs(des_x))
+
+        if abs(des_y) > 1.0:
+            des_y = 1.0*(des_y/abs(des_y))
+
+        final_motor_output = des_x + des_y + des_rps
+
+        final_cmd = np.array([final_motor_output, final_motor_output, final_motor_output, enable*des_thrust])
+        #self.cmd_z = enable*des_thrust
+
+        return (final_cmd)
     
-    def get_angles_and_thrust(self,flatness_option,amplitude):
+    
+    """ def get_angles_and_thrust(self,flatness_option,amplitude):
         # self.control_input()
         # cmd_att = self.attitude_loop(self.robot_quat, self.control_signal)
 
@@ -400,8 +433,8 @@ class att_ctrl(object):
 
 
         ## compare against pid control
-        #des_x = self.p_control_signal[0]/500
-        #des_y = self.p_control_signal[1]/500
+        des_x = self.p_control_signal[0]/50
+        des_y = self.p_control_signal[1]/50
         
         
         if abs(des_x) > 1.0:
@@ -417,7 +450,7 @@ class att_ctrl(object):
         ## final cmd at the end
         final_cmd = np.array([[des_x*cyclic_gain, des_y*cyclic_gain, des_rps*collective_gain, float(0)]]) # linear(x)-pitch(y), linear(y)-roll(x), rps on wj side
         
-        return (final_cmd)
+        return (final_cmd) """
     
 
     """ def NDI_get_angles_and_thrust(self,flatness_option):

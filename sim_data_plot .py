@@ -24,7 +24,8 @@ position = mat_data['Monocopter_XYZ']
 velocity = mat_data['velocity']
 z_control = mat_data['z_control']
 des_thrust = mat_data['des_thrust']
-
+precession = mat_data['yawrate']
+print('Precession: ', precession[0][200])
 px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
 pz = [row[2] for row in position]
@@ -161,12 +162,12 @@ ax3.set_xlabel('Time(s)')
 ax3.set_ylabel('Angle/s(deg)')
 
 
-ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
-ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
-ax4.legend()
-ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
-ax4.set_xlabel('Time(s)')
-ax4.set_ylabel('Angle/s^2(deg)')
+# ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
+# ax4.plot(time[0], np.round((tpp_pitch_raterate[0]*(180/np.pi)),3), label='tpp_pitch_raterate', color='red')
+# ax4.legend()
+# ax4.set_title('TPP angle/s^2(deg) vs time', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Angle/s^2(deg)')
 
 # ax4.plot(time[0], px[0], label='px', color='red')
 # ax4.legend()
@@ -201,6 +202,12 @@ ax4.set_ylabel('Angle/s^2(deg)')
 # ax4.set_title('Collective control', fontsize=20)
 # ax4.set_xlabel('Time(s)')
 # ax4.set_ylabel('Signal')
+
+ax4.plot(time[0], precession[0], label='precession', color='green')
+ax4.legend()
+ax4.set_title('Precession control', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('Signal')
 
 
 # Show the figure

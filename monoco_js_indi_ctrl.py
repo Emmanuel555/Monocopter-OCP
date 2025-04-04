@@ -20,23 +20,23 @@ if __name__ == '__main__':
 
     # Setup keyboard listener
     stage = 'hover'
-    def on_press(key):
-        global stage
-        try:
-            if key.char == 'g':  # Check if 'g' is pressed
-                stage = 'trajectory on'
-        except AttributeError:
-            pass  # Ignore special keys
+    # def on_press(key):
+    #     global stage
+    #     try:
+    #         if key.char == 'g':  # Check if 'g' is pressed
+    #             stage = 'trajectory on'
+    #     except AttributeError:
+    #         pass  # Ignore special keys
 
-    # Start listening for key presses
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()
+    # # Start listening for key presses
+    # listener = keyboard.Listener(on_press=on_press)
+    # listener.start()
 
     data_receiver_sender = Mocap.Udp()
     max_sample_rate = 360
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    data_processor = Data_process.RealTimeProcessor(5, [36], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
                                    'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle','tpp_omega','tpp_omega_dot','velocity','z_control','des_thrust','ref_rates','ref_raterates','precession_rate','yawrate')
@@ -69,7 +69,8 @@ if __name__ == '__main__':
     #att_loop = rate_loop * 1.5 # same as rate loop, try next wk on pos hold
     att_loop = rate_loop * 5 # 10, 36 hz best so far
     #vel_loop = rate_loop * 5 # 8, 36 hz best so far
-    pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
+    #pid_loop = rate_loop * 5 # 10, 36 hz best so far, position
+    pid_loop = 1
 
     #rate_loop = 1
     #att_loop = 1
@@ -106,7 +107,7 @@ if __name__ == '__main__':
     
     ## traj generator for min snap circle, ####### pre computed points
     ## 2 pt line
-    pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
+    #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     # pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle(0, 0.5, 1)
     ## circle
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
@@ -180,6 +181,7 @@ if __name__ == '__main__':
     # Control Loop Commands
     cmd_att = np.array([0.0,0.0])
     cmd_bod_rates = np.array([0.0,0.0])
+    final_cmd = np.array([[0.0,0.0,0.0,0.0]])
 
     # initial flatness terms
     ref_rates = np.array([0.0,0.0])
@@ -256,15 +258,15 @@ if __name__ == '__main__':
             #ref_pos = ref_pos_1[0]
 
                 ## trajectory inputs
-                if stage == 'trajectory on':
-                    ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                    ref_pos = ref_derivatives[0]
-                    ref_pos_z = ref_pos[2]
-                    ref_vel = ref_derivatives[1]
-                    ref_acc = ref_derivatives[2]
-                    ref_jerk = ref_derivatives[3]
-                    ref_snap = ref_derivatives[4]
-                    ref_msg = ref_derivatives[5]
+                # if stage == 'trajectory on':
+                #     ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                #     ref_pos = ref_derivatives[0]
+                #     ref_pos_z = ref_pos[2]
+                #     ref_vel = ref_derivatives[1]
+                #     ref_acc = ref_derivatives[2]
+                #     ref_jerk = ref_derivatives[3]
+                #     ref_snap = ref_derivatives[4]
+                #     ref_msg = ref_derivatives[5]
 
                 # update references for PID loop
                 monoco.update_ref_pos(ref_pos)
@@ -280,6 +282,11 @@ if __name__ == '__main__':
                 ref_rates = monoco.ref_rates
                 ref_raterates = monoco.ref_raterates
 
+                #final_cmd = monoco.get_angles_and_thrust(flatness_option,amplitude)
+
+                # send to monocopter via INDI
+                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+
 
             if loop_counter % att_loop == 0:
 
@@ -292,6 +299,13 @@ if __name__ == '__main__':
                 # bod rates
                 monoco.get_body_rate(cmd_att,flatness_option,1/(max_sample_rate/rate_loop),amplitude)
             
+
+            #if loop_counter % (raterate_loop*3) == 0:
+                # final control input (INDI loop)
+                #final_cmd = monoco.get_angles_and_thrust(flatness_option,amplitude)
+
+                # send to monocopter via INDI
+                #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             # collective thrust
             z_controls = monoco.collective_thrust(kpz,kdz,kiz)
@@ -320,15 +334,16 @@ if __name__ == '__main__':
                 print('cmd info sent: ', final_cmd)
                 #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
                 #print('tpp_angle_from_rotational', rotational_state_vector[0][0], rotational_state_vector[0][1], rotational_state_vector[0][2])
-                print('tpp_angle', tpp_angle)
+                #print('tpp_angle', tpp_angle)
+                print('stage', stage)
                 #print('tpp_omega', type(tpp_omega),type(rotational_state_vector[1]))
                 #print('ref robot_position', ref_pos[0], ref_pos[1], ref_pos[2])
                 #print('pos_error', ref_pos[0]-linear_state_vector[0], ref_pos[1]-linear_state_vector[1], ref_pos[2]-linear_state_vector[2])
 
 
             # start experiment
-            if count > (20 * max_sample_rate): # 5 seconds
-                status = "experiment started"
+            #if count > (20 * max_sample_rate): # 5 seconds
+            status = stage
 
 
             # rmse accumulation
@@ -364,8 +379,8 @@ if __name__ == '__main__':
             
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/robot_solo/hover_test_0.0,0.0_hgt_1.5'
+#path = '/home/emmanuel/Monocopter-OCP/robot_solo/2ptlinehover_test_0.0,0.0_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_test_1x_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/circle_INDI_df_x1_0.5_hgt_1.5'
 #path = '/home/emmanuel/Monocopter-OCP/robot_solo/att_tracking_not_filtered_collective0.0_clean_gains_0.1,0.0,0.01_attraterate360_0.1,0.0,0.01_attrate360_0.1,0.0,0.01_att360_0.1_vel36_1.0,0.0,0.1_pid36_tpp_sim_-90'
-data_saver.save_data(path)
+#data_saver.save_data(path)
