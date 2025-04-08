@@ -398,6 +398,6 @@ if __name__ == '__main__':
                     break
 
 # save data
-path = '/home/emmanuel/AFC_Optitrack/robot_solo/'
-data_saver.save_data(path)
+#path = '/home/emmanuel/AFC_Optitrack/robot_solo/'
+#data_saver.save_data(path)
 
