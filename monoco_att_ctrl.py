@@ -13,7 +13,7 @@ import numpy.linalg as la
 
 
 class att_ctrl(object):
-    def __init__(self,p_gains,d_gains,i_gains,vel_gains,vel_gains_d,vel_gains_i,angle_gains,angle_gains_d,angle_gains_i,body_rate_gains,body_rate_gains_d,body_rate_gains_i,body_rate_rate_gains,body_rate_rate_gains_d,body_rate_rate_gains_i):
+    def __init__(self,p_gains,d_gains,i_gains,vel_gains,angle_gains,body_rate_gains,body_rate_rate_gains):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -33,23 +33,23 @@ class att_ctrl(object):
         self.ki = np.array(i_gains) 
         # vel
         self.kpvel = np.array(vel_gains) 
-        self.kdvel = np.array(vel_gains_d) 
-        self.kivel = np.array(vel_gains_i) 
+        #self.kdvel = np.array(vel_gains_d) 
+        #self.kivel = np.array(vel_gains_i) 
         # attitude/angle
         # self.kpa = np.array([10, 10]) # abt x y
         self.kpa = np.array(angle_gains) # abt x y
-        self.kpad = np.array(angle_gains_d) # abt x y
-        self.kpai = np.array(angle_gains_i) # abt x y
+        #self.kpad = np.array(angle_gains_d) # abt x y
+        #self.kpai = np.array(angle_gains_i) # abt x y
         # body rates
         # self.kpr = np.array([50, 50]) # abt x y
         self.kpr = np.array(body_rate_gains) # abt x y
-        self.kprd = np.array(body_rate_gains_d) # abt x y
-        self.kpri = np.array(body_rate_gains_i) # abt x y
+        #self.kprd = np.array(body_rate_gains_d) # abt x y
+        #self.kpri = np.array(body_rate_gains_i) # abt x y
         # body rate rates
         # self.kprr = np.array([1000, 1000]) # abt x y
         self.kprr = np.array(body_rate_rate_gains) # abt x y
-        self.kprrd = np.array(body_rate_rate_gains_d) # abt x y
-        self.kprri = np.array(body_rate_rate_gains_i) # abt x y
+        #self.kprrd = np.array(body_rate_rate_gains_d) # abt x y
+        #self.kprri = np.array(body_rate_rate_gains_i) # abt x y
         ## sampling time
         self.dt = 0
 
@@ -146,10 +146,10 @@ class att_ctrl(object):
         self.ref_pos = ref_pos 
 
 
-    def attitude_loop(self, quat, control_input, sampling_dt,zd_d):
+    def attitude_loop(self, quat, control_input, sampling_dt, zd_d):
         kpa = self.kpa # abt x y
-        kpad = self.kpad # abt x y
-        kpai = self.kpai # abt x y
+        #kpad = self.kpad # abt x y
+        #kpai = self.kpai # abt x y
         qz = quaternion.create(quat[0], quat[1], quat[2], 1.0) # x y z w ## qw is always set to 1 even in optitrack itself
         #qz = np.array([quat[0],quat[1],quat[2],quat[3]]) # x y z w
         qzi = quaternion.inverse(qz)
@@ -170,7 +170,9 @@ class att_ctrl(object):
         #zd_d = zd_n/la.norm(zd_n,2)
         #print ("disk vector: ", disk_vector)
         #print ("control_input: ", control_input)
-        
+
+        zd_d = np.array([[zd_d[0],zd_d[1],zd_d[2]]])
+        zd_d = np.dot(zd_d,np.transpose(zd_n))
         num = np.dot(disk_vector,np.transpose(zd_n)) # 1 x 1
         den = la.norm(disk_vector,2)*la.norm(zd_d,2) # L2 norm of a and b
         num_den = num/den 
@@ -196,9 +198,13 @@ class att_ctrl(object):
         cmd_att_integral_error = (cmd_att_error*sampling_dt) 
         self.angle_error_last = cmd_att_error
 
-        cmd_att_final = kpa*(cmd_att_error) + kpad*(cmd_att_error_rate) + kpai*(cmd_att_integral_error) # abt x y z
-        
+        #cmd_att_final = kpa*(cmd_att_error) + kpad*(cmd_att_error_rate) + kpai*(cmd_att_integral_error) # abt x y z
+        cmd_att_final = kpa*(cmd_att_error)
         return (cmd_att_final)
+    
+
+    def p_control_input_manual(self,manual_input):
+        self.p_control_signal = manual_input
     
 
     def p_control_input(self,sampling_dt):
@@ -332,7 +338,7 @@ class att_ctrl(object):
         cmd_att_x = self.attitude_loop(self.robot_quat, control_input_y, sampling_dt, zd_dy)
 
         self.cmd_att = cmd_att_x + cmd_att_y
-        self.cmd_att = self.cmd_att/sampling_dt
+        #self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
     
