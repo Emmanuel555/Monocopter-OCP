@@ -47,7 +47,7 @@ class att_ctrl(object):
         #self.kpri = np.array(body_rate_gains_i) # abt x y
         # body rate rates
         # self.kprr = np.array([1000, 1000]) # abt x y
-        self.kprr = np.array(body_rate_rate_gains) # abt x y
+        self.kprr = np.array(body_rate_rate_gains) # abt x y # control effectiveness
         #self.kprrd = np.array(body_rate_rate_gains_d) # abt x y
         #self.kprri = np.array(body_rate_rate_gains_i) # abt x y
         ## sampling time
@@ -146,7 +146,7 @@ class att_ctrl(object):
         self.ref_pos = ref_pos 
 
 
-    def attitude_loop(self, quat, control_input, sampling_dt, zd_d):
+    def attitude_loop(self, quat, control_input, sampling_dt):
         kpa = self.kpa # abt x y
         #kpad = self.kpad # abt x y
         #kpai = self.kpai # abt x y
@@ -171,10 +171,12 @@ class att_ctrl(object):
         #print ("disk vector: ", disk_vector)
         #print ("control_input: ", control_input)
 
-        zd_d = np.array([[zd_d[0],zd_d[1],zd_d[2]]])
-        zd_d = np.dot(zd_d,np.transpose(zd_n))
+        ## prev for 65
+        #zd_d = np.array([[zd_d[0],zd_d[1],zd_d[2]]])
+        #zd_d = np.dot(zd_d,np.transpose(zd_n))
+        
         num = np.dot(disk_vector,np.transpose(zd_n)) # 1 x 1
-        den = la.norm(disk_vector,2)*la.norm(zd_d,2) # L2 norm of a and b
+        den = la.norm(disk_vector,2)*la.norm(zd_n,2) # L2 norm of a and b
         num_den = num/den 
         #print ("num/den: ", num/den)
 
@@ -288,6 +290,23 @@ class att_ctrl(object):
         self.cmd_z = des_thrust
 
         return (p_error_z,self.cmd_z)
+    
+
+    def manual_collective_thrust(self,kpz,kdz,kiz,manual_thrust): 
+        # weight of the robot
+        robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
+        self.z_error = self.ref_pos_z - self.robot_pos[2]
+        rate_position_error_z = (self.z_error - self.position_error_last[2])/self.dt
+        integral_error_z = (self.z_error*self.dt)
+        self.position_error_last[2] = self.z_error 
+
+        p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
+        
+        self.des_rps = p_error_z + manual_thrust
+        des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
+        self.cmd_z = des_thrust
+
+        return (p_error_z,self.cmd_z)
         
 
     def body_rate_loop(self,cascaded_ref_bod_rates,sampling_dt):
@@ -327,17 +346,31 @@ class att_ctrl(object):
         return (cmd_bod_acc_final)
     
 
-    def get_angle(self,sampling_dt):
-        control_input_x = np.array([self.p_control_signal[0]+self.v_control_signal[0],0.0,0.0])
-        control_input_y = np.array([0.0,self.p_control_signal[1]+self.v_control_signal[1],0.0])
+    """ def get_angle(self,sampling_dt): # corrected
+        control_input_x = np.array([0.0,self.p_control_signal[0]+self.v_control_signal[0],0.0])
+        control_input_y = np.array([self.p_control_signal[1]+self.v_control_signal[1],0.0,0.0])
         
-        zd_dx = np.array([1.0,0.0,0.0])
-        zd_dy = np.array([0.0,1.0,0.0])
+        zd_dx = np.array([0.0,1.0,0.0])
+        zd_dy = np.array([1.0,0.0,0.0])
 
         cmd_att_y = self.attitude_loop(self.robot_quat, control_input_x, sampling_dt, zd_dx)
         cmd_att_x = self.attitude_loop(self.robot_quat, control_input_y, sampling_dt, zd_dy)
 
         self.cmd_att = cmd_att_x + cmd_att_y
+        #self.cmd_att = self.cmd_att/sampling_dt
+        #print('cmd_att: ', self.cmd_att)
+        return (self.cmd_att) """
+    
+
+    def get_angle(self,sampling_dt): # corrected
+        control_input = self.p_control_signal + self.v_control_signal
+        
+        #zd_dx = np.array([0.0,1.0,0.0])
+        #zd_dy = np.array([1.0,0.0,0.0])
+
+        cmd_att = self.attitude_loop(self.robot_quat, control_input, sampling_dt)
+
+        self.cmd_att = cmd_att #rpy
         #self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
@@ -354,32 +387,25 @@ class att_ctrl(object):
 
     def CF_SAM_get_angles_and_thrust(self,enable):
         # output saturation/normalisation
-        des_rps = self.des_rps/30
-        
-        if abs(des_rps) > 1.0:
-            des_rps = 1.0*(des_rps/abs(des_rps))
+        des_rps = self.des_rps
+        cmd_bod_acc = self.cmd_att
 
-        ## precession sign change
-        #x_sign = abs(math.sin(self.yaw))
-        #y_sign = abs(math.cos(self.yaw))
+        # output saturation (cmd_att)
+        if abs(cmd_bod_acc[0]) > 10000:
+            cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
+        if abs(cmd_bod_acc[1]) > 10000:
+             cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
-        ## compare against pid control
-        des_x = self.p_control_signal[0]/50
-        des_y = self.p_control_signal[1]/50
+        final_motor_output = cmd_bod_acc[0] + cmd_bod_acc[1] + des_rps
+        final_motor_output = final_motor_output * enable
 
-        # output saturation
-        # if des_roll > 25:
-        #     des_roll = 25
-        
-        if abs(des_x) > 1.0:
-            des_x = 1.0*(des_x/abs(des_x))
+        # motor saturation
+        if abs(final_motor_output) > 65500:
+            final_motor_output = 10000*(final_motor_output/abs(final_motor_output))
+        elif abs(final_motor_output) < 10:
+            final_motor_output = 10*(final_motor_output/abs(final_motor_output))
 
-        if abs(des_y) > 1.0:
-            des_y = 1.0*(des_y/abs(des_y))
-
-        final_motor_output = des_x + des_y + des_rps
-
-        final_cmd = np.array([final_motor_output, final_motor_output, final_motor_output, enable*des_thrust])
+        final_cmd = np.array([final_motor_output, final_motor_output, final_motor_output, final_motor_output])
         #self.cmd_z = enable*des_thrust
 
         return (final_cmd)

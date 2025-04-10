@@ -373,10 +373,12 @@ class RealTimeProcessor(object):
         shift = np.deg2rad(0) # in degrees bitch
         
         ## tpp roll   
-        tpp_roll = math.cos(yaw+shift)*bod_roll
+        #tpp_roll = math.cos(yaw+shift)*bod_roll # prev at 65 abt x is roll
+        tpp_roll = math.sin(yaw+shift)*-1*bod_roll # 703 abt y is roll
         
         ## tpp pitch
-        tpp_pitch = math.sin(yaw+shift)*-1*bod_roll
+        #tpp_pitch = math.sin(yaw+shift)*-1*bod_roll # prev at 65 abt y is pitch
+        tpp_pitch = math.cos(yaw+shift)*bod_roll # 703 abt x is pitch
 
         self.yaw = yaw
         self.tpp = np.array([tpp_roll, tpp_pitch, 0.0])

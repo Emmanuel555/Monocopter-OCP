@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
             # testing sending information over udp to wj esp32
             #print ("sending info: ", final_cmd)
-            data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
+            #data_receiver_sender.send_data(UDP_IP, UDP_PORT, final_cmd)
 
             count = count + 1
 

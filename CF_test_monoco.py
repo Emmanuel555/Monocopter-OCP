@@ -215,9 +215,9 @@ if __name__ == '__main__':
     sample_time = 1 / sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
-    data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
-                      
+    #data_saver = DataSave.SaveData('Data_time',
+    #                               'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
+              
                                    
     logging.basicConfig(level=logging.ERROR)
     cflib.crtp.init_drivers()
@@ -374,28 +374,38 @@ if __name__ == '__main__':
                     # get angle
                     cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
 
+
+                # collective thrust
+                z_controls = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
                 
-
-
+                # motor output
+                final_cmd = monoco.CF_SAM_get_angles_and_thrust(enable)
+                motor_cmd = final_cmd[0]
                 # control input (traj execution)
-                final_cmd = np.array([cmd, cmd, cmd, cmd]) 
+                # final_cmd = np.array([cmd, cmd, cmd, cmd]) e.g
                 final_cmd = np.array([final_cmd])
                 seq_args = swarm_exe(final_cmd)
                 swarm.parallel(arm_throttle, args_dict=seq_args)
 
                 if count % 10 == 0:
-                    print('cmd and button commands: ', cmd, button0, button1)
+                    print('cmd and button commands: ', motor_cmd, button0, button1)
                     print('tx commands: ', a0, a1)
 
                     if dt > 0.0:
                         print('frequency (Hz) = ', 1/dt)
                         #print('time step: ', dt, 'abs time: ', abs_time)
 
+                loop_counter += 1
                 count += 1
+
+                # save data
+                #data_saver.add_item(abs_time,
+                #                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
+            
 
 
         except KeyboardInterrupt:    
-            print('cmd and button commands: ', cmd, button0, button1)
+            print('cmd and button commands: ', motor_cmd, button0, button1)
             print('tx commands: ', a0, a1)
                     
 
