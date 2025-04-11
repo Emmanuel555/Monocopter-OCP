@@ -173,7 +173,7 @@ class att_ctrl(object):
 
         ## prev for 65
         #zd_d = np.array([[zd_d[0],zd_d[1],zd_d[2]]])
-        #zd_d = np.dot(zd_d,np.transpose(zd_n))
+        #zd_d = np.multiply(zd_d,zd_n)
         
         num = np.dot(disk_vector,np.transpose(zd_n)) # 1 x 1
         den = la.norm(disk_vector,2)*la.norm(zd_n,2) # L2 norm of a and b
@@ -185,17 +185,28 @@ class att_ctrl(object):
         
         angle = math.acos(num_den) # angle in radians
 
-        n = np.cross(disk_vector,zd_n)/la.norm(np.cross(disk_vector,zd_d)) # cross product of a and b - 1 x 3
-        n = list(n.flat) # flattened array
-        B = quaternion.apply_to_vector(qzi, n) # inverse of qz applied to n
-        error_quat = np.array([math.cos(angle/2), B[0]*math.sin(angle/2), B[1]*math.sin(angle/2), B[2]*math.sin(angle/2)]) # abt w x y z
+        # print("disk_vector: ", disk_vector)
+        # print("zd_n: ", zd_n)
+        # print("n_dem: ", la.norm(np.cross(disk_vector,zd_n)))
 
-        if error_quat[0] < 0:
-            cmd_att = -2*error_quat[1:3]
+
+        if la.norm(np.cross(disk_vector,zd_n)) == 0.0:
+            n = 0.0
+            cmd_att = np.array([0.0,0.0])
         else:
-            cmd_att = 2*error_quat[1:3] # bod_att[0] = abt x, bod_att[1] = abt y 
+            n = np.cross(disk_vector,zd_n)/la.norm(np.cross(disk_vector,zd_n)) # cross product of a and b - 1 x 3
+            n = list(n.flat) # flattened array
+            B = quaternion.apply_to_vector(qzi, n) # inverse of qz applied to n
+            error_quat = np.array([math.cos(angle/2), B[0]*math.sin(angle/2), B[1]*math.sin(angle/2), B[2]*math.sin(angle/2)]) # abt w x y z
 
-        cmd_att_error = np.array([cmd_att[0],cmd_att[1]]) # abt x y only
+            if error_quat[0] < 0:
+                cmd_att = -2*error_quat[1:3]
+            else:
+                cmd_att = 2*error_quat[1:3] # bod_att[0] = abt x, bod_att[1] = abt y    
+
+        #cmd_att_error = np.array([cmd_att[0],cmd_att[1]]) # abt x y only
+
+        cmd_att_error = np.array([cmd_att[1],cmd_att[0]]) # abt y x only
         cmd_att_error_rate = (cmd_att_error - self.angle_error_last)/sampling_dt
         cmd_att_integral_error = (cmd_att_error*sampling_dt) 
         self.angle_error_last = cmd_att_error
@@ -313,18 +324,18 @@ class att_ctrl(object):
         # body rate gains
         # kpr = np.array([50, 50]) # abt x y
         kpr = self.kpr
-        kprd = self.kprd
-        kpri = self.kpri 
+        #kprd = self.kprd
+        #kpri = self.kpri 
         fb = np.array(self.robot_tpp_bod_rate[0:2]) # abt x y z
 
         # body rate controller
         cmd_bod_rates_error = cascaded_ref_bod_rates - fb
-        cmd_bod_rates_error_rate = (cmd_bod_rates_error  - self.rate_error_last)/sampling_dt
-        cmd_bod_rates_integral_error = (cmd_bod_rates_error*sampling_dt) 
+        #cmd_bod_rates_error_rate = (cmd_bod_rates_error  - self.rate_error_last)/sampling_dt
+        #cmd_bod_rates_integral_error = (cmd_bod_rates_error*sampling_dt) 
         self.rate_error_last = cmd_bod_rates_error
 
-        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) + kpri*(cmd_bod_rates_integral_error)# abt x y z
-        
+        #self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error) + kprd*(cmd_bod_rates_error_rate) + kpri*(cmd_bod_rates_integral_error)# abt x y z
+        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error)
         return (self.cmd_bod_rates_final)
     
 
@@ -332,13 +343,14 @@ class att_ctrl(object):
         # body raterate gains
         # kprr = np.array([50, 50]) # abt x y
         kprr = self.kprr
-        kprrd = self.kprrd
-        kprri = self.kprri
+        #kprrd = self.kprrd
+        #kprri = self.kprri
         fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
         cmd_bod_acc_error = cascaded_ref_bod_acc - fb
-        cmd_bod_acc_error_rate = (cmd_bod_acc_error - self.raterate_error_last)/self.dt
+        #cmd_bod_acc_error_rate = (cmd_bod_acc_error - self.raterate_error_last)/self.dt
         # body raterate controller
-        cmd_bod_acc_final = kprr*(cmd_bod_acc_error) + kprrd*(cmd_bod_acc_error_rate) + kprri*(cmd_bod_acc_error*self.dt)
+        #cmd_bod_acc_final = kprr*(cmd_bod_acc_error) + kprrd*(cmd_bod_acc_error_rate) + kprri*(cmd_bod_acc_error*self.dt)
+        cmd_bod_acc_final = kprr*(cmd_bod_acc_error) 
         self.raterate_error_last = cmd_bod_acc_error 
 
         # NDI
@@ -363,32 +375,52 @@ class att_ctrl(object):
     
 
     def get_angle(self,sampling_dt): # corrected
-        control_input = self.p_control_signal + self.v_control_signal
+        #control_input_x = np.array([self.p_control_signal[0]+self.v_control_signal[0],0.0,0.0])
+        #control_input_y = np.array([0.0,self.p_control_signal[1]+self.v_control_signal[1],0.0])
         
-        #zd_dx = np.array([0.0,1.0,0.0])
-        #zd_dy = np.array([1.0,0.0,0.0])
+        control_input = self.p_control_signal + self.v_control_signal
+
+        #zd_dx = np.array([1.0,0.0,0.0])
+        #zd_dy = np.array([0.0,1.0,0.0])
 
         cmd_att = self.attitude_loop(self.robot_quat, control_input, sampling_dt)
-
         self.cmd_att = cmd_att #rpy
         #self.cmd_att = self.cmd_att/sampling_dt
         #print('cmd_att: ', self.cmd_att)
         return (self.cmd_att)
     
 
-    def get_body_rate(self,cmd_att,flatness_option,sampling_dt,amplitude):
+    def get_body_rate(self,flatness_option,sampling_dt):
         if flatness_option == 0:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(cmd_att,sampling_dt)
+            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att,sampling_dt)
         else:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(cmd_att,sampling_dt) + self.include_jerk_bod_rates(amplitude)
-        self.cascaded_ref_bod_rates = self.cascaded_ref_bod_rates/sampling_dt
+            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att,sampling_dt) + self.include_jerk_bod_rates()
+        #self.cascaded_ref_bod_rates = self.cascaded_ref_bod_rates/sampling_dt
         return (self.cascaded_ref_bod_rates)
     
 
-    def CF_SAM_get_angles_and_thrust(self,enable):
+    def CF_SAM_get_angles_and_thrust(self,enable,flatness_option):
         # output saturation/normalisation
         des_rps = self.des_rps
-        cmd_bod_acc = self.cmd_att
+        #cmd_bod_acc = self.cmd_att
+
+
+        if flatness_option == 0:
+            #cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
+            cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        else:
+            #cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
+            #cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
+            cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+            cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
+            #cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
+        
+
+        x_sign = math.sin(self.yaw)
+        y_sign = math.cos(self.yaw)
+
+        cmd_bod_acc[0] = cmd_bod_acc[0] * x_sign 
+        cmd_bod_acc[1] = cmd_bod_acc[1] * y_sign * -1
 
         # output saturation (cmd_att)
         if abs(cmd_bod_acc[0]) > 10000:
@@ -396,20 +428,23 @@ class att_ctrl(object):
         if abs(cmd_bod_acc[1]) > 10000:
              cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
-        final_motor_output = cmd_bod_acc[0] + cmd_bod_acc[1] + des_rps
-        final_motor_output = final_motor_output * enable
+        #final_motor_output = cmd_bod_acc[0] + cmd_bod_acc[1] + des_rps
+        #final_motor_output = cmd_bod_acc[0] + cmd_bod_acc[1]
+        #final_motor_output = final_motor_output * enable
 
         # motor saturation
-        if abs(final_motor_output) > 65500:
-            final_motor_output = 10000*(final_motor_output/abs(final_motor_output))
-        elif abs(final_motor_output) < 10:
-            final_motor_output = 10*(final_motor_output/abs(final_motor_output))
+        # if final_motor_output > 65500:
+        #     final_motor_output = 65500
+        # elif final_motor_output < 10:
+        #     final_motor_output = 10
 
-        final_cmd = np.array([final_motor_output, final_motor_output, final_motor_output, final_motor_output])
+        #final_cmd = np.array([final_motor_output, final_motor_output, final_motor_output, final_motor_output])
+        
         #self.cmd_z = enable*des_thrust
 
-        return (final_cmd)
-    
+        #return (final_cmd)
+        return (cmd_bod_acc)
+
     
     """ def get_angles_and_thrust(self,flatness_option,amplitude):
         # self.control_input()
@@ -559,7 +594,7 @@ class att_ctrl(object):
         return (precession_rate,self.yawrate)
 
 
-    def include_jerk_bod_rates(self,amplitude):
+    def include_jerk_bod_rates(self):
         if self.cmd_z == 0:
             wy = 0
             wx = 0
@@ -574,7 +609,7 @@ class att_ctrl(object):
         return ref_bod_rates
     
 
-    def include_snap_bod_raterate(self,amplitude):
+    def include_snap_bod_raterate(self):
         if self.cmd_z == 0:
             wy_dot = 0
             wx_dot = 0

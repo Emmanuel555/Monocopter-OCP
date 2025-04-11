@@ -15,7 +15,7 @@ if __name__ == '__main__':
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
     ##data_processor = Data_process_swarm.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
-    data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     data_saver = DataSave.SaveData('Data_time',
                                    'raw_data'
@@ -60,6 +60,7 @@ if __name__ == '__main__':
             tpp_omega_dot = data_processor.Omega_dot
             body_pitch = data_processor.body_pitch
             tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
+            body_roll = data_processor.body_angle_roll
 
             # testing sending information over udp to wj esp32
             #print ("sending info: ", final_cmd)
@@ -67,7 +68,7 @@ if __name__ == '__main__':
 
             count = count + 1
 
-            if count % 10 == 0:
+            if count % 5 == 0:
                 #print('-----', 'time: ', abs_time, '-----')
                 #print(raw_data)
 
@@ -94,7 +95,7 @@ if __name__ == '__main__':
                 #print("sampling period and freq: ", t_diff, 1/t_diff) 
                 print("tpp angles in degrees:", round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3)) # rpy
                 #print("tpp bodypitch:", body_pitch)
-                print("tpp bodyrates:", tpp_omega) # rpy
+                #print("tpp bodyrates:", tpp_omega) # rpy
                 #print("tpp bodyraterates:", tpp_omega_dot) # rpy
                 print("position: ", pos[0:3])
                 #print("tpp quaternion: ", tpp_quat)
@@ -121,7 +122,7 @@ if __name__ == '__main__':
                 disk_vector = quaternion.apply_to_vector(tpp_quat_y, ez) # flattened array
 
                 
-                print(disk_vector)
+                #print(disk_vector)
                 yaw = math.atan2(r11,r21)
                 # denominator is 1 as its a unit vector (quaternion mag is 1)
                 # bod_pitch = math.acos(pitch) 
@@ -129,6 +130,9 @@ if __name__ == '__main__':
                 
                 # pitch_rad = np.pi/2 - bod_pitch
                 yaw_deg = round(yaw*(180/np.pi),2)
+                body_roll = round(body_roll*(180/np.pi),2)
+                print ("yaw_deg: ", yaw_deg)
+                print ("bod_roll_deg, pitch deg: ", body_roll, body_pitch)
 
                 # ## tpp roll
                 # tpp_roll = np.pi/2 - bod_roll
@@ -143,7 +147,9 @@ if __name__ == '__main__':
                 #print("tpp_pitch: ", tpp_pitch)
                                 
                 #print(round(roll*(180/np.pi),3), round(roll*(180/np.pi),3))
-                print("cos yaw: ", math.cos(yaw))
+                #print("cos yaw: ", math.cos(yaw))
+                
+                #print("connected....")
             
     
                 #time.sleep(0.05) # impt to pause and see information

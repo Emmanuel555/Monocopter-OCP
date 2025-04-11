@@ -119,9 +119,9 @@ class RealTimeProcessor(object):
         self.FilterY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         self.FilterZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
-        self.rX = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
-        self.pY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
-        self.yZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.rX = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.pY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.yZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
         self.FilterVX = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
         self.FilterVY = IIR2Filter(10, [1], ftype, design='butter', fs=sample_rate)
@@ -135,18 +135,18 @@ class RealTimeProcessor(object):
         #self.FilterY = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
         #self.FilterZ = IIR2Filter(order, [cutoff], ftype, fs=sample_rate)
         
-        self.FilterQX = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterQY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterQZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
-        self.FilterQW = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.FilterQX = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.FilterQY = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.FilterQZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
+        # self.FilterQW = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
         self.FilterOmega_x = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
         self.FilterOmega_y = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterOmega_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        # self.FilterOmega_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
         self.FilterOmega_dot_x = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
         self.FilterOmega_dot_y = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterOmega_dot_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        # self.FilterOmega_dot_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
         
     def data_unpack(self, udp_data): ## qns abt this
@@ -165,18 +165,27 @@ class RealTimeProcessor(object):
         #self.pz = float(z)   # position pz 
 
         # 1 seems to work better than 0.001
-        self.quat_x = float(qx)
-        self.quat_y = float(qy)
-        self.quat_z = float(qz)
-        self.quat_w = float(qw)
+        self.quat_x_filted = float(qx)*0.001
+        self.quat_y_filted = float(qy)*0.001
+        self.quat_z_filted = float(qz)*0.001
+        self.quat_w_filted = float(qw)*0.001
 
         #self.quat_x = float(qx)
         #self.quat_y = float(qy)
         #self.quat_z = float(qz)
         #self.quat_w = float(qw)/np.abs(float(qw)) # normalizing the quaternion
 
-        self.raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
+        self.raw_data = [self.px, self.py, self.pz, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
         #return raw_data
+
+
+    def data_filtered(self):
+        self.px_filted = self.FilterX.filter(self.px)
+        self.py_filted = self.FilterY.filter(self.py)
+        self.pz_filted = self.FilterZ.filter(self.pz)
+
+        #return filted_data
+        self.filted_data = [self.px_filted, self.py_filted, self.pz_filted, self.quat_x_filted, self.quat_y_filted, self.quat_z_filted, self.quat_w_filted]
 
 
     def data_unpack_filtered(self,udp_data):
@@ -191,12 +200,13 @@ class RealTimeProcessor(object):
         self.py = y * 0.0005  # position py  
         self.pz = z * 0.0005  # position pz 
 
-        
         self.quat_x = float(qx)*0.001
         self.quat_y = float(qy)*0.001
         self.quat_z = float(qz)*0.001
         self.quat_w = float(qw)*0.001 # needa check if this can always be left as 1 when spinning 
 
+        self.raw_data = [self.px, self.py, self.pz, self.quat_x, self.quat_y, self.quat_z, self.quat_w]
+      
         self.px_filted = self.FilterX.filter(self.px)
         self.py_filted = self.FilterY.filter(self.py)
         self.pz_filted = self.FilterZ.filter(self.pz)
@@ -362,7 +372,7 @@ class RealTimeProcessor(object):
         # denominator is 1 as its a unit vector (quaternion mag is 1)
         bod_pitch = math.acos(pitch) 
         bod_roll = math.acos(roll) 
-        
+
         pitch_rad = np.pi/2 - bod_pitch
         pitch_deg = pitch_rad*(180/np.pi)
         self.body_pitch = -1*pitch_deg
@@ -370,7 +380,9 @@ class RealTimeProcessor(object):
 
         bod_roll = np.pi/2 - bod_roll
 
-        shift = np.deg2rad(0) # in degrees bitch
+        self.body_angle_roll = bod_roll
+
+        shift = np.deg2rad(0) # in degrees bitch, later set to 90
         
         ## tpp roll   
         #tpp_roll = math.cos(yaw+shift)*bod_roll # prev at 65 abt x is roll

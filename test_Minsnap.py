@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # print(test_x)
 
 
-    word = 'hello'
+    """ word = 'hello'
 
     # Setup keyboard listener
     def on_press(key):
@@ -106,9 +106,10 @@ if __name__ == '__main__':
     listener.start()
 
     while True:
-        print(word)
+        print(word) """
         
-    
+    ans = math.atan2(pad_y, pad_x)
+    print (ans)
     # a = np.array([1.4,1.2,3.0,6.0,1.0])
     # a = a*4.0
     # a = np.median(a)

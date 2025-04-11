@@ -78,7 +78,6 @@ def init_throttle(scf, cmds):
 def arm_throttle(scf, cmds):
     try:
         cf = scf.cf
-        cf.param.set_value('stabilizer.controller', '3')  # 3: INDI controller
         cf.commander.send_position_setpoint(int(cmds[0]), int(cmds[1]), int(cmds[2]), int(cmds[3]))  
         #print('arming w thrust val....', cmds[3])
     except Exception as e:
@@ -121,12 +120,13 @@ def transmitter_calibration():
     else:
         enable = 1
 
-    cmd = conPad*enable
+    cmd = conPad*enable*button0
+
     return (cmd, button0, button1, a0, a1, enable)
 
 
 def att_manual_ctrl(a0,a1,af):
-    pad_x = a0
+    """ pad_x = a0
     pad_y = a1
     trigger = math.sqrt(pad_x ** 2 + pad_y ** 2)
 
@@ -134,11 +134,17 @@ def att_manual_ctrl(a0,a1,af):
     pad_dir = math.atan2(pad_y, pad_x)
 
     k = math.cos(af * math.pi / 180) # aggression factor means lowering the number
-    d_x_pad = math.cos(pad_dir) * k
-    d_y_pad = math.sin(pad_dir) * k
-    d_z_pad = math.sqrt(1 - (d_x_pad ** 2 + d_y_pad ** 2))
+    d_x_pad = math.cos(pad_dir) * k #r
+    d_y_pad = math.sin(pad_dir) * k #p
+    d_z_pad = math.sqrt(1 - (d_x_pad ** 2 + d_y_pad ** 2)) """
 
-    cmd = np.array([d_x_pad, d_y_pad, d_z_pad])  # roll, pitch, yawrate, thrust
+    control_x = a0
+    control_y = a1
+    #control_z = math.sqrt(1 - (control_x ** 2 + control_y ** 2))
+    control_z = 1.0
+
+    #cmd = np.array([d_x_pad, d_y_pad, d_z_pad])  # roll, pitch, yawrate, thrust
+    cmd = np.array([control_x, control_y, control_z])  # roll, pitch, yawrate, thrust
     return (cmd) 
 
     
@@ -210,13 +216,16 @@ if __name__ == '__main__':
     # listener.start()
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 360
+    max_sample_rate = 250 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     #data_saver = DataSave.SaveData('Data_time',
     #                               'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
+
+    data_saver = DataSave.SaveData('Data_time',
+                                   'Monocopter_XYZ_raw','Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll')    
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -245,7 +254,8 @@ if __name__ == '__main__':
     # loop rates
     loop_counter = 1
     att_loop = 1
-    pid_loop = 1
+    pid_loop = 10
+    rate_loop = 1
     
     
     time_last = 0
@@ -272,9 +282,9 @@ if __name__ == '__main__':
     
 
     # cyclic xy (attitude)
-    ka = [1.0, 1.0]  # 0.08 - 1.5 * 0.1m/s
-    kr = [1.0, 1.0]
-    krr = [0.001, 0.001] # 0.00005, sim = 0.0091, 0.001
+    ka = [5000, 5000]  # 0.08 - 1.5 * 0.1m/s
+    kr = [10.0, 10.0] # test this tmr
+    krr = [0.5, 0.5] # 0.00005, sim = 0.0091, 0.001
    
 
     # physical params
@@ -305,7 +315,12 @@ if __name__ == '__main__':
     x_offset = 0.0
     y_offset = 0.0
     z_offset = 0.0
-      
+
+    # flatness option
+    flatness_option = 0  # this is a must!
+    amplitude = 1  
+
+    manual_cyclic = np.array([0.0, 0.0, 0.0]) # roll, pitch, yawrate
     
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
@@ -333,6 +348,7 @@ if __name__ == '__main__':
                 # processed tpp data/feedback
                 # rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_finite_diff()
                 rotational_state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
+                pos_raw = data_processor.raw_data
                 linear_state_vector = data_processor.pos_vel_acc_filtered()
                 body_pitch = data_processor.body_pitch
                 tpp_angle = data_processor.tpp
@@ -343,6 +359,7 @@ if __name__ == '__main__':
                 # tpp_omega = data_processor.Omega
                 # tpp_omega_dot = data_processor.Omega_dot
                 tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
+                bod_angle_roll = data_processor.body_angle_roll
 
                 # time difference needed to calculate velocity
                 dt = time.time() - time_last  #  time step/period
@@ -357,13 +374,14 @@ if __name__ == '__main__':
                 button1 = tx_cmds[2]
                 enable = tx_cmds[5]
 
+                a0 = tx_cmds[3]     
+                a1 = tx_cmds[4]
+                af = 80 # aggression factor
+
                 # update references for PID position loop
                 if loop_counter % pid_loop == 0:
                 
                     #if button0 == 0:                    
-                    a0 = tx_cmds[3]     
-                    a1 = tx_cmds[4]
-                    af = 80 # aggression factor
                     manual_cyclic = att_manual_ctrl(a0, a1, af) # manual position control
                     monoco.p_control_input_manual(manual_cyclic) # update the manual cyclic inputs
                     monoco.v_control_input()
@@ -375,21 +393,44 @@ if __name__ == '__main__':
                     cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
 
 
+                if loop_counter % rate_loop == 0:
+
+                    # bod rates
+                    monoco.get_body_rate(flatness_option,1/(max_sample_rate/rate_loop))
+                
+
+
+
                 # collective thrust
                 z_controls = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
                 
+                
                 # motor output
-                final_cmd = monoco.CF_SAM_get_angles_and_thrust(enable)
-                motor_cmd = final_cmd[0]
+                
+                # from att ctrl
+                cmd_bod_acc = monoco.CF_SAM_get_angles_and_thrust(enable,flatness_option)
+                cyclic = cmd_bod_acc[0] + cmd_bod_acc[1]
+
                 # control input (traj execution)
-                # final_cmd = np.array([cmd, cmd, cmd, cmd]) e.g
+                manual_thrust = manual_thrust + int(cyclic)*button0
+
+                # motor saturation - manual thrust
+                if manual_thrust > 65500:
+                    manual_thrust = 65500
+                elif manual_thrust < 10:
+                    manual_thrust = 10
+                
+                final_cmd = np.array([manual_thrust, manual_thrust, manual_thrust, manual_thrust]) # e.g
+                
                 final_cmd = np.array([final_cmd])
                 seq_args = swarm_exe(final_cmd)
                 swarm.parallel(arm_throttle, args_dict=seq_args)
 
                 if count % 10 == 0:
-                    print('cmd and button commands: ', motor_cmd, button0, button1)
+                    print('cmd and button commands: ', manual_thrust, button0, button1)
                     print('tx commands: ', a0, a1)
+                    print('manual_cyclic_xyz: ', manual_cyclic)
+                    print('att_cmds: ', cmd_bod_acc)
 
                     if dt > 0.0:
                         print('frequency (Hz) = ', 1/dt)
@@ -402,14 +443,22 @@ if __name__ == '__main__':
                 #data_saver.add_item(abs_time,
                 #                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
             
+                data_saver.add_item(abs_time,
+                                    pos_raw[0:3],linear_state_vector[0:3],manual_thrust,manual_cyclic,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
+    
 
 
         except KeyboardInterrupt:    
-            print('cmd and button commands: ', motor_cmd, button0, button1)
+            print('cmd and button commands: ', manual_thrust, button0, button1)
             print('tx commands: ', a0, a1)
+            print('manual_cyclic_xyz: ', manual_cyclic)
+            print('att_cmds: ', cmd_bod_acc)
+            data_saver.add_item(abs_time,
+                                pos_raw[0:3],linear_state_vector[0:3],manual_thrust,manual_cyclic,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
+    
                     
 
 # save data
-#path = '/home/emmanuel/AFC_Optitrack/robot_solo/'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/'
+data_saver.save_data(path)
 
