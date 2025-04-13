@@ -288,11 +288,11 @@ if __name__ == '__main__':
 
     # cyclic xyz (position)
     kp = [0.04,0.04,0.0] # 0.04
-    kd = [0.0005,0.0005,0.0] 
+    kd = [0.0005,0.0005,0.0] # not in use
     ki = [10.0,10.0,0.0] 
 
 
-    # cyclic xyz (velocity) - monocopter doesnt like lol
+    # cyclic xyz (velocity)
     kvp = [0.0001,0.0001,0.0] 
     
 
@@ -515,8 +515,8 @@ if __name__ == '__main__':
             print('p_cyclic_xyz: ', monoco.p_control_signal)
             print('att_cmds: ', cmd_bod_acc)
             print('Emergency Stopped and final z rmse produced: ', rmse_num )
-            data_saver.add_item(abs_time,
-                                pos_raw[0:3],linear_state_vector[0:3],motor_cmd,monoco.p_control_signal,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
+            #data_saver.add_item(abs_time,
+            #                    pos_raw[0:3],linear_state_vector[0:3],motor_cmd,monoco.p_control_signal,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
     
                     
 

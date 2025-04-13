@@ -8,7 +8,7 @@ from scipy import ndimage
 from numpy import linalg as la
 from Filter import IIR2Filter
 
-file_path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/'
+file_path = '/home/emmanuel/Monocopter-OCP/cf_data_selected/'
 files = os.listdir(file_path)
 files.sort(key=lambda x: os.path.getmtime(os.path.join(file_path, x)), reverse=True)
 
@@ -63,12 +63,56 @@ tpp_pitch_raterate = np.array([tpp_pitch_raterate])
 fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
 #print(cmd_x[0])
 
-ax1.plot(time[0], px[0], label='x', color='blue',linewidth=2)
-ax1.plot(time[0], py[0], label='y', color='red',linewidth=2)
-ax1.plot(time[0], pz[0], label='z', color='green',linewidth=2)
-ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
-ax1.plot(time[0], py_r[0], label='y_r', color='red',linewidth=2,linestyle='dashed')
-ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
+
+
+sampling_freq = 250
+start = int(np.size(time[0])/3)
+end = np.size(time[0]) - int(np.size(time[0])/3)
+v_start = 0
+v_end = np.size(time[0]) - int(np.size(time[0])/3)
+v_x = []
+v_y = []
+
+
+print('time taken: ', (end - start)/sampling_freq)
+median_filtered_px = ndimage.median_filter(px[0][start:end], size=100)
+median_filtered_py = ndimage.median_filter(py[0][start:end], size=100)
+median_filtered_pz = ndimage.median_filter(pz[0][start:end], size=100)
+
+
+for i in range(len(px[0][v_start:v_end])):
+    vx = (px[0][i+1] - px[0][i])/(time[0][i+1] - time[0][i])
+    vy = (py[0][i+1] - py[0][i])/(time[0][i+1] - time[0][i])
+    v_x.append(vx)
+    v_y.append(vy)
+
+
+ref_x = 1.0
+ref_y = 1.0
+ref_z = 1.0
+
+x_error_squared = [] 
+y_error_squared = []
+z_error_squared = []
+
+for i in range(len(median_filtered_px)):
+    x_error_squared.append((ref_x - median_filtered_px[i]) ** 2)
+    y_error_squared.append((ref_y - median_filtered_py[i]) ** 2)    
+    z_error_squared.append((ref_z - median_filtered_pz[i]) ** 2)
+    
+final_rmse_x = math.sqrt(sum(x_error_squared)/(end-start))
+final_rmse_y = math.sqrt(sum(y_error_squared)/(end-start))
+final_rmse_z = math.sqrt(sum(z_error_squared)/(end-start))
+final_rmse = la.norm([final_rmse_x, final_rmse_y, final_rmse_z], 2)
+print('Final RMSE: ', final_rmse_y)
+
+
+ax1.plot(time[0][start:end], median_filtered_px, label='x', color='blue',linewidth=2)
+ax1.plot(time[0][start:end], median_filtered_py, label='y', color='red',linewidth=2)
+ax1.plot(time[0][start:end], median_filtered_pz, label='z', color='green',linewidth=2)
+# ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
+# ax1.plot(time[0], py_r[0], label='y_r', color='red',linewidth=2,linestyle='dashed')
+# ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
 ax1.legend()
 ax1.set_title('Position vs time', fontsize=20)
 ax1.set_xlabel('Time(s)')
@@ -76,12 +120,28 @@ ax1.set_ylabel('Position(m)')
 
 plt.subplots_adjust(hspace=0.34, wspace=0.2)
 
-ax2.plot(time[0], tpp_roll[0], label='tpp_roll_deg', color='blue')
-ax2.plot(time[0], tpp_pitch[0], label='tpp_pitch_deg', color='red')
+
+v_x = ndimage.median_filter(v_x, size=30)
+v_y = ndimage.median_filter(v_y, size=30)
+
+ax2.plot(time[0][v_start:v_end], v_x, label='vx', color='blue',linewidth=2)
+ax2.plot(time[0][v_start:v_end], v_y, label='vy', color='red',linewidth=2)
+#ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
+# ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
+# ax1.plot(time[0], py_r[0], label='y_r', color='red',linewidth=2,linestyle='dashed')
+# ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
 ax2.legend()
-ax2.set_title('TPP angles vs time', fontsize=20)
+ax2.set_title('Velocity', fontsize=20)
 ax2.set_xlabel('Time(s)')
-ax2.set_ylabel('Angle(deg)')
+ax2.set_ylabel('Velocity (m/s)')
+
+
+# ax2.plot(time[0], tpp_roll[0], label='tpp_roll_deg', color='blue')
+# ax2.plot(time[0], tpp_pitch[0], label='tpp_pitch_deg', color='red')
+# ax2.legend()
+# ax2.set_title('TPP angles vs time', fontsize=20)
+# ax2.set_xlabel('Time(s)')
+# ax2.set_ylabel('Angle(deg)')
 
 ax3.plot(time[0], np.round((tpp_roll_rate[0]*(180/np.pi)),3), label='tpp_roll_rate', color='blue')
 ax3.plot(time[0], np.round((tpp_pitch_rate[0]*(180/np.pi)),3), label='tpp_pitch_rate', color='red')
