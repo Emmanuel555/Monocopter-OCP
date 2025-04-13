@@ -159,8 +159,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('Keyboard interrupt')
         
-    # save data
-    #path = '/Users/airlab/PycharmProjects/AFC/data/'
-    #path = '/home/emmanuel/AFC_Optitrack/linux_data/'
-    #data_saver.save_data(path)
+# save data
+#path = '/home/emmanuel/AFC_Optitrack/linux_data/'
+#data_saver.save_data(path)
 

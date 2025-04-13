@@ -125,6 +125,17 @@ def transmitter_calibration():
     return (cmd, button0, button1, a0, a1, enable)
 
 
+def p_control_input(linear_pos,kp,kv,ki,ref_pos,dt):
+    """ position control """
+    # error
+    control_x = kp[0]*(ref_pos[0] - linear_pos[0]) - kv[0]*(linear_pos[3]) + ki[0]*(ref_pos[0] - linear_pos[0])*dt
+    control_y = kp[1]*(ref_pos[1] - linear_pos[1]) - kv[1]*(linear_pos[4]) + ki[1]*(ref_pos[1] - linear_pos[1])*dt
+    control_z = 1.0
+
+    cmd = np.array([control_x, control_y, control_z])  # roll, pitch, yawrate, thrust
+    return (cmd) 
+    
+
 def att_manual_ctrl(a0,a1,af):
     """ pad_x = a0
     pad_y = a1
@@ -137,6 +148,10 @@ def att_manual_ctrl(a0,a1,af):
     d_x_pad = math.cos(pad_dir) * k #r
     d_y_pad = math.sin(pad_dir) * k #p
     d_z_pad = math.sqrt(1 - (d_x_pad ** 2 + d_y_pad ** 2)) """
+
+    # to test
+    #control_x = -0.02
+    #control_y = -0.02
 
     control_x = a0
     control_y = a1
@@ -219,7 +234,7 @@ if __name__ == '__main__':
     max_sample_rate = 250 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Data_process.RealTimeProcessor(5, [64], 'lowpass', 'cheby2', 85, sample_rate)
 
     #data_saver = DataSave.SaveData('Data_time',
     #                               'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
@@ -254,7 +269,7 @@ if __name__ == '__main__':
     # loop rates
     loop_counter = 1
     att_loop = 1
-    pid_loop = 10
+    pid_loop = 1
     rate_loop = 1
     
     
@@ -266,31 +281,31 @@ if __name__ == '__main__':
 
 
     # collective z 
-    kpz = 9.6 # 7.5, 30.5 |  9.6
-    kdz = 5.0 # 2.5, 10.5 | 5.0
-    kiz = 128 # | 128
+    kpz = 5000 
+    kdz = 6000 
+    kiz = 1200 # | 128
 
 
     # cyclic xyz (position)
-    kp = [0.8,0.8,0.0] # 0.45 - 1.5 * 0.1m/s 0.02     0.8
-    kd = [0.03,0.03,0.0] # 0.2 - 1.5 * 0.1m/s 0.032  0.025
-    ki = [0.0,0.0,0.0] # 0.0015   0.003
+    kp = [0.04,0.04,0.0] # 0.04
+    kd = [0.0005,0.0005,0.0] 
+    ki = [10.0,10.0,0.0] 
 
 
     # cyclic xyz (velocity) - monocopter doesnt like lol
-    kvp = [0.0,0.0,0.0] 
+    kvp = [0.0001,0.0001,0.0] 
     
 
-    # cyclic xy (attitude)
-    ka = [5000, 5000]  # 0.08 - 1.5 * 0.1m/s
-    kr = [10.0, 10.0] # test this tmr
-    krr = [0.5, 0.5] # 0.00005, sim = 0.0091, 0.001
+    # cyclic xy (attitude) - heuristic gains thus far
+    ka = [6000, 6000]  # 6000
+    kr = [10.0, 10.0] # 10
+    krr = [1.0, 1.0] # 1.0
    
 
     # physical params
     wing_radius = 200/1000 # change to 700 next round
     chord_length = 0.12
-    mass = 75/1000
+    mass = 1000
     cl = 0.5
     cd = 0.052
     J = np.array([1/100000,1/100000,1/1000000]) # moment of inertia
@@ -302,7 +317,7 @@ if __name__ == '__main__':
 
      # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])
-    ref_pos = np.array([0.0,0.0,0.0])
+    ref_pos = np.array([0.0,0.0,1.0])
     ref_pos_z = 0.0
     ref_vel = np.array([0.0,0.0,0.0])
     ref_acc = np.array([0.0,0.0,0.0])
@@ -320,8 +335,9 @@ if __name__ == '__main__':
     flatness_option = 0  # this is a must!
     amplitude = 1  
 
-    manual_cyclic = np.array([0.0, 0.0, 0.0]) # roll, pitch, yawrate
-    
+    manual_cyclic = np.array([0.0, 0.0, 0.0]) 
+    auto_cyclic = np.array([0.0, 0.0, 0.0]) 
+
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
         cmd_att_startup = np.array([0, 0, 0, 0]) # init setpt to 0 0 0 0
@@ -378,87 +394,133 @@ if __name__ == '__main__':
                 a1 = tx_cmds[4]
                 af = 80 # aggression factor
 
+
                 # update references for PID position loop
                 if loop_counter % pid_loop == 0:
                 
-                    #if button0 == 0:                    
-                    manual_cyclic = att_manual_ctrl(a0, a1, af) # manual position control
-                    monoco.p_control_input_manual(manual_cyclic) # update the manual cyclic inputs
-                    monoco.v_control_input()
+                    # update references for PID loop 
+                    manual_cyclic = att_manual_ctrl(a0, a1, af) # manual position control 
+                    auto_cyclic = p_control_input(linear_state_vector, kp, kvp, ki, ref_pos, sample_time) # auto position control
+                    monoco.update_ref_pos(ref_pos)
 
+                    if button1 == 1:
+                        monoco.p_control_input_manual(auto_cyclic)
+                        #monoco.v_control_input()
+                        data_saver.add_item(abs_time,
+                                    pos_raw[0:3],linear_state_vector[0:3],motor_cmd,monoco.p_control_signal,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
+                        
+                    else:
+                        monoco.p_control_input_manual(manual_cyclic) # update the manual cyclic inputs
+                        #monoco.v_control_input()
 
+                    
                 if loop_counter % att_loop == 0:
 
                     # get angle
-                    cmd_att = monoco.get_angle(1/(max_sample_rate/att_loop))
+                    cmd_att = monoco.get_angle()
 
 
                 if loop_counter % rate_loop == 0:
 
                     # bod rates
-                    monoco.get_body_rate(flatness_option,1/(max_sample_rate/rate_loop))
+                    monoco.get_body_rate(flatness_option)
                 
 
 
-
-                # collective thrust
+                # collective thrust (alt hold)
                 z_controls = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
-                
-                
-                # motor output
-                
+                collective_thrust = z_controls[0]*enable*button0
+
+
+                # collect data
+                if button1 == 1:
+                    rmse_num_x = rmse_num_x + (ref_pos[0]-x_offset-linear_state_vector[0])**2
+                    rmse_num_y = rmse_num_y + (ref_pos[1]-y_offset-linear_state_vector[1])**2
+                    rmse_num_z = rmse_num_z + (ref_pos[2]-z_offset-linear_state_vector[2])**2
+                    count += 1
+
+
                 # from att ctrl
                 cmd_bod_acc = monoco.CF_SAM_get_angles_and_thrust(enable,flatness_option)
                 cyclic = cmd_bod_acc[0] + cmd_bod_acc[1]
 
-                # control input (traj execution)
-                manual_thrust = manual_thrust + int(cyclic)*button0
+
+                # motor output
+                motor_cmd = collective_thrust + int(cyclic)*button0
+
 
                 # motor saturation - manual thrust
-                if manual_thrust > 65500:
-                    manual_thrust = 65500
-                elif manual_thrust < 10:
-                    manual_thrust = 10
+                if motor_cmd > 65500:
+                    motor_cmd = 65500
+                elif motor_cmd < 10:
+                    motor_cmd = 10
+
                 
-                final_cmd = np.array([manual_thrust, manual_thrust, manual_thrust, manual_thrust]) # e.g
-                
+                final_cmd = np.array([motor_cmd, motor_cmd, motor_cmd, motor_cmd]) # e.g                
                 final_cmd = np.array([final_cmd])
                 seq_args = swarm_exe(final_cmd)
                 swarm.parallel(arm_throttle, args_dict=seq_args)
 
+
                 if count % 10 == 0:
-                    print('cmd and button commands: ', manual_thrust, button0, button1)
-                    print('tx commands: ', a0, a1)
-                    print('manual_cyclic_xyz: ', manual_cyclic)
+                    print('cmd and button commands: ', motor_cmd, button0, button1)
+                    #print('tx commands: ', a0, a1)
+                    print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                    print('altitude: ', linear_state_vector[2])
+                    print('manual_cyclic_xyz: ', auto_cyclic)
+                    print('p_cyclic_xyz: ', monoco.p_control_signal)
                     print('att_cmds: ', cmd_bod_acc)
+                    print
+                    print('yawrate: ', yawrate)
 
                     if dt > 0.0:
                         print('frequency (Hz) = ', 1/dt)
                         #print('time step: ', dt, 'abs time: ', abs_time)
 
-                loop_counter += 1
-                count += 1
 
+                # control loop counter
+                loop_counter += 1
+                
+        
                 # save data
                 #data_saver.add_item(abs_time,
                 #                linear_state_vector[0:3],ref_pos,rmse_num,0,ref_msg,status,final_cmd,tpp_angle,tpp_omega,tpp_omega_dot,linear_state_vector[3:6],z_control_signal,des_thrust,ref_rates,ref_raterates,precession_yaw_rate[0],precession_yaw_rate[1])
             
-                data_saver.add_item(abs_time,
-                                    pos_raw[0:3],linear_state_vector[0:3],manual_thrust,manual_cyclic,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
+                # rmse
+                # rmse accumulation
+                #rmse_num_x = rmse_num_x + (ref_pos[0]-x_offset-linear_state_vector[0])**2
+                #rmse_num_y = rmse_num_y + (ref_pos[1]-y_offset-linear_state_vector[1])**2
+                #rmse_num_z = rmse_num_z + (ref_pos[2]-z_offset-linear_state_vector[2])**2
+                #rmse_num = [rmse_num_x, rmse_num_y, rmse_num_z]
+
+                #data_saver.add_item(abs_time,
+                #                    pos_raw[0:3],linear_state_vector[0:3],motor_cmd,monoco.p_control_signal,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
     
 
 
-        except KeyboardInterrupt:    
-            print('cmd and button commands: ', manual_thrust, button0, button1)
-            print('tx commands: ', a0, a1)
+        except KeyboardInterrupt:  
+            # final rmse calculation
+            status = "Emergency stop"
+            ref_msg = "traj ended..."
+            final_rmse_x = math.sqrt(rmse_num_x/count)
+            final_rmse_y = math.sqrt(rmse_num_y/count)
+            final_rmse_z = math.sqrt(rmse_num_z/count)
+            final_rmse = la.norm([final_rmse_x, final_rmse_y, final_rmse_z], 2)
+            rmse_num = [final_rmse_x, final_rmse_y, final_rmse_z]  
+
+            print('cmd and button commands: ', motor_cmd, button0, button1)
+            #print('tx commands: ', a0, a1)
+            print('altitude: ', linear_state_vector[2])
             print('manual_cyclic_xyz: ', manual_cyclic)
+            print('p_cyclic_xyz: ', monoco.p_control_signal)
             print('att_cmds: ', cmd_bod_acc)
+            print('Emergency Stopped and final z rmse produced: ', rmse_num )
             data_saver.add_item(abs_time,
-                                pos_raw[0:3],linear_state_vector[0:3],manual_thrust,manual_cyclic,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
+                                pos_raw[0:3],linear_state_vector[0:3],motor_cmd,monoco.p_control_signal,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll)    
     
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/'
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/1.3_0.5_1_waypt'
 data_saver.save_data(path)
 

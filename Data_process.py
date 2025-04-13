@@ -140,12 +140,12 @@ class RealTimeProcessor(object):
         # self.FilterQZ = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
         # self.FilterQW = IIR2Filter(order, [cutoff], ftype, design=design, rs=rs, fs=sample_rate)
 
-        self.FilterOmega_x = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterOmega_y = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_x = IIR2Filter(5, [30], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_y = IIR2Filter(5, [30], ftype, design='butter', fs=sample_rate)
         # self.FilterOmega_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
-        self.FilterOmega_dot_x = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
-        self.FilterOmega_dot_y = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_dot_x = IIR2Filter(5, [30], ftype, design='butter', fs=sample_rate)
+        self.FilterOmega_dot_y = IIR2Filter(5, [30], ftype, design='butter', fs=sample_rate)
         # self.FilterOmega_dot_z = IIR2Filter(10, [2], ftype, design='butter', fs=sample_rate)
 
         
@@ -303,8 +303,11 @@ class RealTimeProcessor(object):
         self.ay = self.FilterAY.filter(self.ay)
         self.az = self.FilterAZ.filter(self.az)
 
-        pos_vel_acc = np.array([self.px_filted, self.py_filted, self.pz_filted, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
+        #pos_vel_acc = np.array([self.px_filted, self.py_filted, self.pz_filted, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
         
+        # for control algo, dun use filtered position data
+        pos_vel_acc = np.array([self.px, self.py, self.pz, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
+       
         #return vel_acc
         return pos_vel_acc
 
@@ -382,7 +385,7 @@ class RealTimeProcessor(object):
 
         self.body_angle_roll = bod_roll
 
-        shift = np.deg2rad(0) # in degrees bitch, later set to 90
+        shift = np.deg2rad(0) # in degrees bitch
         
         ## tpp roll   
         #tpp_roll = math.cos(yaw+shift)*bod_roll # prev at 65 abt x is roll
@@ -516,6 +519,7 @@ class RealTimeProcessor(object):
 
     def get_Omega_dot_dotdot_filt_eul_central_diff(self):
         self.get_rotm_filtered()
+        #self.get_rotm()
         self.get_tpp_angle_xy()
         
         roll = self.tpp[0]
@@ -559,11 +563,11 @@ class RealTimeProcessor(object):
             pitchraterate_y = (self.central_diff_pitch_raterate[-1] - (2*self.central_diff_pitch_raterate[2]) + self.central_diff_pitch_raterate[0])/(np.power(self.sample_time,2)*4.0)
 
 
-        ## not good
-        # rollrate_x = self.FilterOmega_x.filter(rollrate_x)
-        # pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
-        # rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
-        # pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
+        ## filters
+        rollrate_x = self.FilterOmega_x.filter(rollrate_x)
+        pitchrate_y = self.FilterOmega_y.filter(pitchrate_y)
+        rollraterate_x = self.FilterOmega_dot_x.filter(rollraterate_x)
+        pitchraterate_y = self.FilterOmega_dot_y.filter(pitchraterate_y)
 
 
         if self.tpp_rate_cd >= 3.0:
@@ -604,8 +608,8 @@ class RealTimeProcessor(object):
                 pitchraterate_y = np.median(self.med_diff_pitch_raterate)
         
         tpp_angle = [roll, pitch, 0.0] 
-        self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - about x, y, z
-        self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - about x, y, z
+        self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - towards x, y, z - abt y x z
+        self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - towards x, y, z - abt y x z
 
         rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
                              [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
@@ -633,10 +637,10 @@ class RealTimeProcessor(object):
     def get_yawrate(self):
         if self.yaw_counter == 0.0:
             self.yaw_last = self.yaw
-            self.start_yaw = 1.0
+            self.yaw_counter = 1.0
         yawrate = (self.yaw - self.yaw_last)/self.sample_time
         self.yaw_last = self.yaw
-        yawrate = abs(yawrate) * -1
+        yawrate = abs(yawrate)
         return yawrate
 
 

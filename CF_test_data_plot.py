@@ -22,7 +22,6 @@ time = mat_data['Data_time']
 #position = mat_data['data']
 position = mat_data['Monocopter_XYZ']
 position_raw = mat_data['Monocopter_XYZ_raw']
-p_ref = mat_data['ref_position']
 tpp_roll = mat_data['tpp_roll']
 tpp_pitch = mat_data['tpp_pitch']
 body_yaw = mat_data['body_yaw_deg']
@@ -46,13 +45,6 @@ px_r = np.array([px_r])
 py_r = np.array([py_r])
 pz_r = np.array([pz_r])
 
-ref_x = [row[0] for row in p_ref] # column vector
-ref_y = [row[1] for row in p_ref]
-ref_z = [row[2] for row in p_ref]
-
-ref_x = np.array([ref_x])
-ref_y = np.array([ref_y])
-ref_z = np.array([ref_z])
 
 tpp_roll_rate = [row[0] for row in tpp_omega] # column vector
 tpp_pitch_rate = [row[1] for row in tpp_omega]
@@ -84,20 +76,12 @@ ax1.set_ylabel('Position(m)')
 
 plt.subplots_adjust(hspace=0.34, wspace=0.2)
 
-ax2.plot(time[0], ref_x[0], label='x_input', color='blue')
-#ax2.plot(time[0], tpp_pitch[0], label='tpp_pitch_deg', color='red')
+ax2.plot(time[0], tpp_roll[0], label='tpp_roll_deg', color='blue')
+ax2.plot(time[0], tpp_pitch[0], label='tpp_pitch_deg', color='red')
 ax2.legend()
-ax2.set_title('P control input', fontsize=20)
+ax2.set_title('TPP angles vs time', fontsize=20)
 ax2.set_xlabel('Time(s)')
-ax2.set_ylabel('Magnitude')
-
-
-# ax2.plot(time[0], tpp_roll[0], label='tpp_roll_deg', color='blue')
-# ax2.plot(time[0], tpp_pitch[0], label='tpp_pitch_deg', color='red')
-# ax2.legend()
-# ax2.set_title('TPP angles vs time', fontsize=20)
-# ax2.set_xlabel('Time(s)')
-# ax2.set_ylabel('Angle(deg)')
+ax2.set_ylabel('Angle(deg)')
 
 ax3.plot(time[0], np.round((tpp_roll_rate[0]*(180/np.pi)),3), label='tpp_roll_rate', color='blue')
 ax3.plot(time[0], np.round((tpp_pitch_rate[0]*(180/np.pi)),3), label='tpp_pitch_rate', color='red')
