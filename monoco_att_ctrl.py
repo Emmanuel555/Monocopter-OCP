@@ -87,6 +87,7 @@ class att_ctrl(object):
         self.cmd_z = 0.0
         self.cmd_att = np.array([0.0,0.0])
         self.cmd_bod_rates_final = np.array([0.0,0.0])
+        self.cmd_bod_raterates_final = np.array([0.0,0.0])
         self.cascaded_ref_bod_rates = np.array([0.0,0.0])
         self.des_rps = 0.0
         self.z_error = 0.0
@@ -94,6 +95,9 @@ class att_ctrl(object):
         # differential flatness
         self.ref_rates = np.array([0.0,0.0])
         self.ref_raterates = np.array([0.0,0.0])
+
+        # attitude error tracking
+        self.attitude_error = 0.0
 
 
     def physical_params(self,wing_radius,chord_length,mass,cl,cd, J):
@@ -113,9 +117,9 @@ class att_ctrl(object):
         self.drag_rotation_wo_rps = (self.cd*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside, not needed atm
         # print ("pitch: ", pitch)
         if pitch <= 0.0:
-            pitch = 3.0
+            pitch = 0.0
         
-        self.lift_rotation_wo_rps = (self.cl*(pitch)*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
+        self.lift_rotation_wo_rps = (self.cl*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 
 
     def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,ref_pos_z):
@@ -184,7 +188,7 @@ class att_ctrl(object):
             num_den = 1.0*(num_den/abs(num_den))
         
         angle = math.acos(num_den) # angle in radians
-
+        self.attitude_error = angle
         # print("disk_vector: ", disk_vector)
         # print("zd_n: ", zd_n)
         # print("n_dem: ", la.norm(np.cross(disk_vector,zd_n)))
@@ -246,21 +250,22 @@ class att_ctrl(object):
 
 
     def v_control_input(self):
-        vel_gains_p = self.kpvel
+        #vel_gains_p = self.kpvel
 
         # add in vel controller
-        v_ref = self.ref_vel
-        v_error = v_ref - self.robot_vel
+        #v_ref = self.ref_vel
+        #v_error = v_ref - self.robot_vel
         #v_rate_error = (v_error - self.velocity_error_last)/sampling_dt
         #v_integral_error = (v_error*sampling_dt)
         #self.velocity_error_last = v_error
-        self.v_control_signal = vel_gains_p * v_error
+        #self.v_control_signal = vel_gains_p * v_error
 
         # ref acceleration
         ref_acc = np.array([self.ref_acc[0],self.ref_acc[1],0.0])
         
         # w acceleration references
-        self.v_control_signal = self.v_control_signal + ref_acc # abt x y z
+        # self.v_control_signal = self.v_control_signal + ref_acc # abt x y z
+        self.v_control_signal = ref_acc # abt x y z
 
 
     def collective_thrust(self,kpz,kdz,kiz): 
@@ -304,7 +309,10 @@ class att_ctrl(object):
         p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
         
         self.des_rps = p_error_z + manual_thrust
-        des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
+        if self.lift_rotation_wo_rps == 0.0:
+            des_thrust = 0.0
+        else:
+            des_thrust = self.lift_rotation_wo_rps*(self.yawrate**2)
         self.cmd_z = des_thrust
 
         return (self.des_rps,self.cmd_z)
@@ -327,6 +335,7 @@ class att_ctrl(object):
         fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
         cmd_bod_acc_error = cascaded_ref_bod_acc - fb
         cmd_bod_acc_final = kprr*(cmd_bod_acc_error) 
+        self.cmd_bod_raterates_final = cmd_bod_acc_final # for logging purposes
 
         # NDI
         # cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
@@ -388,11 +397,6 @@ class att_ctrl(object):
         cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
         cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
         
-        # if abs(np.rad2deg(self.yaw)) < 20 or abs(np.rad2deg(self.yaw)) > 160: 
-        #      cmd_bod_acc[0] = cmd_bod_acc[0] * -1
-
-        # if abs(np.rad2deg(self.yaw)) > 70 and abs(np.rad2deg(self.yaw)) < 110:
-        #      cmd_bod_acc[1] = cmd_bod_acc[1] * -1    
 
         # output saturation (cmd_att)
         if abs(cmd_bod_acc[0]) > 10000:
@@ -564,14 +568,10 @@ class att_ctrl(object):
 
 
     def include_jerk_bod_rates(self):
-        if self.cmd_z == 0:
-            wy = 0
-            wx = 0
-        else:    
-            wy = self.ref_jer[0]/self.g
-            wx = self.ref_jer[1]/(-1*self.g)
+        wy = self.ref_jer[0]/self.g
+        wx = self.ref_jer[1]/(-1*self.g)
         
-        ref_bod_rates = np.array([wx,wy]) # flattened array abt x y z
+        ref_bod_rates = np.array([wy,wx]) # flattened array abt x y z
         self.ref_rates = ref_bod_rates 
         
         #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
@@ -579,14 +579,10 @@ class att_ctrl(object):
     
 
     def include_snap_bod_raterate(self):
-        if self.cmd_z == 0:
-            wy_dot = 0
-            wx_dot = 0
-        else:    
-            wy_dot = self.ref_sna[0]/self.g
-            wx_dot = self.ref_sna[1]/(-1*self.g)
+        wy_dot = self.ref_sna[0]/self.g
+        wx_dot = self.ref_sna[1]/(-1*self.g)
         
-        ref_bod_raterate = np.array([wx_dot,wy_dot]) # flattened array abt x y z
+        ref_bod_raterate = np.array([wy_dot,wx_dot]) # flattened array abt x y z
         self.ref_raterates = ref_bod_raterate
 
         #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)

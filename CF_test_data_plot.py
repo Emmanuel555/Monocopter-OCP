@@ -7,6 +7,8 @@ import numpy as np
 from scipy import ndimage
 from numpy import linalg as la
 from Filter import IIR2Filter
+import statistics
+  
 
 file_path = '/home/emmanuel/Monocopter-OCP/cf_data_selected/'
 files = os.listdir(file_path)
@@ -91,6 +93,9 @@ ref_x = 1.0
 ref_y = 1.0
 ref_z = 1.0
 
+x_error = [] 
+y_error = []
+z_error = []
 x_error_squared = [] 
 y_error_squared = []
 z_error_squared = []
@@ -99,17 +104,27 @@ for i in range(len(median_filtered_px)):
     x_error_squared.append((ref_x - median_filtered_px[i]) ** 2)
     y_error_squared.append((ref_y - median_filtered_py[i]) ** 2)    
     z_error_squared.append((ref_z - median_filtered_pz[i]) ** 2)
+    x_error.append((ref_x - median_filtered_px[i]))
+    y_error.append((ref_y - median_filtered_py[i]))
+    z_error.append((ref_z - median_filtered_pz[i]))
     
 final_rmse_x = math.sqrt(sum(x_error_squared)/(end-start))
 final_rmse_y = math.sqrt(sum(y_error_squared)/(end-start))
 final_rmse_z = math.sqrt(sum(z_error_squared)/(end-start))
 final_rmse = la.norm([final_rmse_x, final_rmse_y, final_rmse_z], 2)
+
+x_med = statistics.median(x_error)
+y_med = statistics.median(y_error)
+z_med = statistics.median(z_error)  
+print('error med: ', x_med, y_med, z_med)
 print('Final RMSE: ', final_rmse_y)
 
-
-ax1.plot(time[0][start:end], median_filtered_px, label='x', color='blue',linewidth=2)
-ax1.plot(time[0][start:end], median_filtered_py, label='y', color='red',linewidth=2)
-ax1.plot(time[0][start:end], median_filtered_pz, label='z', color='green',linewidth=2)
+ax1.plot(time[0][start:end], x_error, label='x err', color='blue',linewidth=2)
+ax1.plot(time[0][start:end], y_error, label='y err', color='red',linewidth=2)
+ax1.plot(time[0][start:end], z_error, label='z err', color='green',linewidth=2)
+#ax1.plot(time[0][start:end], median_filtered_px, label='x', color='blue',linewidth=2)
+#ax1.plot(time[0][start:end], median_filtered_py, label='y', color='red',linewidth=2)
+#ax1.plot(time[0][start:end], median_filtered_pz, label='z', color='green',linewidth=2)
 # ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
 # ax1.plot(time[0], py_r[0], label='y_r', color='red',linewidth=2,linestyle='dashed')
 # ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')

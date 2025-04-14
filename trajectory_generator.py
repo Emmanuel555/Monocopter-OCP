@@ -9,12 +9,12 @@ class trajectory_generator(object):
         pass
 
 
-    def hover_test(self, x_offset, y_offset):
-        ref_x = 0.0
+    def hover_test(self, x_offset, y_offset, z_offset):
+        ref_x = x_offset
         # ref_y = 1.0
-        ref_y = 0.0
-        ref_z = 1.5
-        ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+        ref_y = y_offset
+        ref_z = z_offset
+        ref_pos = np.array([ref_x, ref_y, ref_z])
         msg = "hovering test..."
         return (ref_pos,msg)
     
@@ -305,10 +305,10 @@ class trajectory_generator(object):
 
 
     def two_pt_line(self,speed,pid_update_rate,alt):
-        x = [0.0,0.0,0.0,0.0,0.0]
-        y = [1.0,0.5,0.0,-0.5,-1.0]
+        y = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+        x = [2.0,1.0,0.0,-1.0,-2.0,-1.0,0.0,1.0,2.0]
         parts = len(x)
-        distance = abs(y[0])*2
+        distance = abs(x[0]) + abs(x[-1])
         speed = 0.1 * speed # default is 0.1
         total_time = distance/speed
         num_pts = int(total_time*pid_update_rate)

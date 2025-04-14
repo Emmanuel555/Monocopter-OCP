@@ -13,10 +13,10 @@ from mpl_toolkits.mplot3d import Axes3D
 alt = 1.2
 start = timeit.default_timer() 
 
-x = [0.0,0.0,0.0,0.0,0.0]
-y = [1.0,0.5,0.0,-0.5,-1.0]
+y = [0.0,0.0,0.0,0.0,0.0]
+x = [1.5,0.5,0.0,-0.5,-1.5]
 parts = len(x)
-distance = abs(y[0])*2
+distance = abs(x[0])*2
 speed = 0.1
 total_time = distance/speed
 sampling_freq = 360
@@ -60,7 +60,7 @@ polys = ms.generate_trajectory(
 
 traj_gen = trajectory_generator.trajectory_generator()
 #derivatives = traj_gen.jerk_snap_9pt_circle(0, 0.4, 0, 1)
-pva,num_pts = traj_gen.two_pt_line(1,36,alt)
+pva,num_pts = traj_gen.two_pt_line(1,250,alt)
 #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(1.16,-0.29,0.9,1,5,1)
 
 #derivatives = traj_gen.jerk_snap_circle(0.5,0,0,1) .....
@@ -81,13 +81,13 @@ t = np.linspace(0, total_time, num_pts)
 #print (len(derivatives))
 #print(np.shape(pos))
 fig, ax = plt.subplots(1)
-ax.plot(t, pos_y, label='pos_y', color='blue')
-#ax.plot(t, jerk_y, label='jerk_y', color='red')
-#ax.plot(t, snap_y, label='snap_y', color='green')
+ax.plot(t, pos_x, label='pos_x', color='blue')
+ax.plot(t, jerk_x, label='jerk_x', color='red')
+ax.plot(t, snap_x, label='snap_x', color='green')
 ax.set_title('Derivatives gen', fontsize=20)
 ax.legend()
-ax.set_xlabel('Time(1/360s)')
-ax.set_ylabel('Y axis input')
+ax.set_xlabel('Time(1/250s)')
+ax.set_ylabel('X axis input')
 plt.show()
 
 
