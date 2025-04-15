@@ -297,9 +297,13 @@ if __name__ == '__main__':
     kdz = 6000 
     kiz = 1200 # | 128
 
+    apz = 320000 
+    adz = 50000 
+    aiz = 1000 # | 128
+
 
     # cyclic xyz (position)
-    kp = [0.04,0.04,0.0] # 0.04
+    kp = [1.3,1.3,0.0] # 0.04
     kd = [0.0005,0.0005,0.0] # not in use
     ki = [10.0,10.0,0.0] 
 
@@ -329,8 +333,8 @@ if __name__ == '__main__':
 
      # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])
-    ref_pos = np.array([0.0,0.0,1.2]) # 0,0 fked up for some reason
-    land_pos = np.array([0.0,0.0,0.1])
+    ref_pos = np.array([1.0,0.0,1.0]) # 0,0 fked up for some reason
+    land_pos = np.array([0.0,0.0,0.4])
     x_hover_offset = ref_pos[0]
     y_hover_offset = ref_pos[1]
     z_hover_offset = ref_pos[2]
@@ -359,13 +363,12 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 0.8 # 0.5
+    radius = 1.0 # 0.5
     speedX = 5.0 # 0.5 m/s the best thus far
-    laps = 10
+    laps = 5
     leminiscate_laps = 4
-    leminiscate_radius = 1.3
-    helix_laps = 32
-    reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
+    leminiscate_radius = 1.5
+    helix_laps = 9
     alt = ref_pos[2]
     elevated_alt = 0.8
     reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
@@ -377,9 +380,14 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
-    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    ## helix
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
+
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt)
+
 
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
@@ -515,7 +523,7 @@ if __name__ == '__main__':
 
                 # collective thrust (alt hold)
                 if button1 == 1:
-                    z_controls = monoco.collective_thrust(kpz,kdz,kiz) # full z alt hold
+                    z_controls = monoco.collective_thrust(apz,adz,aiz) # full z alt hold
                     collective_thrust = z_controls[0]*enable*button0
                 else:    
                     z_controls = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
@@ -587,17 +595,17 @@ if __name__ == '__main__':
             # final rmse calculation
             status = "Emergency stop"
             ref_msg = "flight ended..."
-            final_rmse_x = math.sqrt(rmse_num_x/(count))
-            final_rmse_y = math.sqrt(rmse_num_y/(count))
-            final_rmse_z = math.sqrt(rmse_num_z/(count))
-            final_rmse = la.norm([final_rmse_x, final_rmse_y, final_rmse_z], 2)
-            rmse_num = [final_rmse_x, final_rmse_y, final_rmse_z]  
+            # final_rmse_x = math.sqrt(rmse_num_x/(count))
+            # final_rmse_y = math.sqrt(rmse_num_y/(count))
+            # final_rmse_z = math.sqrt(rmse_num_z/(count))
+            # final_rmse = la.norm([final_rmse_x, final_rmse_y, final_rmse_z], 2)
+            # rmse_num = [final_rmse_x, final_rmse_y, final_rmse_z]  
 
-            print('Emergency Stopped and final rmse produced: ', rmse_num )
+            #print('Emergency Stopped and final rmse produced: ', rmse_num )
             
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5circle_test'
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5Aelevated_circle'
 data_saver.save_data(path)
 

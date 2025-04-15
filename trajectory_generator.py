@@ -354,9 +354,9 @@ class trajectory_generator(object):
 
     def two_pt_line(self,speed,pid_update_rate,alt):
         y = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
-        x = [2.0,1.0,0.0,-1.0,-2.0,-1.0,0.0,1.0,2.0]
+        x = [1.0,0.5,0.0,-1.0,-2.5,-1.0,0.0,0.5,1.0]
         parts = len(x)
-        distance = abs(x[0]) * 4
+        distance = abs(x[0]) * 7
         speed = 0.1 * speed # default is 0.1
         total_time = distance/speed
         num_pts = int(total_time*pid_update_rate)

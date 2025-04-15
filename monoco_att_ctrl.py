@@ -285,6 +285,9 @@ class att_ctrl(object):
             des_thrust = self.lift_rotation_wo_rps*(self.yawrate**2)
         self.cmd_z = des_thrust
 
+        if self.des_rps > 55500:
+            self.des_rps = 55500
+
         return (self.des_rps,self.cmd_z)
     
 
