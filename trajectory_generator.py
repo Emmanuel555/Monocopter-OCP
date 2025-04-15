@@ -304,11 +304,59 @@ class trajectory_generator(object):
         return (pva,num_points)
 
 
+    def lemniscate(self, x_offset, y_offset, laps, radius, pid_update_rate, reverse_cw, speedX, alt):
+        t = np.linspace(0, 2*np.pi, num=100) # leggo w 100 pts
+        x = radius * np.cos(t) / (np.sin(t)**2 + 1)
+        y = radius * np.cos(t) * np.sin(t) / (np.sin(t)**2 + 1)
+
+        if reverse_cw == 1: # cw
+            x = np.flip(x)
+            y = np.flip(y)
+
+        speed = 0.1 * speedX # default is 0.1
+        x_dist = radius * 4 * (laps+1)
+        #y_dist = (radius/3)*4 * (laps+1)
+        refs = []
+
+        x_time = x_dist/speed
+        #y_time = y_dist/speed
+        num_pts = int(x_time*pid_update_rate)
+        
+        x_set = x
+        y_set = y
+
+        for i in range(laps):
+            x_set = np.concatenate((x_set,x))
+            y_set = np.concatenate((y_set,y))
+
+
+
+        parts = len(x_set)
+        for i in range(parts):
+            refs.append(ms.Waypoint(
+                time=(x_time/(parts-1))*i,
+                position=np.array([x_set[i], y_set[i], alt]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+            refs,
+            degree=8,  # Polynomial degree
+            idx_minimized_orders=(3, 4),  
+            num_continuous_orders=3,  
+            algorithm="closed-form",  # Or "constrained"
+        )
+
+        t = np.linspace(0, x_time, num_pts)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6)
+        return (pva,num_pts)    
+
+
     def two_pt_line(self,speed,pid_update_rate,alt):
         y = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
         x = [2.0,1.0,0.0,-1.0,-2.0,-1.0,0.0,1.0,2.0]
         parts = len(x)
-        distance = abs(x[0]) + abs(x[-1])
+        distance = abs(x[0]) * 4
         speed = 0.1 * speed # default is 0.1
         total_time = distance/speed
         num_pts = int(total_time*pid_update_rate)
@@ -364,9 +412,6 @@ class trajectory_generator(object):
 
         return (ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,msg)
     
-
-
-        
  
     def simple_circle(self, x_offset, radius, count, speedX):
         circumference = 2*np.pi*radius
@@ -593,6 +638,9 @@ class trajectory_generator(object):
         # Sample up to the 3rd order (Jerk) -----v
         pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
         return (pva,num_points)
+    
+
+    
 
 
     

@@ -6,6 +6,7 @@ import math
 from pyrr import quaternion, Matrix33, Matrix44, Vector3 # array inputs are all flattened
 from pynput import keyboard
 import time
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     # refs = [
@@ -108,9 +109,21 @@ if __name__ == '__main__':
     while True:
         print(word) """
         
-    ans = math.atan2(pad_y, pad_x)
-    print (ans)
-    # a = np.array([1.4,1.2,3.0,6.0,1.0])
-    # a = a*4.0
-    # a = np.median(a)
-    # print(a)
+    """ radius = 1.3
+    t = np.linspace(0, 2*np.pi, num=100)
+
+    x = radius * np.cos(t) / (np.sin(t)**2 + 1)
+    y = radius * np.cos(t) * np.sin(t) / (np.sin(t)**2 + 1)
+
+    x_dist = radius * 4
+    y_dist = (radius/3)*4
+ 
+    laps = 4
+    x_set = x
+    for i in range(laps):
+        x_set = np.concatenate((x_set,x))
+    
+    print(len(x_set))
+
+    plt.plot(x, y)
+    plt.show() """

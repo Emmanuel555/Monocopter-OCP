@@ -277,25 +277,15 @@ class att_ctrl(object):
         self.position_error_last[2] = self.z_error 
 
         p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
-        #p_error_z = kpz*(self.z_error) - kdz*(self.robot_vel[2]) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # xy vel
-        #p_error_z = kpz*(self.z_error) + kdz*(self.ref_vel[2] - self.robot_vel[2]) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
-        #print ("p_error_z: ", p_error_z)
-        
-        # if p_error_z == 0.0:
-        #     self.des_rps = 0.0
-        # else:
-        #     if self.lift_rotation_wo_rps == 0.0:
-        #         self.des_rps = 0.0
-        #     else:
-        #         self.des_rps = (p_error_z/abs(p_error_z))*np.sqrt((float(abs(p_error_z)))/self.lift_rotation_wo_rps) # input to motor
-        
-        #des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
         
         self.des_rps = p_error_z
-        des_thrust = self.lift_rotation_wo_rps*(self.des_rps**2)
+        if self.lift_rotation_wo_rps == 0.0:
+            des_thrust = 0.0
+        else:
+            des_thrust = self.lift_rotation_wo_rps*(self.yawrate**2)
         self.cmd_z = des_thrust
 
-        return (p_error_z,self.cmd_z)
+        return (self.des_rps,self.cmd_z)
     
 
     def manual_collective_thrust(self,kpz,kdz,kiz,manual_thrust): 

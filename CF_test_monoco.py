@@ -362,6 +362,8 @@ if __name__ == '__main__':
     radius = 0.8 # 0.5
     speedX = 5.0 # 0.5 m/s the best thus far
     laps = 10
+    leminiscate_laps = 4
+    leminiscate_radius = 1.3
     helix_laps = 32
     reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
     alt = ref_pos[2]
@@ -376,6 +378,9 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
     pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    ## lemniscate
+    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
@@ -508,10 +513,13 @@ if __name__ == '__main__':
                     monoco.get_body_rate(flatness_option)
                 
 
-
                 # collective thrust (alt hold)
-                z_controls = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
-                collective_thrust = z_controls[0]*enable*button0
+                if button1 == 1:
+                    z_controls = monoco.collective_thrust(kpz,kdz,kiz) # full z alt hold
+                    collective_thrust = z_controls[0]*enable*button0
+                else:    
+                    z_controls = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
+                    collective_thrust = z_controls[0]*enable*button0
 
 
                 # from att ctrl
@@ -541,7 +549,7 @@ if __name__ == '__main__':
                     print(ref_msg) 
                     #print('tx commands: ', a0, a1)
                     #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
-                    #print('altitude: ', linear_state_vector[2])
+                    print('altitude: ', linear_state_vector[2])
                     #print('manual_cyclic_xyz: ', auto_cyclic)
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
                     print('att_cmds: ', cmd_bod_acc)
