@@ -15,6 +15,7 @@ from pyrr import quaternion
 import numpy as np
 import numpy.linalg as la
 
+#import long_monoco_att_ctrl
 import monoco_att_ctrl
 import trajectory_generator
 import timeit
@@ -298,12 +299,12 @@ if __name__ == '__main__':
     kiz = 1200 # | 128
 
     apz = 320000 
-    adz = 50000 
+    adz = 30000 
     aiz = 1000 # | 128
 
 
     # cyclic xyz (position)
-    kp = [1.3,1.3,0.0] # 0.04
+    kp = [1.0,1.0,0.0] # 0.04
     kd = [0.0005,0.0005,0.0] # not in use
     ki = [10.0,10.0,0.0] 
 
@@ -314,7 +315,7 @@ if __name__ == '__main__':
 
     # cyclic xy (attitude) - heuristic gains thus far
     ka = [6000, 6000]  # 6000
-    kr = [10.0, 10.0] # 10
+    kr = [5.0, 5.0] # 10
     krr = [1.0, 1.0] # 1.0
    
 
@@ -334,7 +335,7 @@ if __name__ == '__main__':
      # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])
     ref_pos = np.array([1.0,0.0,1.0]) # 0,0 fked up for some reason
-    land_pos = np.array([0.0,0.0,0.4])
+    land_pos = np.array([0.0,0.0,0.6])
     x_hover_offset = ref_pos[0]
     y_hover_offset = ref_pos[1]
     z_hover_offset = ref_pos[2]
@@ -355,7 +356,7 @@ if __name__ == '__main__':
     z_offset = 0.0
 
     # flatness option
-    flatness_option = 1  # this is a must!
+    flatness_option = 0  # this is a must!
     amplitude = 1  
 
     manual_cyclic = np.array([0.0, 0.0, 0.0]) 
@@ -380,9 +381,9 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
-    #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
 
@@ -602,6 +603,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5Aelevated_circle'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5LongLeminiscateC_again'
+data_saver.save_data(path)
 
