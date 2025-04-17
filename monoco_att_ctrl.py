@@ -98,6 +98,8 @@ class att_ctrl(object):
 
         # attitude error tracking
         self.attitude_error = 0.0
+        self.attitude_rate_error = 0.0
+        self.attitude_raterate_error = 0.0
 
 
     def physical_params(self,wing_radius,chord_length,mass,cl,cd, J):
@@ -317,6 +319,7 @@ class att_ctrl(object):
 
         # body rate controller
         cmd_bod_rates_error = cascaded_ref_bod_rates - fb
+        self.attitude_rate_error = cmd_bod_rates_error
         self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error)
         return (self.cmd_bod_rates_final)
     
@@ -327,6 +330,7 @@ class att_ctrl(object):
        
         fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
         cmd_bod_acc_error = cascaded_ref_bod_acc - fb
+        self.attitude_raterate_error = cmd_bod_acc_error
         cmd_bod_acc_final = kprr*(cmd_bod_acc_error) 
         self.cmd_bod_raterates_final = cmd_bod_acc_final # for logging purposes
 
@@ -334,23 +338,7 @@ class att_ctrl(object):
         # cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
         return (cmd_bod_acc_final)
     
-
-    """ def get_angle(self,sampling_dt): # corrected
-        control_input_x = np.array([0.0,self.p_control_signal[0]+self.v_control_signal[0],0.0])
-        control_input_y = np.array([self.p_control_signal[1]+self.v_control_signal[1],0.0,0.0])
-        
-        zd_dx = np.array([0.0,1.0,0.0])
-        zd_dy = np.array([1.0,0.0,0.0])
-
-        cmd_att_y = self.attitude_loop(self.robot_quat, control_input_x, sampling_dt, zd_dx)
-        cmd_att_x = self.attitude_loop(self.robot_quat, control_input_y, sampling_dt, zd_dy)
-
-        self.cmd_att = cmd_att_x + cmd_att_y
-        #self.cmd_att = self.cmd_att/sampling_dt
-        #print('cmd_att: ', self.cmd_att)
-        return (self.cmd_att) """
     
-
     def get_angle(self): # corrected
         control_input = self.p_control_signal #+ self.v_control_signal
         cmd_att = self.attitude_loop(self.robot_quat, control_input)

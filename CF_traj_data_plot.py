@@ -73,8 +73,8 @@ z_e = np.array([z_e])
 
 
 sampling_freq = 250
-start = int(np.size(time[0])/4)
-end = int(np.size(time[0])) - int(np.size(time[0])/6)
+start = 0 #int(np.size(time[0])/4)
+end = int(np.size(time[0])) #- int(np.size(time[0])/6)
 v_x = []
 v_y = []
 
@@ -84,9 +84,9 @@ traj_time = time[0][start:end]
 #mf_x_e = ndimage.median_filter(x_e[0][start:end], size=200)
 #mf_y_e = ndimage.median_filter(y_e[0][start:end], size=200)
 #mf_z_e = ndimage.median_filter(z_e[0][start:end], size=200)
-mf_px = ndimage.median_filter(px[0][start:end], size=200)
-mf_py = ndimage.median_filter(py[0][start:end], size=200)
-mf_pz = ndimage.median_filter(pz[0][start:end], size=200)
+mf_px = ndimage.median_filter(px[0][start:end], size=300)
+mf_py = ndimage.median_filter(py[0][start:end], size=300)
+mf_pz = ndimage.median_filter(pz[0][start:end], size=300)
 
 
 print('len: ', len(mf_px)) # must use x_e[0] to get the length of the array
@@ -193,16 +193,26 @@ ax2.set_ylabel('Y(m)')
 # ax3.set_ylabel('Angle/s(deg)')
 
 
-ax3.plot(traj_time[0:-1], v_x, label='vx', color='blue',linewidth=2)
-ax3.plot(traj_time[0:-1], v_y, label='vy', color='red',linewidth=2)
-#ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
-# ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
-# ax1.plot(time[0], py_r[0], label='y_r', color='red',linewidth=2,linestyle='dashed')
-# ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
+
+att_error = ndimage.median_filter(att_error[0], size=10)
+ax3.plot(traj_time, np.round((att_error[start:end]*(180/np.pi)),2), label='att_error_norm', color='red')
 ax3.legend()
-ax3.set_title('Velocity', fontsize=20)
+ax3.set_title('Att_error_norm vs time', fontsize=20)
 ax3.set_xlabel('Time(s)')
-ax3.set_ylabel('Velocity (m/s)')
+ax3.set_ylabel('Deg')
+
+
+
+# ax3.plot(traj_time[0:-1], v_x, label='vx', color='blue',linewidth=2)
+# ax3.plot(traj_time[0:-1], v_y, label='vy', color='red',linewidth=2)
+# #ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
+# # ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
+# # ax1.plot(time[0], py_r[0], label='y_r', color='red',linewidth=2,linestyle='dashed')
+# # ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
+# ax3.legend()
+# ax3.set_title('Velocity', fontsize=20)
+# ax3.set_xlabel('Time(s)')
+# ax3.set_ylabel('Velocity (m/s)')
 
 
 # ax4.plot(time[0], np.round((tpp_roll_raterate[0]*(180/np.pi)),3), label='tpp_roll_raterate', color='blue')
@@ -218,11 +228,18 @@ ax3.set_ylabel('Velocity (m/s)')
 # ax4.set_xlabel('Time(s)')
 # ax4.set_ylabel('Angle(deg)')
 
-ax4.plot(time[0], np.round((body_angle_roll[0]*(180/np.pi)),3), label='body_roll_deg', color='black')
+# ax4.plot(time[0], np.round((body_angle_roll[0]*(180/np.pi)),3), label='body_roll_deg', color='black')
+# ax4.legend()
+# ax4.set_title('Body_roll(deg) vs time', fontsize=20)
+# ax4.set_xlabel('Time(s)')
+# ax4.set_ylabel('Angle(deg)')
+
+yawrate = ndimage.median_filter(yawrate[0], size=200)
+ax4.plot(traj_time, np.round((yawrate[start:end]/(2*math.pi)),2), label='rotation rate in hz', color='red')
 ax4.legend()
-ax4.set_title('Body_roll(deg) vs time', fontsize=20)
+ax4.set_title('Yawrate(Hz) vs time', fontsize=20)
 ax4.set_xlabel('Time(s)')
-ax4.set_ylabel('Angle(deg)')
+ax4.set_ylabel('Hz')
 
 
 

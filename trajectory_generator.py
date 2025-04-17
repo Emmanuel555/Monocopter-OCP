@@ -531,7 +531,7 @@ class trajectory_generator(object):
         # compute x1 and x2
         x_coordinates = r*np.cos(theta) + x_offset
         y_coordinates = r*np.sin(theta) + y_offset
-        z_coordinates = y_coordinates + radius + alt
+        z_coordinates = y_coordinates*0.5 + alt
 
         if reverse_cw == 1:
             x_coordinates = np.flip(x_coordinates)

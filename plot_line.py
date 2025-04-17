@@ -60,7 +60,10 @@ polys = ms.generate_trajectory(
 
 traj_gen = trajectory_generator.trajectory_generator()
 #derivatives = traj_gen.jerk_snap_9pt_circle(0, 0.4, 0, 1)
-pva,num_pts = traj_gen.lemniscate(0.0, 0.0, 2, 1.3, 250, 1, 2, alt)
+#pva,num_pts = traj_gen.lemniscate(0.0, 0.0, 2, 1.3, 250, 1, 2, alt)
+pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(0.0, 0.0, 1.0, 5.0, 250, 3, 0, 1.0)
+    
+#pva,num_pts = traj_gen.lemniscate(0.0, 0.0, 2, 1.3, 250, 1, 2, alt)
 #pva,num_pts = traj_gen.two_pt_line(1,250,alt)
 #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(1.16,-0.29,0.9,1,5,1)
 
@@ -77,7 +80,14 @@ acc_y = pva[2,:,1] # acceleration
 jerk_y = pva[3,:,1] # jerk
 snap_y = pva[4,:,1] # snap
 
-t = np.linspace(0, total_time, num_pts)
+pos_z = pva[0,:,2] # position
+vel_z = pva[1,:,2] # velocity   
+acc_z = pva[2,:,2] # acceleration
+jerk_z = pva[3,:,2] # jerk
+snap_z = pva[4,:,2] # snap
+
+#t = np.linspace(0, total_time, num_pts)
+t = np.linspace(0, np.size(pos_z), np.size(pos_z))
 
 #print (len(derivatives))
 #print(np.shape(pos))
@@ -86,7 +96,8 @@ fig, ax = plt.subplots(1)
 # ax.plot(t, jerk_x, label='jerk_x', color='red')
 # ax.plot(t, snap_x, label='snap_x', color='green')
 # ax.set_title('Derivatives gen', fontsize=20)
-ax.plot(pos_x[:], pos_y[:], label='lemniscate', color='blue')
+#ax.plot(pos_x, pos_y, label='circle', color='blue')
+ax.plot(t, pos_z, label='lemniscate', color='blue')
 #ax.set_title('Derivatives gen', fontsize=20)
 ax.set_title('lemniscate', fontsize=20)
 ax.legend()

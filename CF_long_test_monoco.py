@@ -248,7 +248,7 @@ if __name__ == '__main__':
 
     data_saver = DataSave.SaveData('Data_time',
                                    'Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll',
-                                   'rmse_num_xyz','att_error','yawrate')    
+                                   'rmse_num_xyz','att_error','att_rate_error','att_raterate_error','yawrate')    
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     z_offset = 0.0
 
     # flatness option
-    flatness_option = 0  # this is a must!
+    flatness_option = 1  # this is a must!
     amplitude = 1  
 
     manual_cyclic = np.array([0.0, 0.0, 0.0]) 
@@ -371,8 +371,8 @@ if __name__ == '__main__':
     leminiscate_radius = 1.5
     helix_laps = 9
     alt = ref_pos[2]
-    elevated_alt = 0.8
-    reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
+    elevated_alt = 1.0
+    reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
 
 
     # trajectory generator
@@ -386,6 +386,8 @@ if __name__ == '__main__':
     pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
+    ## elevated circle
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
@@ -516,6 +518,7 @@ if __name__ == '__main__':
 
                     # bod rates
                     monoco.get_body_rate(flatness_option)
+                    att_rate_error = monoco.attitude_rate_error
                 
 
                 # collective thrust (alt hold)
@@ -529,6 +532,7 @@ if __name__ == '__main__':
 
                 # from att ctrl
                 cmd_bod_acc = monoco.CF_SAM_get_angles_and_thrust(enable,flatness_option)
+                att_raterate_error = monoco.attitude_raterate_error
                 cyclic = cmd_bod_acc[0] + cmd_bod_acc[1]
 
 
@@ -584,7 +588,7 @@ if __name__ == '__main__':
                         
                         data_saver.add_item(abs_time,
                                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
-                                    rmse_num,att_error,yawrate)    
+                                    rmse_num,att_error,att_rate_error,att_raterate_error,yawrate)    
                         
                     
 
