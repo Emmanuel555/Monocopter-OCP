@@ -365,7 +365,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 1.0 # 0.5
-    speedX = 5.0 # 0.5 m/s the best thus far
+    speedX = 3.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -607,6 +607,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5LongLeminiscateC_again'
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.3Long_officiallemniscate_night'
 data_saver.save_data(path)
 

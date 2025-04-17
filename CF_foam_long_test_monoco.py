@@ -32,7 +32,7 @@ from cflib.crazyflie.syncLogger import SyncLogger
 # Change uris and sequences according to your setup
 
 # monoco radio 1
-URI1 = 'radio://0/80/2M/E7E7E7E701'
+URI1 = 'radio://0/80/2M/E7E7E7E7E7'
 
 
 uris = {
@@ -314,8 +314,8 @@ if __name__ == '__main__':
     
 
     # cyclic xy (attitude) - heuristic gains thus far
-    ka = [6000, 6000]  # 6000
-    kr = [5.0, 5.0] # 10
+    ka = [8000, 8000]  # 6000
+    kr = [0.05, 0.05] # 10
     krr = [1.0, 1.0] # 1.0
    
 
@@ -381,9 +381,9 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
-    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
@@ -608,6 +608,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5LongLeminiscateC_again'
-data_saver.save_data(path)
+#path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5FoamLeminiscateC_again'
+#data_saver.save_data(path)
 

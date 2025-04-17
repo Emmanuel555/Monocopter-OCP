@@ -371,7 +371,7 @@ if __name__ == '__main__':
     helix_laps = 9
     alt = ref_pos[2]
     elevated_alt = 1.0
-    reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
+    reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
 
 
     # trajectory generator
@@ -380,9 +380,9 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
-    #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
@@ -607,6 +607,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5Aelevated_circle'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.3official_lemniscate_short_flat_again'
+data_saver.save_data(path)
 
