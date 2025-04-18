@@ -8,7 +8,7 @@ import time
 
 import Mocap
 import DataSave
-import Data_process
+import Foam_Data_process
 
 import math
 from pyrr import quaternion
@@ -16,7 +16,7 @@ import numpy as np
 import numpy.linalg as la
 
 #import long_monoco_att_ctrl
-import monoco_att_ctrl
+import foam_monoco_att_ctrl
 import trajectory_generator
 import timeit
 from pynput import keyboard
@@ -241,7 +241,7 @@ if __name__ == '__main__':
     max_sample_rate = 250 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / sample_rate
-    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
+    data_processor = Foam_Data_process.RealTimeProcessor(4, [100], 'lowpass', 'cheby2', 85, sample_rate)
 
     #data_saver = DataSave.SaveData('Data_time',
     #                               'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
@@ -298,13 +298,13 @@ if __name__ == '__main__':
     kdz = 6000 
     kiz = 1200 # | 128
 
-    apz = 320000 
-    adz = 30000 
+    apz = 120000 
+    adz = 25000 
     aiz = 1000 # | 128
 
 
     # cyclic xyz (position)
-    kp = [1.0,1.0,0.0] # 0.04
+    kp = [1.5,1.5,0.0] # 0.04
     kd = [0.0005,0.0005,0.0] # not in use
     ki = [10.0,10.0,0.0] 
 
@@ -314,8 +314,8 @@ if __name__ == '__main__':
     
 
     # cyclic xy (attitude) - heuristic gains thus far
-    ka = [8000, 8000]  # 6000
-    kr = [0.05, 0.05] # 10
+    ka = [1500, 1500]  # 6000
+    kr = [3.0, 3.0] # 10
     krr = [1.0, 1.0] # 1.0
    
 
@@ -328,7 +328,7 @@ if __name__ == '__main__':
     J = np.array([1/100000,1/100000,1/1000000]) # moment of inertia
     
 
-    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, ka, kr, krr)
+    monoco = foam_monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, ka, kr, krr)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd, J) 
 
 
@@ -368,11 +368,11 @@ if __name__ == '__main__':
     speedX = 5.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
-    leminiscate_radius = 1.5
+    leminiscate_radius = 1.0
     helix_laps = 9
     alt = ref_pos[2]
     elevated_alt = 1.0
-    reverse_cw = 0 # 1 for clockwise, 0 for counterclockwise
+    reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
 
 
     # trajectory generator
@@ -381,9 +381,9 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
-    #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
@@ -608,6 +608,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5FoamLeminiscateC_again'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5Foamlem_ndi_c'
+data_saver.save_data(path)
 
