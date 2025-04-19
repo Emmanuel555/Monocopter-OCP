@@ -334,8 +334,8 @@ class att_ctrl(object):
         cmd_bod_acc_final = kprr*(cmd_bod_acc_error) 
         self.cmd_bod_raterates_final = cmd_bod_acc_final # for logging purposes
 
-        # NDI
-        cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
+        ## NDI
+        #cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
         return (cmd_bod_acc_final)
     
     
@@ -358,6 +358,9 @@ class att_ctrl(object):
         # output saturation/normalisation
         des_rps = self.des_rps
         #cmd_bod_acc = self.cmd_att
+        
+        ## icra method
+        #cmd_bod_acc = self.cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
 
 
         if flatness_option == 0:
