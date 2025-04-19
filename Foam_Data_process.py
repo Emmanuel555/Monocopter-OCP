@@ -303,9 +303,10 @@ class RealTimeProcessor(object):
         self.ay = self.FilterAY.filter(self.ay)
         self.az = self.FilterAZ.filter(self.az)
 
+        # for foam control algo, use filtered position data
         pos_vel_acc = np.array([self.px_filted, self.py_filted, self.pz_filted, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
         
-        # for control algo, dun use filtered position data
+        # for normal control algo, dun use filtered position data
         #pos_vel_acc = np.array([self.px, self.py, self.pz, self.vx, self.vy, self.vz, self.ax, self.ay, self.az])
        
         #return vel_acc

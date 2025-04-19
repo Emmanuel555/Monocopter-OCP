@@ -335,7 +335,7 @@ class att_ctrl(object):
         self.cmd_bod_raterates_final = cmd_bod_acc_final # for logging purposes
 
         # NDI
-        # cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
+        cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
         return (cmd_bod_acc_final)
     
     

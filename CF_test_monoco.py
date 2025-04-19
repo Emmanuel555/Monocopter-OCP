@@ -607,6 +607,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.3official_lemniscate_short_flat_again'
+path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5lemniscate_short_ndi'
 data_saver.save_data(path)
 
