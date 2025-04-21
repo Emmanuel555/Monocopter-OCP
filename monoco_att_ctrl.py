@@ -190,7 +190,7 @@ class att_ctrl(object):
             num_den = 1.0*(num_den/abs(num_den))
         
         angle = math.acos(num_den) # angle in radians
-        self.attitude_error = angle
+        
         # print("disk_vector: ", disk_vector)
         # print("zd_n: ", zd_n)
         # print("n_dem: ", la.norm(np.cross(disk_vector,zd_n)))
@@ -213,6 +213,7 @@ class att_ctrl(object):
         #cmd_att_error = np.array([cmd_att[0],cmd_att[1]]) # abt x y only
 
         cmd_att_error = np.array([cmd_att[1],cmd_att[0]]) # abt y x only
+        self.attitude_error = cmd_att_error 
         cmd_att_final = kpa*(cmd_att_error)
         return (cmd_att_final)
     
