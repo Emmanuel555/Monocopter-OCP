@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
 from numpy import linalg as la
-from Filter import IIR2Filter
 import statistics
   
 
