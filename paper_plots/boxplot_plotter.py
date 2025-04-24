@@ -13,14 +13,14 @@ long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 foam_wing = 'foam_traj_data'
 
-selected_wing = short_wing
+selected_wing = long_wing
 
 if selected_wing == short_wing:
-    title = 'Controller Tracking Performance using Short Wing'
+    title = 'Controller tracking performance using short wing'
 elif selected_wing == long_wing:
-    title = 'Controller Tracking Performance using Long Wing'
+    title = 'Controller tracking performance using long wing'
 elif selected_wing == foam_wing:
-    title = 'Controller Tracking Performance using Ultralight Wing'
+    title = 'Controller tracking performance using ultralight wing'
 
 # test short wing first
 wing_circle = data_sorter.whisker_circle(selected_wing)
@@ -36,8 +36,8 @@ colors = ['#254abe','#96400b','#a725be','#254abe','#96400b','#a725be']
 med_colors = ['#34be25','#34be25','red','#34be25','#34be25','red']
 fig.subplots_adjust(hspace=0.3, wspace=0.2, 
                     left=0.048, right=0.97, 
-                    top = 0.915, bottom = 0.042)
-#fig.suptitle(title, fontsize=40, fontweight='bold')
+                    top = 0.89, bottom = 0.042)
+fig.suptitle(title, fontsize=40, fontweight='bold')
 
 
 for a in range(len(graphs)): # 3 trajs
@@ -70,7 +70,7 @@ for a in range(len(graphs)): # 3 trajs
                 label = 'Yw'
             elif i == 2:
                 label = 'Zw'
-            indi = graphs[a][m].boxplot(wing[a][m][6+i],
+            method = graphs[a][m].boxplot(wing[a][m][6+i],
                                 #patch_artist = True,
                                 boxprops={'color':colors[m]},
                                 capprops={'color':'orange'},
@@ -89,22 +89,22 @@ for a in range(len(graphs)): # 3 trajs
             graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=27)
             graphs[a][m].set_xlim(-0.02, 0.12)
             # add title
-            graphs[a][m].set_title(traj_label + method_label + 'Norm error(m)', fontsize=25, fontweight='bold')
+            graphs[a][m].set_title(traj_label + method_label + 'norm error(m)', fontsize=25, fontweight='bold')
             # add legend
             if i == 0:
                 graphs[a][m].legend(loc='upper right', fontsize=20)
 
-            for whisker in indi['whiskers']:
+            for whisker in method['whiskers']:
                 whisker.set(linewidth=7.0) # Set the thickness 
 
-            for box in indi['boxes']:
+            for box in method['boxes']:
                 box.set(linewidth=7.0) # Set the thickness 
 
-            for cap in indi['caps']:
+            for cap in method['caps']:
                 cap.set(linewidth=7.0) # Set the thickness
                 y = cap.get_ydata()[0]
 
-            for median in indi['medians']:
+            for median in method['medians']:
                 median.set(linewidth=7.0) # Set the thickness
     
 
@@ -124,6 +124,6 @@ for i, line in enumerate(indi['medians']):
             fontsize=10,  # Adjust fontsize as needed
             color='black')  # Adjust color as needed
  """
-plt.savefig(title+'.pdf')   
+#plt.savefig(title+'.pdf')   
 plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
 plt.show()

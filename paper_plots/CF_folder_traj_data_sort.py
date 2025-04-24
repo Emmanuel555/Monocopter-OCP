@@ -10,7 +10,7 @@ class sort_traj_data(object):
         self.traj_compile = cf.all_trajectory()
 
     
-    def plot_circle(self,folder): # only for indi
+    def plot_circle(self,folder,att): # only for indi
         # circle 0.3
         indi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle3/indi/'
         ndi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle3/ndi/'
@@ -18,13 +18,20 @@ class sort_traj_data(object):
         indi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle5/indi/'
         ndi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle5/ndi/'
         
-        indi3 = self.traj_compile.att_data_compiler(indi3)
-        ndi3 = self.traj_compile.att_data_compiler(ndi3)
+        if att == 1:
+            indi3 = self.traj_compile.att_data_compiler(indi3)
+            ndi3 = self.traj_compile.att_data_compiler(ndi3)
+            
+            indi5 = self.traj_compile.att_data_compiler(indi5)
+            ndi5 = self.traj_compile.att_data_compiler(ndi5)
+        else:
+            indi3 = self.traj_compile.traj_data_compiler(indi3)
+            ndi3 = self.traj_compile.traj_data_compiler(ndi3)
+            
+            indi5 = self.traj_compile.traj_data_compiler(indi5)
+            ndi5 = self.traj_compile.traj_data_compiler(ndi5)
         
-        indi5 = self.traj_compile.att_data_compiler(indi5)
-        ndi5 = self.traj_compile.att_data_compiler(ndi5)
-        
-        
+    
         return (indi3, ndi3, indi5, ndi5)
     
 
@@ -68,7 +75,7 @@ class sort_traj_data(object):
 
 
     
-    def plot_elevated_circle(self,folder):
+    def plot_elevated_circle(self,folder,att):
         # elevated circle 0.3
         indi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/elevated_circle3/indi/'
         ndi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/elevated_circle3/ndi/'
@@ -76,11 +83,18 @@ class sort_traj_data(object):
         indi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/elevated_circle5/indi/'
         ndi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/elevated_circle5/ndi/'
      
-        indi3 = self.traj_compile.att_data_compiler(indi3)
-        ndi3 = self.traj_compile.att_data_compiler(ndi3)
-  
-        indi5 = self.traj_compile.att_data_compiler(indi5)
-        ndi5 = self.traj_compile.att_data_compiler(ndi5)
+        if att == 1:
+            indi3 = self.traj_compile.att_data_compiler(indi3)
+            ndi3 = self.traj_compile.att_data_compiler(ndi3)
+            
+            indi5 = self.traj_compile.att_data_compiler(indi5)
+            ndi5 = self.traj_compile.att_data_compiler(ndi5)
+        else:
+            indi3 = self.traj_compile.traj_data_compiler(indi3)
+            ndi3 = self.traj_compile.traj_data_compiler(ndi3)
+            
+            indi5 = self.traj_compile.traj_data_compiler(indi5)
+            ndi5 = self.traj_compile.traj_data_compiler(ndi5)
    
         return (indi3, ndi3, indi5, ndi5)
 
@@ -125,7 +139,7 @@ class sort_traj_data(object):
         return (indi3, ndi3, indi5, ndi5)
     
 
-    def plot_lem(self,folder):
+    def plot_lem(self,folder,att):
         # lem 0.3
         indi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/lem3/indi/'
         ndi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/lem3/ndi/' 
@@ -133,12 +147,18 @@ class sort_traj_data(object):
         indi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/lem5/indi/'
         ndi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/lem5/ndi/'
         
-        indi3 = self.traj_compile.att_data_compiler(indi3)
-        ndi3 = self.traj_compile.att_data_compiler(ndi3)
-
-        indi5 = self.traj_compile.att_data_compiler(indi5)
-        ndi5 = self.traj_compile.att_data_compiler(ndi5)
-       
+        if att == 1:
+            indi3 = self.traj_compile.att_data_compiler(indi3)
+            ndi3 = self.traj_compile.att_data_compiler(ndi3)
+            
+            indi5 = self.traj_compile.att_data_compiler(indi5)
+            ndi5 = self.traj_compile.att_data_compiler(ndi5)
+        else:
+            indi3 = self.traj_compile.traj_data_compiler(indi3)
+            ndi3 = self.traj_compile.traj_data_compiler(ndi3)
+            
+            indi5 = self.traj_compile.traj_data_compiler(indi5)
+            ndi5 = self.traj_compile.traj_data_compiler(ndi5)
 
         return (indi3, ndi3, indi5, ndi5)
     

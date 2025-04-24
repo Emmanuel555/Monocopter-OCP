@@ -15,7 +15,7 @@ selected_wing = foam_wing
 
 
 if selected_wing == foam_wing:
-    title = 'Controller Tracking Performance using Ultralight Wing'
+    title = 'Controller tracking performance using ultralight wing'
 
 # test short wing first
 wing_circle = data_sorter.foam_whisker_circle(selected_wing)
@@ -24,14 +24,14 @@ wing_elevated = data_sorter.foam_whisker_elevated_circle(selected_wing)
 wing = [wing_circle,wing_elevated]
 
 ## generate the plot
-fig, ((ax1,ax3,ax5,ax7),(ax2,ax4,ax6,ax8)) = plt.subplots(2, 4, figsize=(40, 20))
+fig, ((ax1,ax3,ax5,ax7),(ax2,ax4,ax6,ax8)) = plt.subplots(2, 4, figsize=(50, 15))
 graphs = [[ax1,ax2,ax3,ax4],[ax5,ax6,ax7,ax8]]
 colors = ['#254abe','#96400b','#254abe','#96400b']
 med_colors = ['#34be25','#34be25','#34be25','#34be25']
-fig.subplots_adjust(hspace=0.2, wspace=0.17, 
+fig.subplots_adjust(hspace=0.3, wspace=0.17, 
                     left=0.048, right=0.97, 
-                    top = 0.915, bottom = 0.042)
-fig.suptitle(title, fontsize=40, fontweight='bold')
+                    top = 0.86, bottom = 0.042)
+fig.suptitle(title, fontsize=60, fontweight='bold')
 
 
 for a in range(len(graphs)): # 3 trajs
@@ -58,7 +58,7 @@ for a in range(len(graphs)): # 3 trajs
                 label = 'Yw'
             elif i == 2:
                 label = 'Zw'
-            indi = graphs[a][m].boxplot(wing[a][m][6+i],
+            method = graphs[a][m].boxplot(wing[a][m][6+i],
                                 #patch_artist = True,
                                 boxprops={'color':colors[m]},
                                 capprops={'color':'orange'},
@@ -68,33 +68,33 @@ for a in range(len(graphs)): # 3 trajs
 
             # rmse
             graphs[a][m].plot(placement+i*0.05, wing[a][m][9][0+i], 'X', 
-                              mfc = med_colors[m], mec = med_colors[m], ms = 15, label='RMS') # marker type
+                              mfc = med_colors[m], mec = med_colors[m], ms = 45, label='RMS') # marker type
             # mean
             graphs[a][m].plot(placement+i*0.05, statistics.mean(wing[a][m][6+i]), 'o', 
-                              mfc = med_colors[m], mec = med_colors[m], ms = 15, label='Mean') # marker type
+                              mfc = med_colors[m], mec = med_colors[m], ms = 45, label='Mean') # marker type
             # rotate x axis labels
-            graphs[a][m].tick_params(axis='x', labelrotation=0, labelsize=25)
-            graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=25)
+            graphs[a][m].tick_params(axis='x', labelrotation=0, labelsize=45)
+            graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=45)
             graphs[a][m].set_xlim(-0.02, 0.12)
             # add title
-            graphs[a][m].set_title(traj_label + method_label + 'Norm error(m)', fontsize=25)
+            graphs[a][m].set_title(traj_label + method_label + 'norm error(m)', fontsize=50, fontweight='bold')
             # add legend
             if i == 0:
-                graphs[a][m].legend(loc='upper right', fontsize=20)
+                graphs[a][m].legend(loc='upper right', fontsize=45)
 
 
-            for whisker in indi['whiskers']:
-                whisker.set(linewidth=5.0) # Set the thickness 
+            for whisker in method['whiskers']:
+                whisker.set(linewidth=15.0) # Set the thickness 
 
-            for box in indi['boxes']:
-                box.set(linewidth=5.0) # Set the thickness 
+            for box in method['boxes']:
+                box.set(linewidth=15.0) # Set the thickness 
 
-            for cap in indi['caps']:
-                cap.set(linewidth=5.0) # Set the thickness
+            for cap in method['caps']:
+                cap.set(linewidth=15.0) # Set the thickness
                 y = cap.get_ydata()[0]
 
-            for median in indi['medians']:
-                median.set(linewidth=5.0) # Set the thickness
+            for median in method['medians']:
+                median.set(linewidth=15.0) # Set the thickness
     
 
 """ # Iterate through each median line and its corresponding data
@@ -113,6 +113,6 @@ for i, line in enumerate(indi['medians']):
             fontsize=10,  # Adjust fontsize as needed
             color='black')  # Adjust color as needed
  """
-plt.savefig(title+'.pdf')   
+#plt.savefig(title+'.pdf')   
 plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
-plt.show()
+#plt.show()
