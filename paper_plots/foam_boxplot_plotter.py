@@ -31,7 +31,7 @@ med_colors = ['#34be25','#34be25','#34be25','#34be25']
 fig.subplots_adjust(hspace=0.3, wspace=0.17, 
                     left=0.048, right=0.97, 
                     top = 0.86, bottom = 0.042)
-fig.suptitle(title, fontsize=60, fontweight='bold')
+fig.suptitle(title + ' (L2 norm error(m))', fontsize=60, fontweight='bold')
 
 
 for a in range(len(graphs)): # 3 trajs
@@ -43,13 +43,13 @@ for a in range(len(graphs)): # 3 trajs
     
     for m in range(len(graphs[a])): # 0.3 and 0.5 all methods  
         if m == 0:
-            method_label = 'INDI 0.3m/s '
+            method_label = '0.3m/s (INDI) '
         elif m == 1:
-            method_label = 'NDI 0.3m/s '
+            method_label = '0.3m/s (NDI) '
         elif m == 2:
-            method_label = 'INDI 0.5m/s '
+            method_label = '0.5m/s (INDI) '
         elif m == 3:
-            method_label = 'NDI 0.5m/s '         
+            method_label = '0.5m/s (NDI) '         
 
         for i in range(3): #xyz
             if i == 0:
@@ -77,7 +77,8 @@ for a in range(len(graphs)): # 3 trajs
             graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=45)
             graphs[a][m].set_xlim(-0.02, 0.12)
             # add title
-            graphs[a][m].set_title(traj_label + method_label + 'norm error(m)', fontsize=50, fontweight='bold')
+            graphs[a][m].set_title(traj_label + method_label, fontsize=50, fontweight='bold')
+            graphs[a][m].grid(linewidth=4.0)
             # add legend
             if i == 0:
                 graphs[a][m].legend(loc='upper right', fontsize=45)

@@ -214,10 +214,10 @@ class all_trajectory(object):
 
         #print(mat_data)
         time = mat_data['Data_time']
-        #position = mat_data['data']
         position = mat_data['Monocopter_XYZ']
         ref_position = mat_data['ref_position']
         yawrate = mat_data['yawrate']
+        motor_cmd = mat_data['motor_cmd']
 
         start = 0 #int(np.size(time[0])/10)
         end = int(np.size(time[0])) #- int(np.size(time[0])
@@ -239,6 +239,7 @@ class all_trajectory(object):
         pz_r = np.array([pz_r])
 
         traj_time = time[0][start:end]
+        motor_cmd = ndimage.median_filter(motor_cmd[0][start:end], size=700)
         px_r = px_r[0][start:end]
         py_r = py_r[0][start:end]
         pz_r = pz_r[0][start:end]
@@ -246,7 +247,7 @@ class all_trajectory(object):
         mf_py = ndimage.median_filter(py[0][start:end], size=700)
         mf_pz = ndimage.median_filter(pz[0][start:end], size=700)
         
-        yawrate = ndimage.median_filter(yawrate[0], size=200)
+        yawrate = ndimage.median_filter(yawrate[0], size=700)
         yawrate = np.round((yawrate[start:end]/(2*math.pi)),2) # in Hz
         yawrate_ls = []
 
@@ -268,7 +269,8 @@ class all_trajectory(object):
             py_r,
             pz_r,
             xyz_error_norm,
-            yawrate_ls
+            yawrate_ls,
+            motor_cmd
         )
 
 
@@ -280,6 +282,9 @@ class all_trajectory(object):
         px_r = data[4]
         py_r = data[5]
         pz_r = data[6]
+        yawrate_ls = data[8]
+        motor_cmd = data[9]
+        traj_time = data[0]
 
         x_error = [] 
         y_error = []
@@ -321,7 +326,10 @@ class all_trajectory(object):
             y_error_norm,
             z_error_norm,
             rmse_xyz_list,
-            final_rmse_xyz
+            final_rmse_xyz,
+            traj_time,
+            yawrate_ls,
+            motor_cmd
         )
 
             

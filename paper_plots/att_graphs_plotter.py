@@ -52,7 +52,7 @@ for t in range(3): # trajectories
 
     for a in range(2): # 2 graphs per traj
         if a == 0:
-            att_label = '(Angular acceleration norm error(rad/s^2) @ (0.3, 0.5)m/s)'   
+            att_label = '(Angular acceleration L2 norm error(rad/s^2) @ (0.3, 0.5)m/s)'   
         elif a == 1:
             att_label = '(Body rotational rate(hz) @ (0.3, 0.5)m/s))'  
 
@@ -110,7 +110,7 @@ for t in range(3): # trajectories
         graphs[a][t].tick_params(axis='both', labelsize=20)
         # add title
         graphs[a][t].set_title(traj_label+att_label, fontsize=25, fontweight='bold')
-        
+        graphs[a][t].grid(linewidth=4.0)
 
 
 

@@ -36,7 +36,7 @@ for i in range(1):
         graphs[i][j] = ax
 
 colors = ['#254abe','#96400b','#254abe','#96400b']
-fig.subplots_adjust(hspace=0.3, wspace=0.029, 
+fig.subplots_adjust(hspace=0.3, wspace=0.05, 
                     left=0.0, right=0.98, 
                     top =1.0, bottom =0.043)
 #fig.suptitle(title, fontsize=40, fontweight='bold')
@@ -77,8 +77,11 @@ for a in range(len(graphs[0])): # 3D plot for trajs
         graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
                 
     graphs[0][a].set_zlim(0,2)
+    graphs[0][a].set_xlabel('Xw[m]', fontsize=10)
+    graphs[0][a].set_ylabel('Yw[m]', fontsize=10)
+    graphs[0][a].set_zlabel('Zw[m]', fontsize=10)
     # legend        
-    graphs[0][a].legend(loc='upper right', fontsize=20)
+    graphs[0][a].legend(loc='upper right', fontsize=15)
     # add title
     graphs[0][a].set_title(traj_label, fontsize=25, fontweight='bold')
         
