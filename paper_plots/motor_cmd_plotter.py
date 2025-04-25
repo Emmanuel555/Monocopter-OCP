@@ -22,13 +22,13 @@ wing_circle_foam = data_sorter.foam_whisker_circle(foam_wing)
 wing = [wing_circle_long,wing_circle_short,wing_circle_foam]
 
 ## generate the plot
-fig, ((ax1,ax2)) = plt.subplots(1, 2, figsize=(20, 8))
-graphs = [ax1,ax2]
+fig, ((ax2,ax3)) = plt.subplots(1, 2, figsize=(20, 8))
+graphs = [ax2,ax3]
 colors = ['#254abe','#96400b','#a725be']
 fig.subplots_adjust(hspace=0.3, wspace=0.2, 
                     left=0.048, right=0.97, 
                     top = 0.89, bottom = 0.042)
-#fig.suptitle(title + ' (L2 norm error(m))', fontsize=40, fontweight='bold')
+fig.suptitle('Long wing motor commands for circle trajectory', fontsize=40, fontweight='bold')
 
 
 for a in range(len(wing)): # 3 trajs
@@ -50,26 +50,26 @@ for a in range(len(wing)): # 3 trajs
     yawrate = wing[a][0][12]
 
     # motor
-    traj_time_motor = wing[0][a][11]
-    motor_cmd = wing[0][a][13] # only for long wing   
+    traj_time_motor_3 = wing[0][a][11]
+    motor_cmd_3 = wing[0][a][13] # only for long wing
+    traj_time_motor_5 = wing[0][a+3][11]
+    motor_cmd_5 = wing[0][a+3][13] # only for long wing   
     
-    ax1.plot(traj_time_yawrate, yawrate, color=colors[a], linestyle='solid', linewidth=3.0, label=wing_label) 
-    ax2.plot(traj_time_motor, motor_cmd, color=colors[a], linestyle='solid', linewidth=3.0, label=method_label)                         
-
+    ax2.plot(traj_time_motor_3, motor_cmd_3, color=colors[a], linestyle='solid', linewidth=3.0, label=method_label+'(0.3m/s)')                         
+    ax3.plot(traj_time_motor_5, motor_cmd_5, color=colors[a], linestyle='solid', linewidth=3.0, label=method_label+'(0.5m/s)') 
   
-ax1.set_xlabel('Time(s)', fontsize=25)
-ax1.set_ylabel('hz', fontsize=25)
 ax2.set_xlabel('Time(s)', fontsize=25)
 ax2.set_ylabel('pwm', fontsize=25)
-ax1.tick_params(axis='both', labelsize=25)
+ax3.set_xlabel('Time(s)', fontsize=25)
+ax3.set_ylabel('pwm', fontsize=25)
 ax2.tick_params(axis='both', labelsize=25)
-ax1.legend(loc='upper right', fontsize=25)
+ax3.tick_params(axis='both', labelsize=25)
 ax2.legend(loc='upper right', fontsize=25)
-ax1.set_title('Body rotational rate @ cir 0.3m/s', fontsize=30, fontweight='bold')
-ax2.set_title('Long wing motor commands @ cir 0.3m/s', fontsize=30, fontweight='bold')
-ax1.grid(linewidth=2.0)
+ax3.legend(loc='upper right', fontsize=25)
+#ax2.set_title('Long wing motor commands @ cir 0.3m/s', fontsize=30, fontweight='bold')
+#ax3.set_title('Long wing motor commands @ cir 0.5m/s', fontsize=30, fontweight='bold')
 ax2.grid(linewidth=2.0)
-    
+ax3.grid(linewidth=2.0)    
   
-plt.savefig('motor_cmd & yawrate.png', dpi=300, bbox_inches='tight')  
+plt.savefig('motor_cmd.png', dpi=300, bbox_inches='tight')  
 plt.show()

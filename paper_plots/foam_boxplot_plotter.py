@@ -24,14 +24,14 @@ wing_elevated = data_sorter.foam_whisker_elevated_circle(selected_wing)
 wing = [wing_circle,wing_elevated]
 
 ## generate the plot
-fig, ((ax1,ax3,ax5,ax7),(ax2,ax4,ax6,ax8)) = plt.subplots(2, 4, figsize=(50, 15))
+fig, ((ax1,ax3,ax5,ax7),(ax2,ax4,ax6,ax8)) = plt.subplots(2, 4, figsize=(50, 20))
 graphs = [[ax1,ax2,ax3,ax4],[ax5,ax6,ax7,ax8]]
 colors = ['#254abe','#96400b','#254abe','#96400b']
 med_colors = ['#34be25','#34be25','#34be25','#34be25']
 fig.subplots_adjust(hspace=0.3, wspace=0.17, 
                     left=0.048, right=0.97, 
                     top = 0.86, bottom = 0.042)
-fig.suptitle(title + ' (L2 norm error(m))', fontsize=60, fontweight='bold')
+fig.suptitle(title + ' (L2 norm error(m))', fontsize=80, fontweight='bold')
 
 
 for a in range(len(graphs)): # 3 trajs
@@ -73,15 +73,14 @@ for a in range(len(graphs)): # 3 trajs
             graphs[a][m].plot(placement+i*0.05, statistics.mean(wing[a][m][6+i]), 'o', 
                               mfc = med_colors[m], mec = med_colors[m], ms = 45, label='Mean') # marker type
             # rotate x axis labels
-            graphs[a][m].tick_params(axis='x', labelrotation=0, labelsize=45)
-            graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=45)
+            graphs[a][m].tick_params(axis='both', labelrotation=0, labelsize=50)
             graphs[a][m].set_xlim(-0.02, 0.12)
             # add title
-            graphs[a][m].set_title(traj_label + method_label, fontsize=50, fontweight='bold')
+            graphs[a][m].set_title(traj_label + method_label, fontsize=70, fontweight='bold')
             graphs[a][m].grid(linewidth=4.0)
             # add legend
             if i == 0:
-                graphs[a][m].legend(loc='upper right', fontsize=45)
+                graphs[a][m].legend(loc='upper right', fontsize=50)
 
 
             for whisker in method['whiskers']:
