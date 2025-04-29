@@ -19,7 +19,7 @@ wing_circle_long = data_sorter.whisker_circle(long_wing)
 wing_circle_short = data_sorter.whisker_circle(short_wing)
 wing_circle_foam = data_sorter.foam_whisker_circle(foam_wing)
 
-wing = [wing_circle_long,wing_circle_short,wing_circle_foam]
+wing = [wing_circle_long,wing_circle_short] # if wan att, need to turn list into len 3
 
 ## generate the plot
 fig, ((ax2,ax3)) = plt.subplots(1, 2, figsize=(20, 8))
