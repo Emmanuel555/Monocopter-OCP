@@ -15,7 +15,7 @@ selected_wing = foam_wing
 
 
 if selected_wing == foam_wing:
-    title = 'Controller tracking performance using ultralight wing'
+    title = 'Controller tracking performance using ultralight-wing'
 
 # test short wing first
 wing_circle = data_sorter.foam_whisker_circle(selected_wing)

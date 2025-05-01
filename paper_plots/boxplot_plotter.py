@@ -16,11 +16,11 @@ foam_wing = 'foam_traj_data'
 selected_wing = short_wing
 
 if selected_wing == short_wing:
-    title = 'Controller tracking performance using short wing'
+    title = 'Controller tracking performance using short-wing'
 elif selected_wing == long_wing:
-    title = 'Controller tracking performance using long wing'
+    title = 'Controller tracking performance using long-wing'
 elif selected_wing == foam_wing:
-    title = 'Controller tracking performance using ultralight wing'
+    title = 'Controller tracking performance using ultralight-wing'
 
 # test short wing first
 wing_circle = data_sorter.whisker_circle(selected_wing)
