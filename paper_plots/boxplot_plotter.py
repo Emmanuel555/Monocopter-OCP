@@ -5,6 +5,7 @@ from numpy import linalg as la
 import matplotlib.pyplot as plt
 import CF_folder_traj_data_sort as cf
 import statistics
+import json
 
 
 data_sorter = cf.sort_traj_data()
@@ -13,7 +14,8 @@ long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 foam_wing = 'foam_traj_data'
 
-selected_wing = short_wing
+selected_wing = long_wing
+display_mean = False
 
 if selected_wing == short_wing:
     title = 'Controller tracking performance using short-wing'
@@ -34,6 +36,8 @@ fig, ((ax1,ax4,ax7,ax10,ax13,ax16),(ax2,ax5,ax8,ax11,ax14,ax17),(ax3,ax6,ax9,ax1
 graphs = [[ax1,ax2,ax3,ax4,ax5,ax6],[ax7,ax8,ax9,ax10,ax11,ax12],[ax13,ax14,ax15,ax16,ax17,ax18]]
 colors = ['#254abe','#96400b','#a725be','#254abe','#96400b','#a725be']
 med_colors = ['#34be25','#34be25','red','#34be25','#34be25','red']
+aggregate = np.zeros((3, 6, 3))
+aggregate = np.array(aggregate, dtype=list) # to store mean and stdev
 fig.subplots_adjust(hspace=0.3, wspace=0.2, 
                     left=0.048, right=0.97, 
                     top = 0.89, bottom = 0.042)
@@ -84,6 +88,22 @@ for a in range(len(graphs)): # 3 trajs
             # mean
             graphs[a][m].plot(placement+i*0.05, statistics.mean(wing[a][m][6+i]), 'o', 
                               mfc = med_colors[m], mec = med_colors[m], ms = 17, label='Mean') # marker type
+            
+            method_mean = statistics.mean(wing[a][m][6+i])
+            method_stdev = statistics.stdev(wing[a][m][6+i])
+
+            aggregate[a][m][i] = [np.round(method_mean,4), np.round(method_stdev,4)]
+           
+            # display mean and stdev
+            if display_mean == True:
+                # Add the text label above the median line
+                graphs[a][m].text(0, 1,  # x, y coordinates for the text
+                f'{statistics.mean(wing[a][m][6+i]):.2f},{statistics.stdev(wing[a][m][6+i]):.2f}',  # The text to display (formatted to 2 decimal places)
+                ha='center',  # Horizontal alignment
+                va='bottom',  # Vertical alignment
+                fontsize=15,  # Adjust fontsize as needed
+                color='black')  # Adjust color as needed
+
             # rotate x axis labels
             graphs[a][m].tick_params(axis='x', labelrotation=0, labelsize=27)
             graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=27)
@@ -125,6 +145,69 @@ for i, line in enumerate(indi['medians']):
             fontsize=10,  # Adjust fontsize as needed
             color='black')  # Adjust color as needed
  """
-#plt.savefig(title+'.pdf')   
+
+xyz_hold_mean = np.zeros((3, 6, 3)) #rows: x,y,z taken from all traj; columns: INDI0.3, NDI0.3, ATT0.3, INDI0.5, NDI0.5, ATT0.5 
+xyz_hold_stddev = np.zeros((3, 6, 3))
+agg_size = np.shape(aggregate)
+for j in range(agg_size[1]):
+    for k in range(agg_size[2]):
+        for i in range(agg_size[0]):
+            xyz_hold_mean[k][j][i] = aggregate[i][j][k][0] 
+            xyz_hold_stddev[k][j][i] = aggregate[i][j][k][1]  # from xyz per element to xxx 
+            
+paper_mean = np.zeros((6, 3)) 
+paper_stddev = np.zeros((6, 3))
+paper_size = np.shape(paper_mean)
+for i in range(paper_size[0]):
+    for j in range(paper_size[1]):
+        paper_mean[i][j] = statistics.mean(xyz_hold_mean[j][i])
+        paper_stddev[i][j] = statistics.stdev(xyz_hold_stddev[j][i])
+
+file = open(title, "w+")
+file.write(selected_wing+'\n')
+file.write('Aggregated XYZ L2 norm error over circle, elevated, and lemniscate: \n')
+file.write('Paper mean:\n')
+for i in range(paper_size[0]):
+    if i == 0:
+        label = 'INDI 0.3m/s '
+    elif i == 1:
+        label = 'NDI 0.3m/s '
+    elif i == 2:
+        label = 'ATT 0.3m/s '
+    elif i == 3:
+        label = 'INDI 0.5m/s '
+    elif i == 4:
+        label = 'NDI 0.5m/s '
+    elif i == 5:
+        label = 'ATT 0.5m/s '
+        
+    content_mean = label + f'{paper_mean[i][0]:.2f},{paper_mean[i][1]:.2f},{paper_mean[i][2]:.2f}\n'
+    file.write(content_mean)
+
+file.write('\n')
+file.write('Paper stddev:\n')
+for i in range(paper_size[0]):
+    if i == 0:
+        label = 'INDI 0.3m/s '
+    elif i == 1:
+        label = 'NDI 0.3m/s '
+    elif i == 2:
+        label = 'ATT 0.3m/s '
+    elif i == 3:
+        label = 'INDI 0.5m/s '
+    elif i == 4:
+        label = 'NDI 0.5m/s '
+    elif i == 5:
+        label = 'ATT 0.5m/s '
+        
+    content_stddev = label + f'{paper_stddev[i][0]:.2f},{paper_stddev[i][1]:.2f},{paper_stddev[i][2]:.2f}\n'
+    file.write(content_stddev)
+
+
+
+#print ('Paper mean:', paper_mean)
+#print ('Paper stddev:', paper_stddev)
+
+file.close()
 plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
-plt.show()
+#plt.show()

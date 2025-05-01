@@ -28,6 +28,8 @@ fig, ((ax1,ax3,ax5,ax7),(ax2,ax4,ax6,ax8)) = plt.subplots(2, 4, figsize=(50, 20)
 graphs = [[ax1,ax2,ax3,ax4],[ax5,ax6,ax7,ax8]]
 colors = ['#254abe','#96400b','#254abe','#96400b']
 med_colors = ['#34be25','#34be25','#34be25','#34be25']
+aggregate = np.zeros((2, 4, 3))
+aggregate = np.array(aggregate, dtype=list) # to store mean and stdev
 fig.subplots_adjust(hspace=0.3, wspace=0.17, 
                     left=0.048, right=0.97, 
                     top = 0.86, bottom = 0.042)
@@ -72,6 +74,12 @@ for a in range(len(graphs)): # 3 trajs
             # mean
             graphs[a][m].plot(placement+i*0.05, statistics.mean(wing[a][m][6+i]), 'o', 
                               mfc = med_colors[m], mec = med_colors[m], ms = 45, label='Mean') # marker type
+            
+            method_mean = statistics.mean(wing[a][m][6+i])
+            method_stdev = statistics.stdev(wing[a][m][6+i])
+
+            aggregate[a][m][i] = [np.round(method_mean,4), np.round(method_stdev,4)]
+            
             # rotate x axis labels
             graphs[a][m].tick_params(axis='both', labelrotation=0, labelsize=50)
             graphs[a][m].set_xlim(-0.02, 0.12)
@@ -113,6 +121,58 @@ for i, line in enumerate(indi['medians']):
             fontsize=10,  # Adjust fontsize as needed
             color='black')  # Adjust color as needed
  """
+
+xyz_hold_mean = np.zeros((3, 4, 2)) #rows: x,y,z taken from all traj; columns: INDI0.3, NDI0.3, ATT0.3, INDI0.5, NDI0.5, ATT0.5 
+xyz_hold_stddev = np.zeros((3, 4, 2))
+agg_size = np.shape(aggregate)
+for j in range(agg_size[1]):
+    for k in range(agg_size[2]):
+        for i in range(agg_size[0]):
+            xyz_hold_mean[k][j][i] = aggregate[i][j][k][0] 
+            xyz_hold_stddev[k][j][i] = aggregate[i][j][k][1]  # from xyz per element to xxx 
+        
+paper_mean = np.zeros((4, 3)) 
+paper_stddev = np.zeros((4, 3))
+paper_size = np.shape(paper_mean)
+for i in range(paper_size[0]):
+    for j in range(paper_size[1]):
+        paper_mean[i][j] = statistics.mean(xyz_hold_mean[j][i])
+        paper_stddev[i][j] = statistics.stdev(xyz_hold_stddev[j][i])
+
+file = open(title, "w+")
+file.write(selected_wing+'\n')
+file.write('Aggregated XYZ L2 norm error over circle, elevated, and lemniscate: \n')
+file.write('Paper mean:\n')
+for i in range(paper_size[0]):
+    if i == 0:
+        label = 'INDI 0.3m/s '
+    elif i == 1:
+        label = 'NDI 0.3m/s '
+    elif i == 2:
+        label = 'INDI 0.5m/s '
+    elif i == 3:
+        label = 'NDI 0.5m/s '
+        
+    content_mean = label + f'{paper_mean[i][0]:.2f},{paper_mean[i][1]:.2f},{paper_mean[i][2]:.2f}\n'
+    file.write(content_mean)
+
+file.write('\n')
+file.write('Paper stddev:\n')
+for i in range(paper_size[0]):
+    if i == 0:
+        label = 'INDI 0.3m/s '
+    elif i == 1:
+        label = 'NDI 0.3m/s '
+    elif i == 2:
+        label = 'INDI 0.5m/s '
+    elif i == 3:
+        label = 'NDI 0.5m/s '
+        
+    content_stddev = label + f'{paper_stddev[i][0]:.2f},{paper_stddev[i][1]:.2f},{paper_stddev[i][2]:.2f}\n'
+    file.write(content_stddev)
+
+
+file.close()
 #plt.savefig(title+'.pdf')   
 plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
 #plt.show()
