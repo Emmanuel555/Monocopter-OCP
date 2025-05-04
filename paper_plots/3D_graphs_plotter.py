@@ -51,21 +51,16 @@ for a in range(len(graphs[0])): # 3D plot for trajs
     elif a == 2:
         traj_label = 'Lemniscate '   
 
-    for m in range(4): # 0.3 and 0.5 INDI and NDI  
-        if m == 0:
-            method_label = 'INDI 0.3m/s '
+    for m in range(2): # 0.5 INDI and NDI  
+        m = m + 2
+        if m == 2:
+            method_label = 'INDI '
             style = 'solid'
-        elif m == 1:
-            method_label = 'NDI 0.3m/s '
-            style = 'solid'
-        elif m == 2:
-            method_label = 'INDI 0.5m/s '
-            style = 'dashed'
         elif m == 3:
-            method_label = 'NDI 0.5m/s '
-            style = 'dashed'
+            method_label = 'NDI '
+            style = 'solid'
 
-        if m == 0:
+        if m == 2:
             rx = wing[a][m][4] 
             ry = wing[a][m][5] 
             rz = wing[a][m][6] 
@@ -74,20 +69,21 @@ for a in range(len(graphs[0])): # 3D plot for trajs
         x = wing[a][m][1] 
         y = wing[a][m][2] 
         z = wing[a][m][3]
-        graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
+        #graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=4.0,color=colors[m],linestyle=style) #label=['INDI']
                 
     graphs[0][a].set_zlim(0,2)
-    graphs[0][a].set_xlabel('Xw[m]', fontsize=10)
-    graphs[0][a].set_ylabel('Yw[m]', fontsize=10)
-    graphs[0][a].set_zlabel('Zw[m]', fontsize=10)
+    graphs[0][a].set_xlabel('Xw [m]', fontsize=20)
+    graphs[0][a].set_ylabel('Yw [m]', fontsize=20)
+    graphs[0][a].set_zlabel('Zw [m]', fontsize=20)
     # legend        
-    graphs[0][a].legend(loc='upper right', fontsize=15)
+    graphs[0][a].legend(loc='upper right', fontsize=25)
     # add title
     graphs[0][a].set_title(traj_label, fontsize=25, fontweight='bold')
+    graphs[0][a].tick_params(axis='both', labelsize=10)
         
 
 
 
 #plt.savefig(title+'.pdf')   
-plt.savefig('long_wing_3D.png', dpi=300, bbox_inches='tight')  
+plt.savefig('ref_3D.png', dpi=300, bbox_inches='tight')  
 plt.show()

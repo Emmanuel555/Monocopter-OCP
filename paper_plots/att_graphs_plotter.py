@@ -52,27 +52,24 @@ for t in range(3): # trajectories
 
     for a in range(2): # 2 graphs per traj
         if a == 0:
-            att_label = '(Angular acceleration L2 norm error(rad/s^2) @ (0.3, 0.5)m/s)'   
+            att_label = 'Angular acceleration L2 norm error (rad/s^2)'   
         elif a == 1:
-            att_label = '(Body rotational rate(hz) @ (0.3, 0.5)m/s))'  
+            att_label = 'Body rotational rate (hz)'  
 
         if a == 1:
-            for m in range(4): # 0.3 and 0.5 INDI and NDI  
-                if m == 0:
-                    method_label = 'INDI 0.3m/s '
+            for m in range(2): # 0.5 INDI and NDI  
+                # only test on 0.5m/s
+                m = m + 2
+                if m == 2:
+                    method_label = 'INDI '
                     style = 'solid'
-                elif m == 1:
-                    method_label = 'NDI 0.3m/s '
-                    style = 'solid'
-                elif m == 2:
-                    method_label = 'INDI 0.5m/s '
-                    style = 'dashed'
                 elif m == 3:
-                    method_label = 'NDI 0.5m/s '
-                    style = 'dashed'
-                    graphs[a][t].axvline(x=wing[t][m][0][-1], color='red', linestyle='--', linewidth=7.0, label='0.5m/s traj end time')
+                    method_label = 'NDI '
+                    style = 'solid'
+                    #graphs[a][t].axvline(x=wing[t][m][0][-1], color='red', linestyle='--', linewidth=7.0, label='0.5m/s traj end time')
 
-                traj_time = wing[t][m][0] 
+                start = wing[t][m][0][0]
+                traj_time = wing[t][m][0] - start 
                 yawrate = wing[t][m][11] # 9 = roll, 10 = pitch, 11 = yawrate
                 mean = statistics.mean(yawrate)
                 mean = np.round(mean,1)
@@ -80,22 +77,19 @@ for t in range(3): # trajectories
                 graphs[a][t].plot(traj_time,yawrate,label=method_label+"(Mean:{})".format(mean),linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
 
         else:
-            for m in range(4): # 0.5 INDI and NDI  
-                if m == 0:
-                    method_label = 'INDI 0.3m/s '
+            for m in range(2): # 0.5 INDI and NDI  
+                # only test on 0.5m/s
+                m = m + 2
+                if m == 2:
+                    method_label = 'INDI '
                     style = 'solid'
-                elif m == 1:
-                    method_label = 'NDI 0.3m/s '
-                    style = 'solid'
-                elif m == 2:
-                    method_label = 'INDI 0.5m/s '
-                    style = 'dashed'
                 elif m == 3:
-                    method_label = 'NDI 0.5m/s '
-                    style = 'dashed'
-                    graphs[a][t].axvline(x=wing[t][m][0][-1], color='red', linestyle='--', linewidth=7.0, label='0.5m/s traj end time')
+                    method_label = 'NDI '
+                    style = 'solid'
+                    #graphs[a][t].axvline(x=wing[t][m][0][-1], color='red', linestyle='--', linewidth=7.0, label='0.5m/s traj end time')
 
-                traj_time = wing[t][m][0] 
+                start = wing[t][m][0][0]
+                traj_time = wing[t][m][0] - start  
                 att_track = wing[t][m][10] # 9 = roll, 10 = pitch, 11 = yawrate 
                 mean = statistics.mean(wing[t][m][10])
                 mean = np.round(mean,2)

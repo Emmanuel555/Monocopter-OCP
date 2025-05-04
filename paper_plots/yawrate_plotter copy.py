@@ -40,7 +40,7 @@ for a in range(len(wing)): # 3 trajs
         wing_label = 'Short '
         method_label = 'NDI '
     elif a == 2:
-        wing_label = 'Foam ' 
+        wing_label = 'Ultralight ' 
         method_label = 'ATT '
 
     # Only for Circle 0.3m/s
