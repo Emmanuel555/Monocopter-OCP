@@ -44,15 +44,15 @@ fig.subplots_adjust(hspace=0.248, wspace=0.118,
 
 for t in range(3): # trajectories
     if t == 0:
-        traj_label = 'Cir '
+        traj_label = 'Circle '
     elif t == 1:
-        traj_label = 'Ele '
+        traj_label = 'Elevated Circle '
     elif t == 2:
-        traj_label = 'Lem '   
+        traj_label = 'Lemniscate '   
 
     for a in range(2): # 2 graphs per traj
         if a == 0:
-            att_label = 'Angular acceleration L2 norm error (rad/s^2)'   
+            att_label = '∥¨ωDE∥ (rad/s^2)'   
         elif a == 1:
             att_label = 'Body rotational rate (hz)'  
 

@@ -14,7 +14,7 @@ long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 foam_wing = 'foam_traj_data'
 
-selected_wing = short_wing
+selected_wing = long_wing
 
 if selected_wing == short_wing:
     title = 'Controller tracking performance using short-wing'
@@ -61,11 +61,11 @@ for a in range(len(graphs)): # 3 trajs
 
         for i in range(3): #xyz
             if i == 0:
-                label = 'Xw (m)'
+                label = '∥Px∥ (m)'
             elif i == 1:
-                label = 'Yw (m)'
+                label = '∥Py∥ (m)'
             elif i == 2:
-                label = 'Zw (m)'
+                label = '∥Pz∥ (m)'
             method = graphs[a][m-3].boxplot(wing[a][m][6+i],
                                 #patch_artist = True,
                                 boxprops={'color':colors[m]},

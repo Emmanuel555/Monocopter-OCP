@@ -84,6 +84,7 @@ if __name__ == "__main__":
             jerk_norm.append(compute_l2_norm(jerk_x[i], jerk_y[i], jerk_z[i]))
             snap_norm.append(compute_l2_norm(snap_x[i], snap_y[i], snap_z[i]))
 
+        # print (traj_label + 'pos_norm', len(pos_norm))
         # smooth the data - gaussian filter inflates the data, not good for errors (median filter still better)
         vel_norm = ndimage.gaussian_filter1d(vel_norm, 200)
         acc_norm = ndimage.gaussian_filter1d(acc_norm, 200)
@@ -98,7 +99,8 @@ if __name__ == "__main__":
 
         graphs[0][a].legend(loc='upper right', fontsize=25)
         # add title
-        graphs[0][a].set_title(traj_label + ' @ 0.5 m/s', fontsize=25, fontweight='bold')
+        length = str(len(pos_norm))
+        graphs[0][a].set_title(traj_label + ' @ 0.5 m/s' + length, fontsize=25, fontweight='bold')
         graphs[0][a].tick_params(axis='both', labelsize=10)     
     
 

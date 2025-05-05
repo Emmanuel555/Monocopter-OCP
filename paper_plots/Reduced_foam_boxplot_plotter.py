@@ -49,11 +49,11 @@ for a in range(len(graphs)): # 3 trajs
 
         for i in range(3): #xyz
             if i == 0:
-                label = 'Xw (m)'
+                label = '∥Px∥ (m)'
             elif i == 1:
-                label = 'Yw (m)'
+                label = '∥Py∥ (m)'
             elif i == 2:
-                label = 'Zw (m)'
+                label = '∥Pz∥ (m)'
             method = graphs[a][m].boxplot(wing[a][m][6+i],
                                 #patch_artist = True,
                                 boxprops={'color':colors[m]},
