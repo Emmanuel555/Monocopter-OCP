@@ -64,19 +64,19 @@ for a in range(len(graphs[0])): # 3D plot for trajs
             rx = wing[a][m][4] 
             ry = wing[a][m][5] 
             rz = wing[a][m][6] 
-            graphs[0][a].plot3D(rx,ry,rz,label='Reference',color='red',linewidth=7.0,linestyle='solid') 
+            graphs[0][a].plot3D(rx,ry,rz,label='Ref',color='red',linewidth=7.0,linestyle='solid') 
     
         x = wing[a][m][1] 
         y = wing[a][m][2] 
         z = wing[a][m][3]
-        #graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=4.0,color=colors[m],linestyle=style) #label=['INDI']
+        graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
                 
     graphs[0][a].set_zlim(0,2)
     graphs[0][a].set_xlabel('Xw [m]', fontsize=20)
     graphs[0][a].set_ylabel('Yw [m]', fontsize=20)
     graphs[0][a].set_zlabel('Zw [m]', fontsize=20)
     # legend        
-    graphs[0][a].legend(loc='upper right', fontsize=30)
+    graphs[0][a].legend(loc='upper right', fontsize=23)
     # add title
     graphs[0][a].set_title(traj_label, fontsize=35, fontweight='bold')
     graphs[0][a].tick_params(axis='both', labelsize=20)
