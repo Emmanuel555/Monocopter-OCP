@@ -8,6 +8,7 @@ import time
 
 import Mocap
 import DataSave
+#import Foam_Data_process as Data_process
 import Data_process
 
 import math
@@ -15,7 +16,8 @@ from pyrr import quaternion
 import numpy as np
 import numpy.linalg as la
 
-import monoco_att_ctrl
+#import monoco_att_ctrl
+import soft_monoco_att_ctrl as monoco_att_ctrl
 import trajectory_generator
 import timeit
 from pynput import keyboard
@@ -303,9 +305,9 @@ if __name__ == '__main__':
 
 
     # cyclic xyz (position)
-    kp = [1.3,1.3,0.0] # 0.04
+    kp = [0.05,0.05,0.0] # 0.04
     kd = [0.0005,0.0005,0.0] # not in use
-    ki = [10.0,10.0,0.0] 
+    ki = [0.0,0.0,0.0] 
 
 
     # cyclic xyz (velocity)
@@ -313,8 +315,8 @@ if __name__ == '__main__':
     
 
     # cyclic xy (attitude) - heuristic gains thus far
-    ka = [6000, 6000]  # 6000
-    kr = [10.0, 10.0] # 10
+    ka = [3000, 3000]  # 6000
+    kr = [40.0, 40.0] # 10
     krr = [1.0, 1.0] # 1.0
    
 
