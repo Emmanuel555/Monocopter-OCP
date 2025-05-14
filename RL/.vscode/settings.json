@@ -1,0 +1,9 @@
+{
+    "ros.distro": "melodic",
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "editor.suggestSelection": "first",
+    "python.analysis.extraPaths": ["."],
+    "python.analysis.diagnosticMode": "workspace"
+}
