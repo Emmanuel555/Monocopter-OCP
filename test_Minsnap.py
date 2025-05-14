@@ -7,6 +7,7 @@ from pyrr import quaternion, Matrix33, Matrix44, Vector3 # array inputs are all 
 from pynput import keyboard
 import time
 import matplotlib.pyplot as plt
+import torch
 
 if __name__ == '__main__':
     # refs = [
