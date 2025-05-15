@@ -53,6 +53,7 @@ class SupervisedPolicy(nn.Module):
 ## Initialize model, loss, and optimizer
 # model = SupervisedPolicy()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device for Sup_Learning(Actor):", device)
 model = SupervisedPolicy().to(device)
 inputs = inputs.to(device)
 outputs = outputs.to(device)
@@ -66,7 +67,7 @@ criterion = log_mse_loss
 optimizer = optim.Adam(model.parameters(), lr=0.005) #type: ignore
 
 # Train the model
-for epoch in range(100):  # training epochs
+for epoch in range(30000):  # training epochs
     optimizer.zero_grad()
     predicted_output = model(inputs)
     loss = criterion(predicted_output, outputs)
@@ -77,3 +78,6 @@ for epoch in range(100):  # training epochs
 
 # Save the pre-trained model
 torch.save(model.state_dict(), "short_wing_circle_pretrained_policy.pth")
+
+# print this to test if can cuda:
+# python3 -c "import torch; print(torch.cuda.is_available())"
