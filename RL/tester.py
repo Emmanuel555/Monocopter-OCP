@@ -1,25 +1,18 @@
-import torch
 import numpy as np
 from stable_baselines3 import PPO
-import sup_learning as sl
 import CF_folder_traj_data_sort as cf
-import os
-
-# point cwd back to your project root
-os.chdir("/home/emmanuel/Monocopter-OCP/RL")
-
 
 # --- Configuration
-DEVICE = torch.device("cpu")
+DEVICE = "cpu"
 N_TEST = 100   # number of test states you want to compare
 STATE_DIM = 5  # dimensionality of your Monocopter state
 
 # --- Load your pretrained supervised (actor) model
-pretrained_model = sl.SupervisedPolicy().to(DEVICE)
-pretrained_model.load_state_dict(
-    torch.load("short_wing_circle_pretrained_policy.pth", map_location=DEVICE)
-)
-pretrained_model.eval()
+#pretrained_model = sl.SupervisedPolicy().to(DEVICE)
+#pretrained_model.load_state_dict(
+#    torch.load("short_wing_circle_pretrained_policy.pth", map_location=DEVICE)
+#)
+#pretrained_model.eval()
 
 # --- Load your trained RL agent
 ppo_model = PPO.load("short_wing_circle_ppo_rl_trained_policy.zip", device=DEVICE)
@@ -51,7 +44,8 @@ inputs[:, 3] = rz    # Reference z position
 inputs[:, 4] = body_yaw        # Body yaw angle in deg
 
 # Convert to torch tensors
-test_states = torch.FloatTensor(inputs)
+#test_states = torch.FloatTensor(inputs)
+test_states = inputs
 
 # Storage for outputs
 ppo_actions = []
@@ -61,22 +55,22 @@ for state in test_states:
 
     # 1) Get RL policy output
     #    NOTE: ppo_model.predict expects a batch-shape (n_envs, obs_dim)
-    obs = state.cpu().numpy() 
-    action_rl, _ = ppo_model.predict(obs, deterministic=True)
+    #obs = state.cpu().numpy() 
+    action_rl, _ = ppo_model.predict(state, deterministic=True)
     # action_rl will be array shape (1,) here
     ppo_actions.append(float(action_rl.flatten()[0]))
     
 
     # 2) Get supervised model output
-    state_tensor = state.unsqueeze(0)  # shape [1, STATE_DIM]
+    """ state_tensor = state.unsqueeze(0)  # shape [1, STATE_DIM]
     with torch.no_grad():
         out = pretrained_model(state_tensor)          # e.g. tensor([[…]])
         out = torch.nan_to_num(out, nan=0.0)          # clamp any NaN/Inf
-        sup_actions.append(float(out.item()))
+        sup_actions.append(float(out.item())) """
 
 # --- Convert to NumPy for analysis
 ppo_actions = np.array(ppo_actions)
-sup_actions = np.array(sup_actions)
+""" sup_actions = np.array(sup_actions)
 
 # --- Simple metrics
 diffs = ppo_actions - sup_actions
@@ -90,3 +84,4 @@ print(f"  Root-Mean-Squared Err: {rmse:.4f}")
 # --- (Optional) inspect a few pairs
 for i in range(min(10, N_TEST)):
     print(f"State {i:2d}:  RL={ppo_actions[i]:+.3f},  SUP={sup_actions[i]:+.3f},  Δ={diffs[i]:+.3f}")
+ """

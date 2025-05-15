@@ -2,16 +2,9 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecNormalize
 from stable_baselines3.common.env_checker import check_env
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import numpy as np
-import CF_folder_traj_data_sort as cf
 import sup_learning as sl
 import gymnasium as gym
-import os
-
-# point cwd back to your project root
-os.chdir("/home/emmanuel/Monocopter-OCP/RL")
 
 # Proximal Policy Optimization (PPO)
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -116,10 +109,15 @@ check_env(env.envs[0])
 
 
 # Initialize PPO with the environment
-ppo_model = PPO("MlpPolicy", env, verbose=1, device=device)
-ppo_model.learn(total_timesteps=10_000)
-#ppo_model.save("/home/emmanuel/Monocopter-OCP/RL/short_wing_circle_ppo_rl_trained_policy")
+ppo_model = PPO("MlpPolicy", env, learning_rate=3e-4, clip_range=0.1, verbose=0, device=device)
+ppo_model.learn(total_timesteps=50_000)
+ppo_model.save("short_wing_circle_ppo_rl_trained_policy")
 
-save_path = "/home/emmanuel/Monocopter-OCP/RL/short_wing_circle_ppo_rl_trained_policy.zip"
-os.makedirs(os.path.dirname(save_path), exist_ok=True)
-ppo_model.save(save_path)
+
+""" ppo_model = PPO(
+    "MlpPolicy", env,
+    learning_rate=3e-5,      # smaller than the default 3e-4
+    clip_range=0.1,          # tighter clip to slow down updates
+    device="cpu",
+    verbose=1
+) """

@@ -79,5 +79,5 @@ for epoch in range(30000):  # training epochs
 # Save the pre-trained model
 torch.save(model.state_dict(), "short_wing_circle_pretrained_policy.pth")
 
-# print this to test if can cuda:
+# print this to test if can use cuda:
 # python3 -c "import torch; print(torch.cuda.is_available())"
