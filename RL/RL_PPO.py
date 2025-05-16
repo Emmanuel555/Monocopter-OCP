@@ -109,7 +109,7 @@ check_env(env.envs[0])
 
 
 # Initialize PPO with the environment
-ppo_model = PPO("MlpPolicy", env, learning_rate=3e-4, clip_range=0.1, verbose=0, device=device)
+ppo_model = PPO("MlpPolicy", env, learning_rate=3e-4, clip_range=0.1, verbose=1, device=device)
 ppo_model.learn(total_timesteps=50_000)
 ppo_model.save("short_wing_circle_ppo_rl_trained_policy")
 

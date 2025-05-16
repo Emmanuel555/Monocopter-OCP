@@ -3,10 +3,10 @@ from stable_baselines3 import PPO
 import CF_folder_traj_data_sort as cf
 import sys
 
-""" print("Python executable:", sys.executable)
+print("Python executable:", sys.executable)
 print("Python version   :", sys.version.replace('\\n', ' '))
 print("NumPy location   :", np.__file__)
-print("NumPy version    :", np.__version__) """
+print("NumPy version    :", np.__version__)
 
 # --- Configuration
 DEVICE = "cpu"
