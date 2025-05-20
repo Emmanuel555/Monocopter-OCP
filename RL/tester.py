@@ -21,7 +21,7 @@ STATE_DIM = 5  # dimensionality of your Monocopter state
 #pretrained_model.eval()
 
 # --- Load your trained RL agent
-ppo_model = PPO.load("short_wing_circle_ppo_rl_trained_policy.zip", device=DEVICE)
+ppo_model = PPO.load("/home/emmanuel/Monocopter-OCP/RL/short_wing_circle_ppo_rl_trained_policy", device=DEVICE)
 
 # --- Generate or load the same test states for both models
 # Here we just sample uniformly in the valid observation space:
