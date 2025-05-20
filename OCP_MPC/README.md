@@ -1,14 +1,14 @@
-# For ACADOS
+## For ACADOS
 Installation: https://docs.acados.org/installation/index.html
 
 Link to problems with installation: https://discourse.acados.org/t/acados-installation-in-pycharm/103
 
-# Bashrc
+## Bashrc
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/acados/lib
 export ACADOS_SOURCE_DIR=$HOME/acados
 
 
-# installation
+## installation
 cd ~/acados
 git submodule update --init --recursive
 rm -rf build && mkdir build && cd build
@@ -26,11 +26,9 @@ cmake .. \
 make -j$(nproc)
 make install
 
-# run a C example, e.g.:
+## run a C example, e.g.:
 ./examples/c/sim_wt_model_nx6
 
-# go back to ~/acados and find interfaces folder, then go into acados template like this:
+## go back to ~/acados and find interfaces folder, then go into acados template like this:
 pwd: ~/acados/interfaces/acados_template 
 run pip install .
-
-# readme
