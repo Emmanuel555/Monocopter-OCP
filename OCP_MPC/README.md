@@ -32,3 +32,5 @@ make install
 # go back to ~/acados and find interfaces folder, then go into acados template like this:
 pwd: ~/acados/interfaces/acados_template 
 run pip install .
+
+# readme
