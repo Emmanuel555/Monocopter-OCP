@@ -1,265 +1,646 @@
+import math
 import numpy as np
-import matplotlib.pyplot as plt
+import numpy.linalg as la
+import minsnap_trajectories as ms
 
 
-def draw_poly(traj, u_traj, t, target_points=None, target_t=None):
-    """
-    Plots the generated trajectory of length n with the used keypoints.
-    :param traj: Full generated reference trajectory. Numpy array of shape nx13
-    :param u_traj: Generated reference inputs. Numpy array of shape nx4
-    :param t: Timestamps of the references. Numpy array of length n
-    :param target_points: m position keypoints used for trajectory generation. Numpy array of shape 3 x m.
-    :param target_t: Timestamps of the reference position keypoints. If not passed, then they are extracted from the
-    t vector, assuming constant time separation.
-    """
+class trajectory_generator(object):
+    def __init__(self):
+        pass
 
-    ders = 2
-    dims = 3
 
-    y_labels = [r'pos $[m]$', r'vel $[m/s]$', r'acc $[m/s^2]$', r'jer $[m/s^3]$']
-    dim_legends = ['x', 'y', 'z']
+    def hover_test(self, x_offset, y_offset, z_offset):
+        ref_x = x_offset
+        # ref_y = 1.0
+        ref_y = y_offset
+        ref_z = z_offset
+        ref_pos = np.array([ref_x, ref_y, ref_z])
+        msg = "hovering test..."
+        return (ref_pos,msg)
+    
 
-    if target_t is None and target_points is not None:
-        target_t = np.linspace(0, t[-1], target_points.shape[1])
+    def low_alt_rectangle(self, x_offset, abs_time):
+        if abs_time < 3:
+            ref_x = 0
+            ref_y = 0.6
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_1..still flying..."
+        elif 3 <= abs_time < 7:
+            ref_x = 0
+            ref_y = 0.9
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_2..still flying..."
+        elif 7 <= abs_time < 11:
+            ref_x = 0
+            ref_y = 1.2
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_3..still flying..." 
+        elif 11 <= abs_time < 15:
+            ref_x = 0.5
+            ref_y = 1.2
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_3..still flying..."
+        elif 15 <= abs_time < 19:
+            ref_x = 0.5
+            ref_y = 0.9
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_4..still flying..."
+        elif 19 <= abs_time < 23:
+            ref_x = 0.5
+            ref_y = 0.6
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_5..still flying..."
+        elif 23 <= abs_time < 27:
+            ref_x = 0
+            ref_y = 0.6
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "pt_6..still flying..."
+        elif 27 <= abs_time:
+            ref_x = 0
+            ref_y = 0.6
+            ref_z = 0.02
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "traj ended..."
 
-    p_traj = traj[:, :3]
-    a_traj = traj[:, 3:7]
-    v_traj = traj[:, 7:10]
-    r_traj = traj[:, 10:]
+        return (ref_pos,msg)
+    
 
-    plt_traj = [p_traj, v_traj]
+    def simple_rectangle(self, x_offset, y_offset, abs_time):
+        if abs_time < 5:
+            ref_x = -0.9
+            ref_y = 0.0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_1..still flying..."
+        elif 5 <= abs_time < 10:
+            ref_x = -0.9
+            ref_y = 0.6
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_2..still flying..."
+        elif 10 <= abs_time < 15:
+            ref_x = -0.9
+            ref_y = 0.9
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_3..still flying..." 
+        elif 15 <= abs_time < 20:
+            ref_x = -0.9
+            ref_y = 1.2
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_4..still flying..."
+        elif 20 <= abs_time < 25:
+            ref_x = 0.9
+            ref_y = 1.2
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_5..still flying..."
+        elif 25 <= abs_time < 30:
+            ref_x = 0.9
+            ref_y = 0.9
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_6..still flying..."
+        elif 30 <= abs_time < 35:
+            ref_x = 0.9
+            ref_y = 0.6
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_7..still flying..."
+        elif 35 <= abs_time < 40:
+            ref_x = 0.9
+            ref_y = 0.0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "pt_8..still flying..."
+        elif 40 <= abs_time:
+            ref_x = 0.0
+            ref_y = 0.0
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y+y_offset, ref_z])
+            msg = "traj ended..."
 
-    fig = plt.figure()
-    for d_ord in range(ders):
+        return (ref_pos,msg)
+    
 
-        plt.subplot(ders + 2, 2, d_ord * 2 + 1)
+    def elevated_rectangle(self, x_offset, abs_time):
+        if abs_time < 3:
+            ref_x = 0
+            ref_y = 0.6
+            ref_z = 0.3
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..."
+        elif 3 <= abs_time < 7:
+            ref_x = 0
+            ref_y = 0.9
+            ref_z = 0.7
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..."
+        elif 7 <= abs_time < 11:
+            ref_x = 0
+            ref_y = 1.2
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..." 
+        elif 11 <= abs_time < 15:
+            ref_x = 0.5
+            ref_y = 1.2
+            ref_z = 1.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..."
+        elif 15 <= abs_time < 19:
+            ref_x = 0.5
+            ref_y = 0.9
+            ref_z = 0.7
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..."
+        elif 19 <= abs_time < 23:
+            ref_x = 0.5
+            ref_y = 0.6
+            ref_z = 0.3
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..."
+        elif 23 <= abs_time < 27:
+            ref_x = 0
+            ref_y = 0.6
+            ref_z = 0.2
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "still flying..."
+        elif 27 <= abs_time:
+            ref_x = 0
+            ref_y = 0.6
+            ref_z = 0.02
+            ref_pos = np.array([ref_x+x_offset, ref_y, ref_z])
+            msg = "traj ended..."
 
-        for dim in range(dims):
+        return (ref_pos,msg)
+    
 
-            plt.plot(t, plt_traj[d_ord][:, dim], label=dim_legends[dim])
+    def compute_jerk_snap_9pt_circle(self, x_offset, y_offset, radius, speedX):
+        # theta goes from 0 to 2pi
+        parts = 9 # octagon
+        theta = np.linspace(0, 2*np.pi, parts)
 
-            if d_ord == 0 and target_points is not None:
-                plt.plot(target_t, target_points[dim, :], 'bo')
+        # the radius of the circle
+        r = radius
+        circumference = 2*np.pi*r
+        total_time = (circumference/0.1)/speedX
+        num_points = int((circumference/0.1)*100) # 0.1 m/s baseline 
+        num_points = int(num_points/speedX) # 0.1 m/s baseline
 
-        plt.gca().set_xticklabels([])
-        plt.legend()
-        plt.grid()
-        plt.ylabel(y_labels[d_ord])
 
-    dim_legends = [['w', 'x', 'y', 'z'], ['x', 'y', 'z']]
-    y_labels = [r'att $[quat]$', r'rate $[rad/s]$']
-    plt_traj = [a_traj, r_traj]
-    for d_ord in range(ders):
+        # compute x1 and x2
+        x = r*np.cos(theta) + x_offset
+        y = r*np.sin(theta) + y_offset
 
-        plt.subplot(ders + 2, 2, d_ord * 2 + 1 + ders * 2)
-        for dim in range(plt_traj[d_ord].shape[1]):
-            plt.plot(t, plt_traj[d_ord][:, dim], label=dim_legends[d_ord][dim])
 
-        plt.legend()
-        plt.grid()
-        plt.ylabel(y_labels[d_ord])
-        if d_ord == ders - 1:
-            plt.xlabel(r'time $[s]$')
+        refs = [
+            ms.Waypoint(
+                time=(total_time/(parts-1))*0,
+                position=np.array([x[0], y[0], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*1,
+                position=np.array([x[1], y[1], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*2,
+                position=np.array([x[2], y[2], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*3,
+                position=np.array([x[3], y[3], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*4,
+                position=np.array([x[4], y[4], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*5,
+                position=np.array([x[5], y[5], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*6,
+                position=np.array([x[6], y[6], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*7,
+                position=np.array([x[7], y[7], 1.0]),
+            ),
+            ms.Waypoint(
+                time=(total_time/(parts-1))*8,
+                position=np.array([x[8], y[8], 1.0]),
+            ),
+        ]
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_points)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
+        return (pva,num_points)
+    
+
+    def compute_jerk_snap_9pt_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw,alt):
+        # theta goes from 0 to 2pi
+        parts = 9 # octagon lap x 5
+        theta = np.linspace(0, 2*np.pi, parts)
+        total_parts = parts + ((parts-1)*(laps-1)) 
+
+        # the radius of the circle
+        r = radius
+        circumference = 2*np.pi*r
+        total_time = laps*((circumference/0.1)/speedX)
+        num_points = int(laps*((circumference/0.1)*pid_update_rate)) # 0.1 m/s baseline, pid_update_rate = 100 as of now for pid
+        num_points = int(num_points/speedX) # 0.1 m/s baseline
+
+        # compute x1 and x2
+        x_coordinates = r*np.cos(theta) + x_offset
+        y_coordinates = r*np.sin(theta) + y_offset
+
+        if reverse_cw == 1:
+            x_coordinates = np.flip(x_coordinates)
+            y_coordinates = np.flip(y_coordinates)
+
+        x = np.array([x_coordinates[0]])
+        y = np.array([y_coordinates[0]])
+        refs = []
+
+        for i in range(laps):
+            x = np.append(x,x_coordinates[1:])
+            y = np.append(y,y_coordinates[1:])
+
+        for i in range(total_parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(total_parts-1))*i,
+                position=np.array([x[i], y[i], alt]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_points)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
+        return (pva,num_points)
+
+
+    def lemniscate(self, x_offset, y_offset, laps, radius, pid_update_rate, reverse_cw, speedX, alt):
+        t = np.linspace(0, 2*np.pi, num=100) # leggo w 100 pts
+        x = radius * np.cos(t) / (np.sin(t)**2 + 1)
+        y = radius * np.cos(t) * np.sin(t) / (np.sin(t)**2 + 1)
+
+        if reverse_cw == 1: # cw
+            x = np.flip(x)
+            y = np.flip(y)
+
+        speed = 0.1 * speedX # default is 0.1
+        x_dist = radius * 4 * (laps+1)
+        #y_dist = (radius/3)*4 * (laps+1)
+        refs = []
+
+        x_time = x_dist/speed
+        #y_time = y_dist/speed
+        num_pts = int(x_time*pid_update_rate)
+        
+        x_set = x
+        y_set = y
+
+        for i in range(laps):
+            x_set = np.concatenate((x_set,x))
+            y_set = np.concatenate((y_set,y))
+
+
+
+        parts = len(x_set)
+        for i in range(parts):
+            refs.append(ms.Waypoint(
+                time=(x_time/(parts-1))*i,
+                position=np.array([x_set[i], y_set[i], alt]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+            refs,
+            degree=8,  # Polynomial degree
+            idx_minimized_orders=(3, 4),  
+            num_continuous_orders=3,  
+            algorithm="closed-form",  # Or "constrained"
+        )
+
+        t = np.linspace(0, x_time, num_pts)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6)
+        return (pva,num_pts)    
+
+
+    def two_pt_line(self,speed,pid_update_rate,alt):
+        y = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+        x = [1.0,0.5,0.0,-1.0,-2.5,-1.0,0.0,0.5,1.0]
+        parts = len(x)
+        distance = abs(x[0]) * 7
+        speed = 0.1 * speed # default is 0.1
+        total_time = distance/speed
+        num_pts = int(total_time*pid_update_rate)
+        refs = []
+
+        for i in range(parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(parts-1))*i,
+                position=np.array([x[i], y[i], alt]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_pts)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6)
+        return (pva,num_pts)
+    
+
+    def jerk_snap_circle(self, pva, num_points, count, landing_hgt):
+        all_pos = np.array([pva[0,:,0],pva[0,:,1],pva[0,:,2]]) # position
+        all_vel = np.array([pva[1,:,0],pva[1,:,1],pva[1,:,2]]) # velocity
+        all_acc = np.array([pva[2,:,0],pva[2,:,1],pva[2,:,2]]) # acceleration
+        all_jer = np.array([pva[3,:,0],pva[3,:,1],pva[3,:,2]]) # jerk
+        all_sna = np.array([pva[4,:,0],pva[4,:,1],pva[4,:,2]]) # snap
+
+        if count >= num_points:
+            ref_pos = np.array([pva[0,-1,0],pva[0,-1,1],pva[0,-1,2]]) # position
+            ref_vel = np.array([pva[1,-1,0],pva[1,-1,1],pva[1,-1,2]]) # velocity
+            ref_acc = np.array([pva[2,-1,0],pva[2,-1,1],pva[2,-1,2]]) # acceleration
+            ref_jer = np.array([pva[3,-1,0],pva[3,-1,1],pva[3,-1,2]]) # jerk
+            ref_sna = np.array([pva[4,-1,0],pva[4,-1,1],pva[4,-1,2]]) # snap
+            msg = "traj ended..."
         else:
-            plt.gca().set_xticklabels([])
+            ref_pos = np.array([pva[0,count,0],pva[0,count,1],pva[0,count,2]]) # ref position
+            ref_vel = np.array([pva[1,count,0],pva[1,count,1],pva[1,count,2]]) # ref velocity
+            ref_acc = np.array([pva[2,count,0],pva[2,count,1],pva[2,count,2]]) # ref acceleration
+            ref_jer = np.array([pva[3,count,0],pva[3,count,1],pva[3,count,2]]) # ref jerk
+            ref_sna = np.array([pva[4,count,0],pva[4,count,1],pva[4,count,2]]) # ref snap
+            msg = "still flying..."
+        
+        ref_pos = list(ref_pos.flat)
+        ref_vel = list(ref_vel.flat)
+        ref_acc = list(ref_acc.flat)    
+        ref_jer = list(ref_jer.flat)
+        ref_sna = list(ref_sna.flat)
 
-    ax = fig.add_subplot(2, 2, 2, projection='3d')
-    plt.plot(p_traj[:, 0], p_traj[:, 1], p_traj[:, 2])
-    if target_points is not None:
-        plt.plot(target_points[0, :], target_points[1, :], target_points[2, :], 'bo')
-    plt.title('Target position trajectory')
-    ax.set_xlabel(r'$p_x [m]$')
-    ax.set_ylabel(r'$p_y [m]$')
-    ax.set_zlabel(r'$p_z [m]$')
+        return (ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,msg)
+    
+ 
+    def simple_circle(self, x_offset, radius, count, speedX):
+        circumference = 2*np.pi*radius
+        num_points = int((circumference/0.1)*100) # 0.1 m/s baseline over 1
+        num_points = int(num_points/speedX) # 0.1 m/s baseline over 1
+        theta = np.linspace(0, 2*np.pi, num_points) 
 
-    plt.subplot(ders + 1, 2, (ders + 1) * 2)
-    for i in range(u_traj.shape[1]):
-        plt.plot(t, u_traj[:, i], label=r'$u_{}$'.format(i))
-    plt.grid()
-    plt.legend()
-    plt.gca().yaxis.set_label_position("right")
-    plt.gca().yaxis.tick_right()
-    plt.xlabel(r'time $[s]$')
-    plt.ylabel(r'single thrusts $[N]$')
-    plt.title('Control inputs')
+        # the radius of the circle
+        r = radius
 
-    plt.suptitle('Generated polynomial trajectory')
-
-    plt.show()
-
-
-def get_full_traj(poly_coeffs, target_dt, int_dt): #target = avg time taken to reach, int_dt = operating frequency
-
-    dims = poly_coeffs.shape[-1]
-    full_traj = np.zeros((4, dims, 0))
-    t_total = np.zeros((0,))
-
-    if isinstance(target_dt, float):
-        # Adjust target_dt to make it divisible by int_dt
-        target_dt = round(target_dt / int_dt) * int_dt
-
-        # Assign target time for each keypoint using homogeneous spacing
-        t_vec = np.arange(0, target_dt * (poly_coeffs.shape[0] + 1) - 1e-5, target_dt)
-
-    else:
-        # The time between each pair of points is assigned independently
-        # First, also adjust each value of the target_dt vector to make it divisible by int_dt
-        for i, dt in enumerate(target_dt):
-            target_dt[i] = round(dt / int_dt) * int_dt
-
-        t_vec = np.append(np.zeros(1), np.cumsum(target_dt[:-1]))
-
-    for seg in range(len(t_vec) - 1):
-
-        # Select time sampling (linear or quadratic) mode
-        tau_dt = np.arange(t_vec[seg], t_vec[seg + 1] + 1e-5, int_dt)
-
-        # Re-normalize time sampling vector between -1 and 1
-        t1 = (tau_dt - t_vec[seg]) / (t_vec[seg + 1] - t_vec[seg]) * 2 - 1
-
-        # Compression ratio
-        compress = 2 / np.diff(t_vec)[seg]
-
-        # Integrate current segment of trajectory
-        traj = np.zeros((4, dims, len(t1)))
-
-        for der_order in range(4):
-            for i in range(dims):
-                traj[der_order, i, :] = np.polyval(np.polyder(poly_coeffs[seg, :, i], der_order), t1) * (compress ** der_order)
-
-        if seg < len(t_vec) - 2:
-            # Remove last sample (will be the initial point of next segment)
-            traj = traj[:, :, :-1]
-            t_seg = tau_dt[:-1]
+        # compute x and y, starts from bottom facing positive x
+        x = r*np.cos(theta) + x_offset 
+        y = r*np.sin(theta) + 1.2
+        
+        if count >= num_points:
+            ref_x = x[-1]
+            ref_y = y[-1]
+            ref_z = 0.2
+            msg = "traj ended..."
         else:
-            t_seg = tau_dt
+            ref_x = x[count]
+            ref_y = y[count]
+            ref_z = 1.0
+            msg = "still flying..."
 
-        full_traj = np.concatenate((full_traj, traj), axis=-1)
-        t_total = np.concatenate((t_total, t_seg))
-
-    # Separate into p_xyz and yaw trajectories
-    yaw_traj = full_traj[:, -1, :]
-    full_traj = full_traj[:, :-1, :]
-
-    return full_traj, yaw_traj, t_total
+        ref_pos = np.array([ref_x, ref_y, ref_z])
+        
+        return (ref_pos,msg)
 
 
-def fit_multi_segment_polynomial_trajectory(p_targets, yaw_targets): # stopped here 
+    def elevated_circle(self, x_offset, radius, count, speedX):
+        circumference = 2*np.pi*radius
+        num_points = int((circumference/0.1)*100) # 0.1 m/s baseline over 1
+        num_points = int(num_points/speedX) # 0.1 m/s baseline over 1
+        theta = np.linspace(0, 2*np.pi, num_points) 
 
-    p_targets = np.concatenate((p_targets, yaw_targets[np.newaxis, :]), 0) # if axis = 0, jus adds the new row of index 1 to index 0
-    m = multiple_waypoints(p_targets.shape[1] - 1)
+        # the radius of the circle
+        r = radius
 
-    dims = p_targets.shape[0] # shape returns [rows,cols] therefore 0 returns row space, straight line = 4
-    n_segments = p_targets.shape[1] # shape returns [rows,cols] therefore 1 returns col space, straight line = 3
+        # compute x and y, starts from bottom facing positive x
+        x = r*np.cos(theta) + x_offset 
+        y = r*np.sin(theta) + 1.2
+        z = y
 
-    poly_coefficients = np.zeros((n_segments - 1, 8, dims))
-    for dim in range(dims):
-        b = rhs_generation(p_targets[dim, :]) # dim = row, col takes everything
-        poly_coefficients[:, :, dim] = np.fliplr(np.linalg.solve(m, b).reshape(n_segments - 1, 8))
+        if count >= num_points:
+            ref_x = x[-1]
+            ref_y = y[-1]
+            ref_z = 0.10
+            msg = "traj ended..."
+        else:
+            ref_x = x[count]
+            ref_y = y[count]
+            ref_z = z[count]
+            msg = "still flying..."
 
-    return poly_coefficients
+        ref_pos = np.array([ref_x, ref_y, ref_z])
 
+        return (ref_pos,msg)
+    
 
-def matrix_generation(ts):
-    b = np.array([[1, ts,  ts**2, ts**3,    ts**4,    ts**5,     ts**6,     ts**7],
-                  [0, 1, 2*ts,  3*ts**2,  4*ts**3,  5*ts**4,   6*ts**5,   7*ts**6],
-                  [0, 0, 2,     6*ts,    12*ts**2, 20*ts**3,  30*ts**4,  42*ts**5],
-                  [0, 0, 0,     6,       24*ts,    60*ts**2, 120*ts**3, 210*ts**4],
-                  [0, 0, 0,     0,       24,      120*ts,    360*ts**2, 840*ts**3],
-                  [0, 0, 0,     0,       0,       120,       720*ts,   2520*ts**2],
-                  [0, 0, 0,     0,       0,       0,         720,      5040*ts],
-                  [0, 0, 0,     0,       0,       0,         0,        5040]])
-
-    return b
-
-
-def multiple_waypoints(n_segments):
-
-    m = np.zeros((8 * n_segments, 8 * n_segments))
-
-    for i in range(n_segments):
-
-        if i == 0:
-
-            # initial condition of the first curve
-            b = matrix_generation(-1.0)
-            m[8 * i:8 * i + 4, 8 * i:8 * i + 8] = b[:4, :]
-
-            # intermediary condition of the first curve
-            b = matrix_generation(1.0)
-            m[8 * i + 4:8 * i + 7 + 4, 8 * i:8 * i + 8] = b[:-1, :]
-
-            # starting condition of the second curve position and derivatives
-            b = matrix_generation(-1.0)
-            m[8 * i + 4 + 1:8 * i + 4 + 7, 8 * (i + 1):8 * (i + 1) + 8] = -b[1:-1, :]
-            m[8 * i + 4 + 7:8 * i + 4 + 8, 8 * (i + 1):8 * (i + 1) + 8] = b[0, :]
-
-        elif i != n_segments - 1:
-
-            # starting condition of the ith curve position and derivatives
-            b = matrix_generation(1.0)
-            m[8 * i + 4:8 * i + 7 + 4, 8 * i:8 * i + 8] = b[:-1, :]
-
-            # end condition of the ith curve position and derivatives
-            b = matrix_generation(-1.0)
-            m[8 * i + 4 + 1:8 * i + 4 + 7, 8 * (i + 1):8 * (i + 1) + 8] = -b[1:-1, :]
-            m[8 * i + 4 + 7:8 * i + 4 + 8, 8 * (i + 1):8 * (i + 1) + 8] = b[0, :]
-
-        if i == n_segments - 1:
-            # end condition of the final curve position and derivatives (4 boundary conditions)
-            b = matrix_generation(1.0)
-            m[8 * i + 4:8 * i + 4 + 4, 8 * i:8 * i + 8] = b[:4, :]
-
-    return m
+    def helix(self, x_offset, radius, count, speedX):
+        circumference = 2*np.pi*radius
+        num_points = int((circumference/0.1)*100) # 0.1 m/s baseline over 1
+        num_points = int(num_points/speedX) # 0.1 m/s baseline over 1
+        theta = np.linspace(0, 2*np.pi, num_points) 
+        z_1 = np.linspace(0.7, 1, num_points)
+        z_2 = np.linspace(1, 1.5, num_points)
+        z_3 = np.linspace(1.5, 1, num_points)
+        z_4 = np.linspace(1, 0.7, num_points)
 
 
-def fit_single_segment(p_start, p_end, v_start=None, v_end=None, a_start=None, a_end=None, j_start=None, j_end=None):
+        # the radius of the circle
+        r = radius
 
-    if v_start is None:
-        v_start = np.array([0, 0])
-    if v_end is None:
-        v_end = np.array([0, 0])
-    if a_start is None:
-        a_start = np.array([0, 0])
-    if a_end is None:
-        a_end = np.array([0, 0])
-    if j_start is None:
-        j_start = np.array([0, 0])
-    if j_end is None:
-        j_end = np.array([0, 0])
+        # compute x and y, starts from bottom facing positive x
+        x = r*np.cos(theta) + x_offset 
+        y = r*np.sin(theta) + 1.2
+        z = y
 
-    poly_coefficients = np.zeros((8, len(p_start)))
+        helix_array_x = np.array([x,x,x,x])
+        helix_array_y = np.array([y,y,y,y]) 
+        helix_array_z = np.array([z_1,z_2,z_3,z_4]) 
 
-    tf = 1
-    ti = -1
-    A = np.array(([
-        [1 * tf ** 7,   1 * tf ** 6,   1 * tf ** 5,   1 * tf ** 4,   1 * tf ** 3,  1 * tf ** 2,  1 * tf ** 1,  1],
-        [7 * tf ** 6,   6 * tf ** 5,   5 * tf ** 4,   4 * tf ** 3,   3 * tf ** 2,  2 * tf ** 1,  1,            0],
-        [42 * tf ** 5,  30 * tf ** 4,  20 * tf ** 3,  12 * tf ** 2,  6 * tf ** 1,  2,            0,            0],
-        [210 * tf ** 4, 120 * tf ** 3, 60 * tf ** 2,  24 * tf ** 1,  6,            0,            0,            0],
-        [1 * ti ** 7,   1 * ti ** 6,   1 * ti ** 5,   1 * ti ** 4,   1 * ti ** 3,  1 * ti ** 2,  1 * ti ** 1,  1],
-        [7 * ti ** 6,   6 * ti ** 5,   5 * ti ** 4,   4 * ti ** 3,   3 * ti ** 2,  2 * ti ** 1,  1,            0],
-        [42 * ti ** 5,  30 * ti ** 4,  20 * ti ** 3,  12 * ti ** 2,  6 * ti ** 1,  2,            0,            0],
-        [210 * ti ** 4, 120 * ti ** 3, 60 * ti ** 2,  24 * ti ** 1,  6,            0,            0,            0]]))
+        helix_array_x = helix_array_x.flat
+        helix_array_y = helix_array_y.flat
+        helix_array_z = helix_array_z.flat
 
-    A = np.tile(A[:, :, np.newaxis], (1, 1, len(p_start)))
+        if count >= num_points*4:
+            ref_x = helix_array_x[-1]
+            ref_y = helix_array_y[-1]
+            ref_z = 0.10
+            msg = "traj ended..."
+        else:
+            ref_x = helix_array_x[count]
+            ref_y = helix_array_y[count]
+            ref_z = helix_array_z[count]
+            msg = "still flying..."
 
-    b = np.concatenate((p_end, v_end, a_end, j_end, p_start, v_start, a_start, j_start)).reshape(8, -1)
+        ref_pos = np.array([ref_x, ref_y, ref_z])
 
-    for i in range(len(p_start)):
-        poly_coefficients[:, i] = np.linalg.inv(A[:, :, i]).dot(np.array(b[:, i]))
+        return (ref_pos,msg)
+    
 
-    return np.expand_dims(poly_coefficients, 0)
+    def compute_jerk_snap_9pt_elevated_circle_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw,alt):
+        # theta goes from 0 to 2pi
+        parts = 9 # octagon lap x 5
+        theta = np.linspace(0, 2*np.pi, parts)
+        total_parts = parts + ((parts-1)*(laps-1)) 
+
+        # the radius of the circle
+        r = radius
+        circumference = 2*np.pi*r
+        total_time = laps*((circumference/0.1)/speedX)
+        num_points = int(laps*((circumference/0.1)*pid_update_rate)) # 0.1 m/s baseline, pid_update_rate = 100 as of now for pid
+        num_points = int(num_points/speedX) # 0.1 m/s baseline
+
+        # compute x1 and x2
+        x_coordinates = r*np.cos(theta) + x_offset
+        y_coordinates = r*np.sin(theta) + y_offset
+        z_coordinates = y_coordinates*0.5 + alt
+
+        if reverse_cw == 1:
+            x_coordinates = np.flip(x_coordinates)
+            y_coordinates = np.flip(y_coordinates)
+
+        x = np.array([x_coordinates[0]])
+        y = np.array([y_coordinates[0]])
+        z = np.array([z_coordinates[0]])
+        refs = []
+
+        for i in range(laps):
+            x = np.append(x,x_coordinates[1:])
+            y = np.append(y,y_coordinates[1:])
+            z = np.append(z,z_coordinates[1:])
+
+        for i in range(total_parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(total_parts-1))*i,
+                position=np.array([x[i], y[i], z[i]]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_points)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
+        return (pva,num_points)
+    
+
+    # 21 laps for 5 times helix
+    def compute_jerk_snap_9pt_helix_x_laps(self, x_offset, y_offset, radius, speedX, pid_update_rate,laps,reverse_cw,alt):
+        # theta goes from 0 to 2pi
+        parts = 9 # octagon lap x 5
+        theta = np.linspace(0, 2*np.pi, parts)
+        total_parts = parts + ((parts -1)*(laps-1)) 
+
+        # the radius of the circle
+        r = radius
+        circumference = 2*np.pi*r
+        total_time = laps*((circumference/0.1)/speedX)
+        num_points = int(laps*((circumference/0.1)*pid_update_rate)) # 0.1 m/s baseline, pid_update_rate = 100 as of now for pid
+        num_points = int(num_points/speedX) # 0.1 m/s baseline
+
+        # z values for helix
+        z_1 = np.linspace(alt, alt+0.6, total_parts)
+        z_2 = np.linspace(alt+0.6, alt*2, total_parts)
+        z_2 = z_2[1:]
+        z_3 = np.linspace(alt*2, alt+0.6, total_parts)
+        z_3 = z_3[1:]
+        z_4 = np.linspace(alt+0.6, alt, total_parts)
+        z_4 = z_4[1:]
+        z_suite = np.append(z_1,z_2)
+        z_suite = np.append(z_suite,z_3)
+        z = np.append(z_suite,z_4)
+        
+
+        # compute x1 and x2
+        x_coordinates = r*np.cos(theta) + x_offset
+        y_coordinates = r*np.sin(theta) + y_offset
 
 
-def rhs_generation(x):
-    n = x.shape[0] - 1
+        if reverse_cw == 1:
+            x_coordinates = np.flip(x_coordinates)
+            y_coordinates = np.flip(y_coordinates)
 
-    big_x = np.zeros((8 * n))
-    big_x[:4] = np.array([x[0], 0, 0, 0]).T
-    big_x[-4:] = np.array([x[-1], 0, 0, 0]).T
 
-    for i in range(1, n):
-        big_x[8 * (i - 1) + 4:8 * (i - 1) + 8 + 4] = np.array([x[i], 0, 0, 0, 0, 0, 0, x[i]]).T
+        x = np.array([])
+        y = np.array([])
+        refs = []
 
-    return big_x
+
+        for i in range(laps):
+            if i == 0:
+                x = np.append(x,x_coordinates)
+                y = np.append(y,y_coordinates) 
+            else:
+                x = np.append(x,x_coordinates[1:])
+                y = np.append(y,y_coordinates[1:])            
+            if i % 4.0 == 0:  
+                z = np.append(z,z)
+                
+
+        for i in range(total_parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(total_parts-1))*i,
+                position=np.array([x[i], y[i], z[i]]),
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_points)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
+        return (pva,num_points)
+    
+
+    
+
+
+    
