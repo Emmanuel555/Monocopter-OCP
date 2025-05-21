@@ -3,7 +3,6 @@ import time
 
 import Utils.Mocap as Mocap
 import Utils.DataSave as DataSave
-import Data_process_swarm
 
 import math
 from scipy.optimize import fsolve

@@ -10,6 +10,8 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program. If not, see <http://www.gnu.org/licenses/>."""
 
+import os
+import sys
 import casadi as cs
 from matplotlib.pyplot import get
 import numpy as np
@@ -20,7 +22,8 @@ from Utils.utils import skew_symmetric, v_dot_q, safe_mkdir_recursive, quaternio
 class Monoco_Optimizer:
     def __init__(self, monoco_type, t_horizon=1, n_nodes=20,
                  q_cost=None, r_cost=None,
-                 model_name="augmented_quad_3d_acados_mpc", solver_options=None): # insert one more argument here to show that I am using the ith iterated gp...
+                 model_name="monoco_acados_mpc", solver_options=None): # insert one more argument here to show that I am using the ith iterated gp...
+        
         """
         :param quad: monoco typed object from (long_wing, short_wing, ultra-light_wing);
         :type quad: monoco
@@ -29,11 +32,6 @@ class Monoco_Optimizer:
         :param n_nodes: number of optimization nodes until time horizon
         :param q_cost: diagonal of Q matrix for LQR cost of MPC cost function. Must be a numpy array of length 12.
         :param r_cost: diagonal of R matrix for LQR cost of MPC cost function. Must be a numpy array of length 4.
-        :param B_x: dictionary of matrices that maps the outputs of the gp regressors to the state space.
-        
-        :param q_mask: Optional boolean mask that determines which variables from the state compute towards the cost
-        function. In case no argument is passed, all variables are weighted.
-        
         :param solver_options: Optional set of extra options dictionary for solvers.
         """
 
@@ -51,27 +49,101 @@ class Monoco_Optimizer:
         self.max_u = monoco_type.max_input_value
         self.min_u = monoco_type.min_input_value
 
-        # Declare model variables
-        self.p = cs.MX.sym('p', 3)  # position
-        self.q = cs.MX.sym('a', 4)  # angle quaternion (wxyz)
-        self.v = cs.MX.sym('v', 3)  # velocity
-        self.r = cs.MX.sym('r', 3)  # angle rate
+        # Declare model variables (row vectors with col vector 1)
+        self.pos = cs.MX.sym('pos', 3)  # position
+        self.ang = cs.MX.sym('ang', 3) # disk angles (rpy)
+        self.quat = cs.MX.sym('quat', 4)  # disk quaternions (wxyz)
+        self.vel = cs.MX.sym('vel', 3)  # velocity
+        self.bodyrate = cs.MX.sym('bodyrate', 3)  # disk body rates
 
-        # Full state vector (13-dimensional)
-        self.x = cs.vertcat(self.p, self.q, self.v, self.r) # horizontal concatenation
-        self.state_dim = 13
+        # Full state vector (12-dimensional)
+        self.x = cs.vertcat(self.pos, self.ang, self.vel, self.bodyrate) # vertical concatenation
+        self.state_dim = 12
 
         # Control input vector (rpy + collective thrust)
-        u1 = cs.MX.sym('u1')
-        u2 = cs.MX.sym('u2')
-        u3 = cs.MX.sym('u3')
-        u4 = cs.MX.sym('u4')
+        u1 = cs.MX.sym('u1') # roll
+        u2 = cs.MX.sym('u2') # pitch
+        u3 = cs.MX.sym('u3') # yaw
+        u4 = cs.MX.sym('u4') # collective thrust
         self.u = cs.vertcat(u1, u2, u3, u4)
+
+        # Disk dynamics
+        self.monoco_nom_model = self.disk_dynamics() 
+        
+        # Setup acados model
+        monoco_acados_model, nominal_monoco_dynamics = self.acados_setup_model(
+            self.disk_dynamics(x=self.x, u=self.u)['x_dot'], model_name) # inputs of state and control input
+       
+        # Add one more weight to the rotation (use quaternion norm weighting in acados)
+        q_diagonal = np.concatenate((q_cost[:3], np.mean(q_cost[3:6])[np.newaxis], q_cost[3:])) # can always test this 
+
+        # Ensure current working directory is current folder
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        self.acados_models_dir = '../../acados_models'
+        safe_mkdir_recursive(os.path.join(os.getcwd(), self.acados_models_dir))
+
+        # Setup Acados OCP
+        nx = monoco_acados_model.x.size()[0] # initial state - beginning of the series of nodes = 12
+        nu = monoco_acados_model.u.size()[0] # initial inputs = 4
+        ny = nx + nu
+        n_param = monoco_acados_model.p.size()[0] if isinstance(monoco_acados_model.p, cs.MX) else 0
+
+        # Create OCP object to formulate the optimization OCP = Optimal control problem
+        ocp = AcadosOcp()
+       
+        ocp.model = monoco_acados_model# acados model is updated here...
+        ocp.dims.N = self.N # time horizon / opt_dt
+        ocp.solver_options.tf = t_horizon
+
+        # Initialize parameters
+        ocp.dims.np = n_param # 12
+        ocp.parameter_values = np.zeros(n_param) # initialise parameters as zeros
+
+        ocp.cost.cost_type = 'LINEAR_LS'
+        ocp.cost.cost_type_e = 'LINEAR_LS'
+
+        # Formulate the LQR problem here ***********
+        ocp.cost.W = np.diag(np.concatenate((q_diagonal, r_cost)))
+        ocp.cost.W_e = np.diag(q_diagonal)
+        terminal_cost = 0 if solver_options is None or not solver_options["terminal_cost"] else 1
+        ocp.cost.W_e *= terminal_cost
+
+        ocp.cost.Vx = np.zeros((ny, nx))
+        ocp.cost.Vx[:nx, :nx] = np.eye(nx)
+        ocp.cost.Vu = np.zeros((ny, nu))
+        ocp.cost.Vu[-4:, -4:] = np.eye(nu)
+
+        ocp.cost.Vx_e = np.eye(nx)
+
+        # Initial reference trajectory (will be overwritten)
+        x_ref = np.zeros(nx)
+        ocp.cost.yref = np.concatenate((x_ref, np.array([0.0, 0.0, 0.0, 0.0]))) # concatenates with control inputs
+        ocp.cost.yref_e = x_ref # terminal shooting node 
+
+        # Initial state (will be overwritten) initial conditions can be updated here 
+        ocp.constraints.x0 = x_ref
+
+        # Set constraints
+        ocp.constraints.lbu = np.array([self.min_u] * 4)
+        ocp.constraints.ubu = np.array([self.max_u] * 4)
+        ocp.constraints.idxbu = np.array([0, 1, 2, 3])
+
+        # Solver options
+        ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
+        ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'
+        ocp.solver_options.integrator_type = 'ERK'
+        ocp.solver_options.print_level = 0
+        ocp.solver_options.nlp_solver_type = 'SQP_RTI' if solver_options is None else solver_options["solver_type"]
+
+        # Compile acados OCP solver if necessary
+        json_file = os.path.join(self.acados_models_dir, key_model.name + '_acados_ocp.json')
+        self.acados_ocp_solver[key] = AcadosOcpSolver(ocp, json_file=json_file) # label and initialise the acadosolver here where ocp refers to the acados object
+
 
 
     def acados_setup_model(self, nominal, model_name):
         """
-        Builds an Acados symbolic models using CasADi expressions.
+        Builds an Acados symbolic model using CasADi expressions. (via AcadosModel)
         :arg model_name: name for the acados model for the relevant Monocopter type.
         :arg nominal: CasADi symbolic nominal model of the Monocopter: f(self.x, self.u) = x_dot, dimensions 13x1.
         :return:
@@ -79,7 +151,7 @@ class Monoco_Optimizer:
             - CasADi symbolic nominal dynamics equations (long,short,ultra-light)
         :rtype: AcadosModel, cs.MX
         """
-    
+
         def fill_in_acados_model(x, u, p, dynamics, name):
 
             x_dot = cs.MX.sym('x_dot', dynamics.shape)
@@ -97,143 +169,63 @@ class Monoco_Optimizer:
 
             return model
 
-        acados_models = {}
-        dynamics_equations = {}
-
-        # Run GP inference if GP's available
-
-        # the entire section below needs to be updated in the optimisation section at the bottom
-        """ if self.gp_reg_ensemble is not None:
-
-            # Feature vector are the elements of x and u determined by the selection matrix B_z. The trigger var is used
-            # to select the gp-specific state estimate in the first optimization node, and the regular integrated state
-            # in the rest. The computing of the features z is done within the GPEnsemble.
-            gp_x = self.gp_x * self.trigger_var + self.x * (1 - self.trigger_var)
-            #  Transform velocity to body frame
-            v_b = v_dot_q(gp_x[7:10], quaternion_inverse(gp_x[3:7]))
-            gp_x = cs.vertcat(gp_x[:7], v_b, gp_x[10:])
-            gp_u = self.u
-
-            gp_dims = self.gp_reg_ensemble.dim_idx
-
-            # Get number of models in GP
-            for i in range(self.gp_reg_ensemble.n_models):
-                # Evaluate cluster of the GP ensemble
-                cluster_id = {k: [v] for k, v in zip(gp_dims, i * np.ones_like(gp_dims, dtype=int))}
-                outs = self.gp_reg_ensemble.predict(gp_x, gp_u, return_cov=False, gp_idx=cluster_id, return_z=False)
-
-                # Unpack prediction outputs. Transform back to world reference frame
-                outs = self.add_missing_states(outs)
-                gp_means = v_dot_q(outs["pred"], gp_x[3:7])
-                gp_means = self.remove_extra_states(gp_means)
-
-                print ("Analysing GP mean size: ", gp_means.shape)
-                
-                # Jus to look at the dimensions
-                print ("B.x is: ", self.B_x)
-                print ("cs.mtimes(self.B_x, gp_means) is... ", cs.mtimes(self.B_x, gp_means))
-
-                # Add GP mean prediction - nominal refers to nominal dynamic model 
-                dynamics_equations[i] = nominal + cs.mtimes(self.B_x, gp_means) # need to amend this part out
-
-                x_ = self.x
-                dynamics_ = dynamics_equations[i]
-
-                # Add again the gp augmented dynamics for the GP state
-                dynamics_ = cs.vertcat(dynamics_)
-                dynamics_equations[i] = cs.vertcat(dynamics_equations[i])
-
-                i_name = model_name + "_domain_" + str(i)
-
-                params = cs.vertcat(self.gp_x, self.trigger_var)
-                acados_models[i] = fill_in_acados_model(x=x_, u=self.u, p=params, dynamics=dynamics_, name=i_name)
-
-        else: """
-
-        # No available GP so return nominal dynamics
-        # start with nominal dynamics - this part needs to edit first
-        # TO DO - find out actual dynamics of nominal model 
-        # nominal dynamics = 13 x 1 matrix 
-
-        augmentations = cs.MX.sym('augmentations',13) # for now, this matrix aug of 13 x 1, lets jus assume its true...
+        # in case we want to add augmentations to the dynamics equations
+        augmentations = cs.MX.sym('augmentations',12) 
 
         # nominal takes in inputs from supposed initial thruster values 
+        dynamics_equations = nominal
 
-        dynamics_equations[0] = nominal + augmentations
-
+        # state vector
         x_ = self.x
-        #dynamics_ = nominal
 
-        # test this
-        dynamics_ = dynamics_equations[0]
+        # dynamics into the model
+        dynamics_ = dynamics_equations
 
-        acados_models[0] = fill_in_acados_model(x=x_, u=self.u, p=augmentations, dynamics=dynamics_, name=model_name) # dict
+        acados_model = fill_in_acados_model(x=x_, u=self.u, p=augmentations, dynamics=dynamics_, name=model_name) # dict
 
-        return acados_models, dynamics_equations # can recall dynamic equations 
+        return acados_model, dynamics_equations # can recall dynamic equations 
 
 
-    def quad_dynamics(self, rdrv_d): # input for quad dynamics (rdrv_d = drag coeff)
+    def disk_dynamics(self): # input for disk dynamics (rdrv_d = drag coeff)
         """
-        Symbolic dynamics of the 3D quadrotor model. The state consists on: [p_xyz, a_wxyz, v_xyz, r_xyz]^T, where p
+        Symbolic disk dynamics. The state consists on: [p_xyz, a_wxyz, v_xyz, r_xyz]^T, where p
         stands for position, a for angle (in quaternion form), v for velocity and r for body rate. 
         
-        The INPUT of the system is: [u_1, u_2, u_3, u_4], i.e. the activation of the four thrusters.
+        The INPUT of the system is: [u_1, u_2, u_3, u_4], where u_3 
 
-        :param rdrv_d: a 3x3 diagonal matrix containing the D matrix coefficients for a linear drag model as proposed
-        by Faessler et al.
-
-        :return: CasADi function that computes the analytical differential state dynamics of the quadrotor model.
-        Inputs: 'x' state of quadrotor (13x1) and 'u' control input (4x1). Output: differential state vector 'x_dot'
-        (13x1)
+        :return: CasADi function that computes the analytical differential state dynamics of the Monocopter's disk model.
+        Inputs: 'x' state of Monocopter (12x1) and 'u' control input (4x1). Output: differential state vector 'x_dot'
+        (12x1)
         """
+        x_dot = cs.vertcat(self.p_dynamics(), self.ang_dynamics(), self.v_dynamics(), self.w_dynamics()) # 12 x 1
+        return cs.Function('x_dot', [self.x[:12], self.u], [x_dot], ['x', 'u'], ['x_dot']) # function (name, args, function/output, [options])
 
-        x_dot = cs.vertcat(self.p_dynamics(), self.q_dynamics(), self.v_dynamics(rdrv_d), self.w_dynamics()) # 13 x 13
-        return cs.Function('x_dot', [self.x[:13], self.u], [x_dot], ['x', 'u'], ['x_dot']) # function (name, args, function/output, [options])
 
-    def p_dynamics(self): # returns velocity
-        return self.v
+    def p_dynamics(self): # returns velocity in W
+        return self.vel
 
-    def q_dynamics(self): 
-        return 1 / 2 * cs.mtimes(skew_symmetric(self.r), self.q)
 
-    def v_dynamics(self, rdrv_d):
-        """
-        :param rdrv_d: a 3x3 diagonal matrix containing the D matrix coefficients for a linear drag model as proposed
-        by Faessler et al. None, if no linear compensation is to be used.
-        """
+    def ang_dynamics(self): # returns ang_rate in W
+        return self.bodyrate
 
-        f_thrust = self.u * self.quad.max_thrust
+
+    def v_dynamics(self): # dyn from uzh
+        f_thrust = self.u * self.monoco.max_thrust # pwm values 
         g = cs.vertcat(0.0, 0.0, 9.81)
-        a_thrust = cs.vertcat(0.0, 0.0, f_thrust[0] + f_thrust[1] + f_thrust[2] + f_thrust[3]) / self.quad.mass
+        a_thrust = cs.vertcat(0.0, 0.0, f_thrust[0] + f_thrust[1] + f_thrust[2] + f_thrust[3]) / self.monoco.mass
 
-        v_dynamics = v_dot_q(a_thrust, self.q) - g # assumes that self.q is currently in quaternion form thats why need to change it to matrix form 
-
-        if rdrv_d is not None:
-            # Velocity in body frame:
-            v_b = v_dot_q(self.v, quaternion_inverse(self.q))
-            rdrv_drag = v_dot_q(cs.mtimes(rdrv_d, v_b), self.q)
-            v_dynamics += rdrv_drag
-
-        #rdrv_drag = np.zeros((3, 3), float)
-        #np.fill_diagonal(rdrv_drag, [0.1, 0.1, 0.1])
-        rdrv_drag = np.array([0.0,0.0,0.0]) # shape is 3,
-        #v_b = v_dot_q(self.v, quaternion_inverse(self.q))
-        #rdrv_drag = v_dot_q(cs.mtimes(rdrv, v_b), self.q)
-        rdrv_drag = cs.MX(rdrv_drag)
-        v_dynamics += rdrv_drag
+        v_dynamics = v_dot_q(a_thrust, self.quat) - g # assumes that self.q is currently in quaternion form thats why need to change it to matrix form 
 
         return v_dynamics
 
-    def w_dynamics(self):
-        f_thrust = self.u * self.quad.max_thrust
 
-        y_f = cs.MX(self.quad.y_f)
-        x_f = cs.MX(self.quad.x_f)
-        c_f = cs.MX(self.quad.z_l_tau)
+    def w_dynamics(self):
+        f_thrust = self.u * self.monoco.max_thrust
+
         return cs.vertcat(
-            (cs.mtimes(f_thrust.T, y_f) + (self.quad.J[1] - self.quad.J[2]) * self.r[1] * self.r[2]) / self.quad.J[0],
-            (-cs.mtimes(f_thrust.T, x_f) + (self.quad.J[2] - self.quad.J[0]) * self.r[2] * self.r[0]) / self.quad.J[1],
-            (cs.mtimes(f_thrust.T, c_f) + (self.quad.J[0] - self.quad.J[1]) * self.r[0] * self.r[1]) / self.quad.J[2])
+            (f_thrust[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0],
+            (f_thrust[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1],
+            0.0)
 
 
 
