@@ -63,7 +63,7 @@ class Monoco_Optimizer:
         # Control input vector (rpy + collective thrust)
         u1 = cs.MX.sym('u1') # roll
         u2 = cs.MX.sym('u2') # pitch
-        u3 = cs.MX.sym('u3') # yaw
+        u3 = cs.MX.sym('u3') # yaw = 0.0
         u4 = cs.MX.sym('u4') # collective thrust
         self.u = cs.vertcat(u1, u2, u3, u4)
 
@@ -136,8 +136,8 @@ class Monoco_Optimizer:
         ocp.solver_options.nlp_solver_type = 'SQP_RTI' if solver_options is None else solver_options["solver_type"]
 
         # Compile acados OCP solver if necessary
-        json_file = os.path.join(self.acados_models_dir, key_model.name + '_acados_ocp.json')
-        self.acados_ocp_solver[key] = AcadosOcpSolver(ocp, json_file=json_file) # label and initialise the acadosolver here where ocp refers to the acados object
+        json_file = os.path.join(self.acados_models_dir, model_name + '_acados_ocp.json')
+        self.acados_ocp_solver = AcadosOcpSolver(ocp, json_file=json_file) # label and initialise the acadosolver here where ocp refers to the acados object
 
 
 
@@ -226,6 +226,48 @@ class Monoco_Optimizer:
             (f_thrust[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0],
             (f_thrust[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1],
             0.0)
+    
+
+    def set_reference_state(self, x_target=None, u_target=None): # set references here in this function 
+        """
+        Sets the target state and pre-computes the integration dynamics with cost equations
+        :param x_target: 12-dimensional target state (p_xyz, a_wxyz, v_xyz, r_xyz)
+        :param u_target: 4-dimensional target control input vector (u_1, u_2, u_3, u_4)
+        """
+
+        if x_target is None:
+            x_target = [[0, 0, 0], [1, 0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        if u_target is None:
+            u_target = [0, 0, 0, 0]
+
+        # Set new target state
+        self.target = copy(x_target)
+
+        ref = np.concatenate([x_target[i] for i in range(4)])
+        #  Transform velocity to body frame
+        v_b = v_dot_q(ref[7:10], quaternion_inverse(ref[3:7]))
+        ref = np.concatenate((ref[:7], v_b, ref[10:]))
+
+        # Determine which dynamics model to use based on the GP optimal input feature region. Should get one for each
+        # output dimension of the GP
+
+        # maybe can ammend it here
+        if self.gp_reg_ensemble is not None:
+            gp_ind = self.gp_reg_ensemble.select_gp(dim=None, x=ref, u=u_target)
+        else:
+            gp_ind = 0
+
+        ref = np.concatenate((ref, u_target))
+
+        # ref state/traj is updated here into the ocp solver where self.N is 20
+        for j in range(self.N):
+            self.acados_ocp_solver.set(j, "yref", ref)
+        self.acados_ocp_solver.set(self.N, "yref", ref[:-4])
+
+        # 0 is for a dynamic model wo gp, and 1 is with gp, assuming that only 1 was trained...
+        return gp_ind
+
+
 
 
 
