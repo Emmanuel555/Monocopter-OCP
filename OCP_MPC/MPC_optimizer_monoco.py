@@ -17,7 +17,7 @@ from matplotlib.pyplot import get
 import numpy as np
 from copy import copy
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
-from Utils.utils import skew_symmetric, v_dot_q, safe_mkdir_recursive, quaternion_inverse
+from Utils.utils import skew_symmetric, v_dot_q, safe_mkdir_recursive, quaternion_inverse, euler_to_quaternion
 
 class Monoco_Optimizer:
     def __init__(self, monoco_type, t_horizon=1, n_nodes=20,
@@ -31,7 +31,7 @@ class Monoco_Optimizer:
         :param t_horizon: time horizon for MPC optimization
         :param n_nodes: number of optimization nodes until time horizon
         :param q_cost: diagonal of Q matrix for LQR cost of MPC cost function. Must be a numpy array of length 12.
-        :param r_cost: diagonal of R matrix for LQR cost of MPC cost function. Must be a numpy array of length 4.
+        :param r_cost: diagonal of R matrix for LQR cost of MPC cost function. Must be a numpy array of length 3.
         :param solver_options: Optional set of extra options dictionary for solvers.
         """
 
@@ -39,7 +39,7 @@ class Monoco_Optimizer:
         if q_cost is None:
             q_cost = np.array([10, 10, 10, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05])
         if r_cost is None:
-            r_cost = np.array([0.1, 0.1, 0.1, 0.1])
+            r_cost = np.array([0.1, 0.1, 0.1])
 
         self.T = t_horizon  # Time horizon needs to change 
         self.N = n_nodes  # number of control nodes within horizon - between initial time & time horizon, default value is 20 
@@ -52,7 +52,7 @@ class Monoco_Optimizer:
         # Declare model variables (row vectors with col vector 1)
         self.pos = cs.MX.sym('pos', 3)  # position
         self.ang = cs.MX.sym('ang', 3) # disk angles (rpy)
-        self.quat = cs.MX.sym('quat', 4)  # disk quaternions (wxyz)
+        # self.quat = cs.MX.sym('quat', 4)  # disk quaternions (wxyz)
         self.vel = cs.MX.sym('vel', 3)  # velocity
         self.bodyrate = cs.MX.sym('bodyrate', 3)  # disk body rates
 
@@ -63,9 +63,8 @@ class Monoco_Optimizer:
         # Control input vector (rpy + collective thrust)
         u1 = cs.MX.sym('u1') # roll
         u2 = cs.MX.sym('u2') # pitch
-        u3 = cs.MX.sym('u3') # yaw = 0.0
-        u4 = cs.MX.sym('u4') # collective thrust
-        self.u = cs.vertcat(u1, u2, u3, u4)
+        u3 = cs.MX.sym('u3') # collective thrust
+        self.u = cs.vertcat(u1, u2, u3)
 
         # Disk dynamics
         self.monoco_nom_model = self.disk_dynamics() 
@@ -84,7 +83,7 @@ class Monoco_Optimizer:
 
         # Setup Acados OCP
         nx = monoco_acados_model.x.size()[0] # initial state - beginning of the series of nodes = 12
-        nu = monoco_acados_model.u.size()[0] # initial inputs = 4
+        nu = monoco_acados_model.u.size()[0] # initial inputs = 3
         ny = nx + nu
         n_param = monoco_acados_model.p.size()[0] if isinstance(monoco_acados_model.p, cs.MX) else 0
 
@@ -111,22 +110,22 @@ class Monoco_Optimizer:
         ocp.cost.Vx = np.zeros((ny, nx))
         ocp.cost.Vx[:nx, :nx] = np.eye(nx)
         ocp.cost.Vu = np.zeros((ny, nu))
-        ocp.cost.Vu[-4:, -4:] = np.eye(nu)
+        ocp.cost.Vu[-3:, -3:] = np.eye(nu)
 
         ocp.cost.Vx_e = np.eye(nx)
 
         # Initial reference trajectory (will be overwritten)
         x_ref = np.zeros(nx)
-        ocp.cost.yref = np.concatenate((x_ref, np.array([0.0, 0.0, 0.0, 0.0]))) # concatenates with control inputs
+        ocp.cost.yref = np.concatenate((x_ref, np.array([0.0, 0.0, 0.0]))) # concatenates with control inputs
         ocp.cost.yref_e = x_ref # terminal shooting node 
 
         # Initial state (will be overwritten) initial conditions can be updated here 
         ocp.constraints.x0 = x_ref
 
         # Set constraints
-        ocp.constraints.lbu = np.array([self.min_u] * 4)
-        ocp.constraints.ubu = np.array([self.max_u] * 4)
-        ocp.constraints.idxbu = np.array([0, 1, 2, 3])
+        ocp.constraints.lbu = np.array([self.min_u] * 3)
+        ocp.constraints.ubu = np.array([self.max_u] * 3)
+        ocp.constraints.idxbu = np.array([0, 1, 2])
 
         # Solver options
         ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
@@ -191,82 +190,113 @@ class Monoco_Optimizer:
         Symbolic disk dynamics. The state consists on: [p_xyz, a_wxyz, v_xyz, r_xyz]^T, where p
         stands for position, a for angle (in quaternion form), v for velocity and r for body rate. 
         
-        The INPUT of the system is: [u_1, u_2, u_3, u_4], where u_3 
+        The INPUT of the system is: [u_1, u_2, u_3]
 
         :return: CasADi function that computes the analytical differential state dynamics of the Monocopter's disk model.
         Inputs: 'x' state of Monocopter (12x1) and 'u' control input (4x1). Output: differential state vector 'x_dot'
         (12x1)
         """
-        x_dot = cs.vertcat(self.p_dynamics(), self.ang_dynamics(), self.v_dynamics(), self.w_dynamics()) # 12 x 1
+        x_dot = cs.vertcat(self.p_dot_dynamics(), self.ang_dot_dynamics(), self.v_dot_dynamics(), self.w_dot_dynamics()) # 12 x 1
         return cs.Function('x_dot', [self.x[:12], self.u], [x_dot], ['x', 'u'], ['x_dot']) # function (name, args, function/output, [options])
 
 
-    def p_dynamics(self): # returns velocity in W
+    def p_dot_dynamics(self): # returns velocity in W
         return self.vel
 
 
-    def ang_dynamics(self): # returns ang_rate in W
+    def ang_dot_dynamics(self): # returns ang_rate in W
         return self.bodyrate
 
 
-    def v_dynamics(self): # dyn from uzh
-        f_thrust = self.u * self.monoco.max_thrust # pwm values 
+    def v_dot_dynamics(self): # dyn from uzh
+        cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
+        collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
-        a_thrust = cs.vertcat(0.0, 0.0, f_thrust[0] + f_thrust[1] + f_thrust[2] + f_thrust[3]) / self.monoco.mass
+        quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy
+        a_thrust = cs.vertcat(0.0, 0.0, cyclic[0] + cyclic[1] + collective[0]) / self.monoco.mass
 
-        v_dynamics = v_dot_q(a_thrust, self.quat) - g # assumes that self.q is currently in quaternion form thats why need to change it to matrix form 
+        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame
 
-        return v_dynamics
+        return a_dynamics
 
 
-    def w_dynamics(self):
-        f_thrust = self.u * self.monoco.max_thrust
+    def w_dot_dynamics(self):
+        cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
 
         return cs.vertcat(
-            (f_thrust[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0],
-            (f_thrust[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1],
+            (cyclic[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0],
+            (cyclic[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1],
             0.0)
     
 
     def set_reference_state(self, x_target=None, u_target=None): # set references here in this function 
         """
         Sets the target state and pre-computes the integration dynamics with cost equations
-        :param x_target: 12-dimensional target state (p_xyz, a_wxyz, v_xyz, r_xyz)
-        :param u_target: 4-dimensional target control input vector (u_1, u_2, u_3, u_4)
+        :param x_target: 12-dimensional target state (p_xyz, ang_xyz, v_xyz, r_xyz)
+        :param u_target: 3-dimensional target control input vector (u_1, u_2, u_3)
         """
 
         if x_target is None:
-            x_target = [[0, 0, 0], [1, 0, 0, 0], [0, 0, 0], [0, 0, 0]]
+            x_target = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]
         if u_target is None:
-            u_target = [0, 0, 0, 0]
+            u_target = [0, 0, 0]
 
         # Set new target state
-        self.target = copy(x_target)
+        self.target = copy(x_target) # list
 
         ref = np.concatenate([x_target[i] for i in range(4)])
-        #  Transform velocity to body frame
-        v_b = v_dot_q(ref[7:10], quaternion_inverse(ref[3:7]))
-        ref = np.concatenate((ref[:7], v_b, ref[10:]))
-
-        # Determine which dynamics model to use based on the GP optimal input feature region. Should get one for each
-        # output dimension of the GP
-
-        # maybe can ammend it here
-        if self.gp_reg_ensemble is not None:
-            gp_ind = self.gp_reg_ensemble.select_gp(dim=None, x=ref, u=u_target)
-        else:
-            gp_ind = 0
-
         ref = np.concatenate((ref, u_target))
 
         # ref state/traj is updated here into the ocp solver where self.N is 20
         for j in range(self.N):
             self.acados_ocp_solver.set(j, "yref", ref)
-        self.acados_ocp_solver.set(self.N, "yref", ref[:-4])
+        self.acados_ocp_solver.set(self.N, "yref", ref[:-3]) # terminal ref doesnt include control inputs
 
-        # 0 is for a dynamic model wo gp, and 1 is with gp, assuming that only 1 was trained...
-        return gp_ind
+        # returns x_target + u_target
+        return ref
 
+
+    def run_optimization(self, initial_state=None):
+        """
+        Optimizes a trajectory to reach the pre-set target state, starting from the input initial state, that minimizes
+        the quadratic cost function and respects the constraints of the system
+
+        :param initial_state: 13-element list of the initial state. If None, 0 state will be used
+        """
+
+        if initial_state is None:
+            initial_state = [0, 0, 0] + [0, 0, 0] + [0, 0, 0] + [0, 0, 0]
+
+        # Set initial state. Add gp state if needed
+        x_init = initial_state
+        x_init = np.stack(x_init)
+
+        # Input initial states
+        self.acados_ocp_solver.set(0, 'lbx', x_init) # lower bounds 
+        self.acados_ocp_solver.set(0, 'ubx', x_init) # upper bounds 
+
+        # note, cannot predict using dynamic model cos mpc setup cant be iterated, only params can wo compiling..
+        # somehow, the update must be done externally either via p or x 
+
+        # Solve OCP
+
+        ## how to change parameter P
+        #state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0, 0.0] + [v_b[0],v_b[1],v_b[2]] + [0.0, 0.0, 0.0]
+        #state = np.stack(state)
+        #self.acados_ocp_solver[use_model].set(0, 'p', state) # needs testing     
+
+        self.acados_ocp_solver.solve()
+
+        # Get u
+        w_opt_acados = np.ndarray((self.N, 3))
+        x_opt_acados = np.ndarray((self.N + 1, len(x_init))) # N +1 due to terminal state
+        x_opt_acados[0, :] = self.acados_ocp_solver.get(0, "x") # same dim and same values as initial state aka x_init
+        for i in range(self.N):
+            w_opt_acados[i, :] = self.acados_ocp_solver.get(i, "u") # thrusters x 4 = collective thrust 
+            x_opt_acados[i + 1, :] = self.acados_ocp_solver.get(i + 1, "x") # states output - same dim as initial state but the back 3 are taken as body rates aka angular velocity
+
+        w_opt_acados = np.reshape(w_opt_acados, (-1)) # first 3 values amount to roll, pitch, and thrust
+        return (w_opt_acados, x_opt_acados)
 
 
 
