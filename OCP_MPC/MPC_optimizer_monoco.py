@@ -25,8 +25,8 @@ class Monoco_Optimizer:
                  model_name="monoco_acados_mpc", solver_options=None): # insert one more argument here to show that I am using the ith iterated gp...
         
         """
-        :param quad: monoco typed object from (long_wing, short_wing, ultra-light_wing);
-        :type quad: monoco
+        :param monoco_type: monoco typed object from (long_wing, short_wing, ultra-light_wing);
+        :type monoco_type: monoco
         
         :param t_horizon: time horizon for MPC optimization
         :param n_nodes: number of optimization nodes until time horizon

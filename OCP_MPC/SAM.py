@@ -27,59 +27,39 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.;
 #
-
-from acados_template import AcadosModel
 from casadi import SX, vertcat, sin, cos
+from math import sqrt
+import numpy as np
+from Utils.utils import quaternion_to_euler, skew_symmetric, v_dot_q, unit_quat, quaternion_inverse
 
-def export_monocopter_ode_model() -> AcadosModel:
 
-    model_name = 'monocopter_ode'
+class SAM(object):
+    def __init__(self, monoco_type):
+        """
+        Initialization of the monocopter class   
+        """
+        # Max cyclic & collective PWM inputs 
+        self.max_thrust_cyclic = 10000
+        self.max_thrust_collective = 55500 
 
-    # constants
-    M = 1. # mass of the cart [kg] -> now estimated
-    m = 0.1 # mass of the ball [kg]
-    g = 9.81 # gravity constant [m/s^2]
-    l = 0.8 # length of the rod [m]
+        # Max & min PWM inputs for the motor 
+        self.max_input_value = 65500  # Motors at full thrust
+        self.min_input_value = 10  # Motors turned off
 
-    # set up states & controls
-    x1      = SX.sym('x1')
-    theta   = SX.sym('theta')
-    v1      = SX.sym('v1')
-    dtheta  = SX.sym('dtheta')
+        # Monocopter's intrinsic parameters as a disk
+        if monoco_type == 'short':
+            self.J = np.array([1/100000,1/100000,1/1000000])  # N m s^2 = kg m^2
+            self.mass = 0.064  # kg
+        elif monoco_type == 'long':
+            self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
+            self.mass = 0.058  # kg
+        elif monoco_type == 'ultralight':
+            self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
+            self.mass = 0.032  # kg
 
-    x = vertcat(x1, theta, v1, dtheta)
 
-    F = SX.sym('F')
-    u = vertcat(F)
 
-    # xdot
-    x1_dot      = SX.sym('x1_dot')
-    theta_dot   = SX.sym('theta_dot')
-    v1_dot      = SX.sym('v1_dot')
-    dtheta_dot  = SX.sym('dtheta_dot')
+        
 
-    xdot = vertcat(x1_dot, theta_dot, v1_dot, dtheta_dot)
 
-    # dynamics
-    cos_theta = cos(theta)
-    sin_theta = sin(theta)
-    denominator = M + m - m*cos_theta*cos_theta
-    f_expl = vertcat(v1,
-                     dtheta,
-                     (-m*l*sin_theta*dtheta*dtheta + m*g*cos_theta*sin_theta+F)/denominator,
-                     (-m*l*cos_theta*sin_theta*dtheta*dtheta + F*cos_theta+(M+m)*g*sin_theta)/(l*denominator)
-                     )
-
-    f_impl = xdot - f_expl
-
-    model = AcadosModel()
-
-    model.f_impl_expr = f_impl
-    model.f_expl_expr = f_expl
-    model.x = x
-    model.xdot = xdot
-    model.u = u
-    model.name = model_name
-
-    return model
-
+    
