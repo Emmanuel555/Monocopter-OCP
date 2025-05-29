@@ -20,9 +20,11 @@ import Utils.trajectory_generator as trajectory_generator
 import timeit
 from pynput import keyboard
 
+import SAM
+import MPC_optimizer_monoco
+
 from cflib.crazyflie.swarm import CachedCfFactory
 from cflib.crazyflie.swarm import Swarm
-
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
 
@@ -120,7 +122,7 @@ def transmitter_calibration():
     else:
         enable = 1
 
-    cmd = conPad*enable*button0
+    cmd = conPad*enable*button0 # thrust
 
     return (cmd, button0, button1, a0, a1, enable)
 
@@ -136,7 +138,7 @@ def p_control_input(linear_pos,kp,kv,ki,ref_pos,dt):
     return (cmd) 
     
 
-def att_manual_ctrl(a0,a1,af):
+def ref_manual_ctrl(a0,a1,af):
     """ pad_x = a0
     pad_y = a1
     trigger = math.sqrt(pad_x ** 2 + pad_y ** 2)
@@ -292,6 +294,7 @@ if __name__ == '__main__':
     time_end = time.time() + (60*100*minutes) 
 
 
+    ## old gains from INDI Diff flatness
     # collective z 
     kpz = 5000 
     kdz = 6000 
@@ -301,34 +304,24 @@ if __name__ == '__main__':
     adz = 50000 
     aiz = 1000 # | 128
 
+    # position
+    kp = np.array([1.3,1.3,1.3])
 
-    # cyclic xyz (position)
-    kp = [1.3,1.3,0.0] # 0.04
-    kd = [0.0005,0.0005,0.0] # not in use
-    ki = [10.0,10.0,0.0] 
-
-
-    # cyclic xyz (velocity)
-    kvp = [0.0001,0.0001,0.0] 
-    
-
-    # cyclic xy (attitude) - heuristic gains thus far
-    ka = [6000, 6000]  # 6000
-    kr = [10.0, 10.0] # 10
-    krr = [1.0, 1.0] # 1.0
+    # angle
+    ka = np.array([0.01,0.01,0.01])
    
-
-    # physical params
-    wing_radius = 200/1000 # change to 700 next round
-    chord_length = 0.12
-    mass = 1000
-    cl = 0.5
-    cd = 0.052
-    J = np.array([1/100000,1/100000,1/1000000]) # moment of inertia
+    # velocity
+    kv = np.array([0.01,0.01,0.01])
     
+    # bodyrates
+    kr = np.array([0.01,0.01,0.01])
 
-    monoco = MPC_monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, ka, kr, krr)
-    monoco.physical_params(wing_radius, chord_length, mass, cl, cd, J) 
+    # INDI Loop
+    krr = [1.0, 1.0] # 1.0
+
+    # MPC gains
+    q_cost = np.concatenate((kp,ka,kv,kr))
+    r_cost = np.array([0.1, 0.1, 0.1])
 
 
      # Initialize references
@@ -389,6 +382,14 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
 
+    # MPC Monoco
+    monoco_name = "short"
+    monoco_type = SAM.SAM(monoco_name)
+    # Monoco INDI control
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, monoco_type)
+    mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=monoco_type, model_name=monoco_name+"_monoco_acados_mpc", q_cost=q_cost, r_cost=r_cost)
+
+
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
         cmd_att_startup = np.array([0, 0, 0, 0]) # init setpt to 0 0 0 0
@@ -401,7 +402,6 @@ if __name__ == '__main__':
         #swarm.parallel(log_async, args_dict=seq_args_log) # only can log up to six items at a time
 
         try:
-            #while time_end > time.time():
             while True:
                 start = timeit.default_timer() 
                 abs_time = time.time() - time_start
@@ -434,6 +434,7 @@ if __name__ == '__main__':
                 # update positions etc.
                 monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
 
+                # update from transmitter
                 tx_cmds = transmitter_calibration()  # get the joystick commands
                 manual_thrust = tx_cmds[0]  # thrust command
                 button0 = tx_cmds[1]
@@ -450,7 +451,7 @@ if __name__ == '__main__':
                 
 
                     # update references for PID loop 
-                    manual_cyclic = att_manual_ctrl(a0, a1, af) # manual position control 
+                    manual_cyclic = ref_manual_ctrl(a0, a1, af) # manual position control 
                     
                     if button1 == 1:
 
@@ -507,19 +508,6 @@ if __name__ == '__main__':
                         #monoco.v_control_input()
 
                     
-                if loop_counter % att_loop == 0:
-
-                    # get angle
-                    cmd_att = monoco.get_angle()
-                    att_error = monoco.attitude_error
-
-
-                if loop_counter % rate_loop == 0:
-
-                    # bod rates
-                    monoco.get_body_rate(flatness_option)
-                    att_rate_error = monoco.attitude_rate_error
-
 
                 # collective thrust (alt hold)
                 if button1 == 1:

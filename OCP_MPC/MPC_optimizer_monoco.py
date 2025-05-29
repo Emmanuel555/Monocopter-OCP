@@ -19,7 +19,7 @@ from copy import copy
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
 from Utils.utils import skew_symmetric, v_dot_q, safe_mkdir_recursive, quaternion_inverse, euler_to_quaternion
 
-class Monoco_Optimizer:
+class Monoco_Optimizer(object):
     def __init__(self, monoco_type, t_horizon=1, n_nodes=20,
                  q_cost=None, r_cost=None,
                  model_name="monoco_acados_mpc", solver_options=None): # insert one more argument here to show that I am using the ith iterated gp...
@@ -73,8 +73,8 @@ class Monoco_Optimizer:
         monoco_acados_model, nominal_monoco_dynamics = self.acados_setup_model(
             self.disk_dynamics(x=self.x, u=self.u)['x_dot'], model_name) # inputs of state and control input
        
-        # Add one more weight to the rotation (use quaternion norm weighting in acados)
-        q_diagonal = np.concatenate((q_cost[:3], np.mean(q_cost[3:6])[np.newaxis], q_cost[3:])) # can always test this 
+        # Convert to Q_diag matrix
+        q_diagonal = np.diag(q_cost)
 
         # Ensure current working directory is current folder
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
