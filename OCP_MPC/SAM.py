@@ -34,7 +34,7 @@ from Utils.utils import quaternion_to_euler, skew_symmetric, v_dot_q, unit_quat,
 
 
 class SAM(object):
-    def __init__(self, monoco_type):
+    def __init__(self, monoco_name):
         """
         Initialization of the monocopter class   
         """
@@ -46,14 +46,17 @@ class SAM(object):
         self.max_input_value = 65500  # Motors at full thrust
         self.min_input_value = 10  # Motors turned off
 
+        # Monoco name 
+        self.monoco_name = monoco_name
+
         # Monocopter's intrinsic parameters as a disk
-        if monoco_type == 'short':
+        if monoco_name == 'short':
             self.J = np.array([1/100000,1/100000,1/1000000])  # N m s^2 = kg m^2
             self.mass = 0.064  # kg
-        elif monoco_type == 'long':
+        elif monoco_name == 'long':
             self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
             self.mass = 0.058  # kg
-        elif monoco_type == 'ultralight':
+        elif monoco_name == 'ultralight':
             self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
             self.mass = 0.032  # kg
 

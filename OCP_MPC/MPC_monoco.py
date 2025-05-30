@@ -382,13 +382,12 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
 
-    # MPC Monoco
+    # MPC Monoco Model
     monoco_name = "short"
     monoco_type = SAM.SAM(monoco_name)
-    # Monoco INDI control
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, monoco_type)
-    mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=monoco_type, model_name=monoco_name+"_monoco_acados_mpc", q_cost=q_cost, r_cost=r_cost)
-
+    # MPC Monoco INDI Control & Optimizer
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type)
+    
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
@@ -445,67 +444,62 @@ if __name__ == '__main__':
                 a1 = tx_cmds[4]
                 af = 80 # aggression factor
 
-
-                # update references for PID position loop
-                if loop_counter % pid_loop == 0:
+                # update references for manual control...contd tmr hiaz
+                manual_cyclic = ref_manual_ctrl(a0, a1, af) # manual position control 
                 
+                if button1 == 1:
 
-                    # update references for PID loop 
-                    manual_cyclic = ref_manual_ctrl(a0, a1, af) # manual position control 
-                    
-                    if button1 == 1:
-
-                        ## hovering test
-                        if stage == 'hover':
-                            ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
-                            hovering_ff = np.array([0.0, 0.0, 0.0])
-                            ref_pos = ref[0]
-                            ref_pos_z = ref_pos[2]
-                            ref_vel = hovering_ff
-                            ref_acc = hovering_ff
-                            ref_jerk = hovering_ff
-                            ref_snap = hovering_ff
-                            ref_msg = ref[1]
-                            count = 0
+                    ## hovering test
+                    if stage == 'hover':
+                        ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
+                        hovering_ff = np.array([0.0, 0.0, 0.0])
+                        ref_pos = ref[0]
+                        ref_pos_z = ref_pos[2]
+                        ref_vel = hovering_ff
+                        ref_acc = hovering_ff
+                        ref_jerk = hovering_ff
+                        ref_snap = hovering_ff
+                        ref_msg = ref[1]
+                        count = 0
 
 
-                        ## trajectory inputs
-                        if stage == 'trajectory on':
-                            ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                            ref_pos = ref_derivatives[0]
-                            ref_pos_z = ref_pos[2]
-                            ref_vel = ref_derivatives[1]
-                            ref_acc = ref_derivatives[2]
-                            ref_jerk = ref_derivatives[3]
-                            ref_snap = ref_derivatives[4]
-                            ref_msg = ref_derivatives[5]  
-                            # compute bem thrust
-                            monoco.compute_bem_wo_rps(body_pitch) 
-                            count += 1 
+                    ## trajectory inputs
+                    if stage == 'trajectory on':
+                        ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                        ref_pos = ref_derivatives[0]
+                        ref_pos_z = ref_pos[2]
+                        ref_vel = ref_derivatives[1]
+                        ref_acc = ref_derivatives[2]
+                        ref_jerk = ref_derivatives[3]
+                        ref_snap = ref_derivatives[4]
+                        ref_msg = ref_derivatives[5]  
+                        # compute bem thrust
+                        monoco.compute_bem_wo_rps(body_pitch) 
+                        count += 1 
 
 
-                        ## landing 
-                        if stage == 'land':
-                            ref = traj_gen.hover_test(x_land_offset,y_land_offset,z_land_offset)
-                            hovering_ff = np.array([0.0, 0.0, 0.0])
-                            ref_pos = ref[0]
-                            ref_pos_z = ref_pos[2]
-                            ref_vel = hovering_ff
-                            ref_acc = hovering_ff
-                            ref_jerk = hovering_ff
-                            ref_snap = hovering_ff
-                            ref_msg = ref[1]
-                            count = 0
+                    ## landing 
+                    if stage == 'land':
+                        ref = traj_gen.hover_test(x_land_offset,y_land_offset,z_land_offset)
+                        hovering_ff = np.array([0.0, 0.0, 0.0])
+                        ref_pos = ref[0]
+                        ref_pos_z = ref_pos[2]
+                        ref_vel = hovering_ff
+                        ref_acc = hovering_ff
+                        ref_jerk = hovering_ff
+                        ref_snap = hovering_ff
+                        ref_msg = ref[1]
+                        count = 0
 
-                        # ff references
-                        monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap,ref_pos_z)
-                        # p control
-                        auto_cyclic = p_control_input(linear_state_vector, kp, kvp, ki, ref_pos, sample_time) # auto position control
-                        monoco.p_control_input_manual(auto_cyclic)
-                        monoco.v_control_input()
-                    else:
-                        monoco.p_control_input_manual(manual_cyclic) # update the manual cyclic inputs
-                        #monoco.v_control_input()
+                    # ff references
+                    monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap,ref_pos_z)
+                    # p control
+                    auto_cyclic = p_control_input(linear_state_vector, kp, kvp, ki, ref_pos, sample_time) # auto position control
+                    monoco.p_control_input_manual(auto_cyclic)
+                    monoco.v_control_input()
+                else:
+                    monoco.p_control_input_manual(manual_cyclic) # update the manual cyclic inputs
+                    #monoco.v_control_input()
 
                     
 

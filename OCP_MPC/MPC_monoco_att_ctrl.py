@@ -15,7 +15,7 @@ import SAM
 
 
 class att_ctrl(object):
-    def __init__(self, body_rate_rate_gains, monoco):
+    def __init__(self, body_rate_rate_gains, q_cost, r_cost, monoco):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -67,6 +67,7 @@ class att_ctrl(object):
 
         # model
         self.monoco = monoco
+        self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, model_name=self.monoco.monoco_name+"_monoco_acados_mpc", q_cost=q_cost, r_cost=r_cost)
 
 
     def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,ref_pos_z):
@@ -101,98 +102,6 @@ class att_ctrl(object):
     def p_control_input_manual(self,manual_input):
         self.p_control_signal = manual_input
     
-
-    def p_control_input(self,sampling_dt):
-        # control gains
-        p_gains = self.kp # p_gains = ([kpx, kpy, kpz])
-        d_gains = self.kd # d_gains = ([kpx, kpy, kpz])
-        i_gains = self.ki # i_gains = ([kpx, kpy, kpz])
-        
-        #I_term_z_prior = 0.0
-        #I_term_prior = np.array([0.0, 0.0, I_term_z_prior])
-
-        position_error = self.ref_pos - self.robot_pos # calculate position error
-        rate_posiition_error = (position_error - self.position_error_last)/sampling_dt
-        #integral_error = (position_error*sampling_dt) + I_term_prior
-        #self.position_error_last = position_error
-        
-        # position pid controller
-        #self.p_control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error) + (i_gains * integral_error) 
-        #self.p_control_signal = np.multiply(p_gains,position_error) 
-        self.p_control_signal = (p_gains * position_error) + (d_gains * rate_posiition_error)
-
-        # position control loop saturation
-        if abs(self.p_control_signal[0]) > 1.0:
-            self.p_control_signal[0] = 1.0*(self.p_control_signal[0]/abs(self.p_control_signal[0]))
-        if abs(self.p_control_signal[1]) > 1.0:
-            self.p_control_signal[1] = 1.0*(self.p_control_signal[1]/abs(self.p_control_signal[1]))    
-        self.p_control_signal[2] = 1.0
-
-        #self.p_control_signal = np.array([0.0,0.0,1.0]) # abt x y z
-        #self.p_control_signal = manual_input
-
-
-    def v_control_input(self):
-        #vel_gains_p = self.kpvel
-
-        # add in vel controller
-        #v_ref = self.ref_vel
-        #v_error = v_ref - self.robot_vel
-        #v_rate_error = (v_error - self.velocity_error_last)/sampling_dt
-        #v_integral_error = (v_error*sampling_dt)
-        #self.velocity_error_last = v_error
-        #self.v_control_signal = vel_gains_p * v_error
-
-        # ref acceleration
-        ref_acc = np.array([self.ref_acc[0],self.ref_acc[1],0.0])
-        
-        # w acceleration references
-        # self.v_control_signal = self.v_control_signal + ref_acc # abt x y z
-        self.v_control_signal = ref_acc # abt x y z
-
-
-    def collective_thrust(self,kpz,kdz,kiz): 
-        # weight of the robot
-        robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
-        self.z_error = self.ref_pos_z - self.robot_pos[2]
-        rate_position_error_z = (self.z_error - self.position_error_last[2])/self.dt
-        integral_error_z = (self.z_error*self.dt)
-        self.position_error_last[2] = self.z_error 
-
-        p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
-        
-        self.des_rps = p_error_z
-        if self.lift_rotation_wo_rps == 0.0:
-            des_thrust = 0.0
-        else:
-            des_thrust = self.lift_rotation_wo_rps*(self.yawrate**2)
-        self.cmd_z = des_thrust
-
-        if self.des_rps > 55500:
-            self.des_rps = 55500
-
-        return (self.des_rps,self.cmd_z)
-    
-
-    def manual_collective_thrust(self,kpz,kdz,kiz,manual_thrust): 
-        # weight of the robot
-        robot_mg = np.array([0.0,0.0,self.mass*self.g]) # robot weight, cf = 47500
-        self.z_error = self.ref_pos_z - self.robot_pos[2]
-        rate_position_error_z = (self.z_error - self.position_error_last[2])/self.dt
-        integral_error_z = (self.z_error*self.dt)
-        self.position_error_last[2] = self.z_error 
-
-        p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
-        
-        self.des_rps = p_error_z + manual_thrust
-        if self.lift_rotation_wo_rps == 0.0:
-            des_thrust = 0.0
-        else:
-            des_thrust = self.lift_rotation_wo_rps*(self.yawrate**2)
-        self.cmd_z = des_thrust
-
-        return (self.des_rps,self.cmd_z)
-        
 
     def body_rate_loop(self,cascaded_ref_bod_rates):
         kpr = self.kpr
