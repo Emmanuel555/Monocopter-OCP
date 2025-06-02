@@ -104,9 +104,10 @@ def transmitter_calibration():
     a2 = joystick.get_axis(2)  # thrust
     a3 = joystick.get_axis(3)
 
-    button0 = joystick.get_button(0)
-    button1 = joystick.get_button(1)
-
+     button0 = joystick.get_axis(5)
+    button1 = joystick.get_axis(6)
+    button2 = joystick.get_axis(4)
+    
     # thrust from control pad
     conPad = int((a2 - highest) * rate)
 
@@ -123,8 +124,9 @@ def transmitter_calibration():
         enable = 1
 
     cmd = conPad*enable*button0 # thrust
+    #print(f"Joystick_axes available: {joystick.get_numaxes()}")
 
-    return (cmd, button0, button1, a0, a1, enable)
+    return (cmd, button0, button1, a0, a1, enable, conPad, button2)
 
 
 def p_control_input(linear_pos,kp,kv,ki,ref_pos,dt):
@@ -158,7 +160,7 @@ def ref_manual_ctrl(a0,a1,af):
     control_x = a0
     control_y = a1
     #control_z = math.sqrt(1 - (control_x ** 2 + control_y ** 2))
-    control_z = 1.0
+    control_z = 1.0 # to include in MPC?
 
     #cmd = np.array([d_x_pad, d_y_pad, d_z_pad])  # roll, pitch, yawrate, thrust
     cmd = np.array([control_x, control_y, control_z])  # roll, pitch, yawrate, thrust
@@ -321,7 +323,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.1, 0.1, 0.1])
+    r_cost = np.array([0.01, 0.01, 0.01])
 
 
      # Initialize references
@@ -444,7 +446,7 @@ if __name__ == '__main__':
                 a1 = tx_cmds[4]
                 af = 80 # aggression factor
 
-                # update references for manual control...contd tmr hiaz
+                # update references for manual control
                 manual_cyclic = ref_manual_ctrl(a0, a1, af) # manual position control 
                 
                 if button1 == 1:
@@ -499,7 +501,7 @@ if __name__ == '__main__':
                     monoco.v_control_input()
                 else:
                     monoco.p_control_input_manual(manual_cyclic) # update the manual cyclic inputs
-                    #monoco.v_control_input()
+                    ## test hovering first
 
                     
 

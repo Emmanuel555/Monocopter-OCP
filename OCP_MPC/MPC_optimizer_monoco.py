@@ -245,7 +245,7 @@ class Monoco_Optimizer(object):
         self.target = copy(x_target) # list
 
         ref = np.concatenate([x_target[i] for i in range(4)])
-        ref = np.concatenate((ref, u_target))
+        ref = np.concatenate((ref, u_target)) # tries to minimise the control input
 
         # ref state/traj is updated here into the ocp solver where self.N is 20
         for j in range(self.N):
@@ -271,20 +271,19 @@ class Monoco_Optimizer(object):
         x_init = initial_state
         x_init = np.stack(x_init)
 
-        # Input initial states
+        ## Input initial states
         self.acados_ocp_solver.set(0, 'lbx', x_init) # lower bounds 
         self.acados_ocp_solver.set(0, 'ubx', x_init) # upper bounds 
 
-        # note, cannot predict using dynamic model cos mpc setup cant be iterated, only params can wo compiling..
-        # somehow, the update must be done externally either via p or x 
+        ## note, cannot predict using dynamic model cos mpc setup cant be iterated, only params can wo compiling..
+        ## somehow, the update must be done externally either via p or x 
+        
+        ## how to change parameter P:
+        #aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0, 0.0] + [v_b[0],v_b[1],v_b[2]] + [0.0, 0.0, 0.0]
+        #aug_state = np.stack(aug_state)
+        #self.acados_ocp_solver[use_model].set(0, 'p', aug_state) # aug_state taken from above    
 
-        # Solve OCP
-
-        ## how to change parameter P
-        #state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0, 0.0] + [v_b[0],v_b[1],v_b[2]] + [0.0, 0.0, 0.0]
-        #state = np.stack(state)
-        #self.acados_ocp_solver[use_model].set(0, 'p', state) # needs testing     
-
+        ## Solve OCP
         self.acados_ocp_solver.solve()
 
         # Get u
@@ -292,10 +291,10 @@ class Monoco_Optimizer(object):
         x_opt_acados = np.ndarray((self.N + 1, len(x_init))) # N +1 due to terminal state
         x_opt_acados[0, :] = self.acados_ocp_solver.get(0, "x") # same dim and same values as initial state aka x_init
         for i in range(self.N):
-            w_opt_acados[i, :] = self.acados_ocp_solver.get(i, "u") # thrusters x 4 = collective thrust 
+            w_opt_acados[i, :] = self.acados_ocp_solver.get(i, "u") # roll, pitch, collective thrust 
             x_opt_acados[i + 1, :] = self.acados_ocp_solver.get(i + 1, "x") # states output - same dim as initial state but the back 3 are taken as body rates aka angular velocity
 
-        w_opt_acados = np.reshape(w_opt_acados, (-1)) # first 3 values amount to roll, pitch, and thrust
+        w_opt_acados = np.reshape(w_opt_acados, (-1)) # first 3 values amount to roll, pitch, and thrust (only take this...)
         return (w_opt_acados, x_opt_acados)
 
 

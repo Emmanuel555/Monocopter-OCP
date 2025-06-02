@@ -1,5 +1,5 @@
 import time
-
+import pygame
 import Utils.Mocap as Mocap
 import Utils.DataSave as DataSave
 import Localization.Data_process as Data_process
@@ -9,101 +9,93 @@ import math
 import numpy.linalg as la
 from pyrr import quaternion
 
+
+def transmitter_calibration():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            done = True
+
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    lowest = 0.97
+    highest = -1
+    range_js = -(highest - lowest)
+    range_motor = 65535
+    rate = range_motor / range_js
+    a0 = joystick.get_axis(0)  # x axis right hand <- ->
+    a1 = joystick.get_axis(1)  # y axis right hand up down
+    a2 = joystick.get_axis(2)  # thrust
+    a3 = joystick.get_axis(3)
+
+    button0 = joystick.get_axis(5)
+    button1 = joystick.get_axis(6)
+    button2 = joystick.get_axis(4)
+    
+    # thrust from control pad
+    conPad = int((a2 - highest) * rate)
+
+    # throttle joystick saturation
+    if conPad < 10:
+        conPad = 10
+    if conPad > 65500:
+        conPad = 65500
+
+    # takeoff sign
+    if conPad < 2000:
+        enable = 0
+    else:
+        enable = 1
+
+    cmd = conPad*enable*button0 # thrust
+    print(f"Joystick_axes available: {joystick.get_numaxes()}")
+
+    return (cmd, button0, button1, a0, a1, enable, conPad, button2)
+
+
 if __name__ == '__main__':
 
-    data_receiver_sender = Mocap.Udp()
-    sample_rate = data_receiver_sender.get_sample_rate()
-    sample_time = 1 / sample_rate
-    ##data_processor = Data_process_swarm.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
-    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
-
-    data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ_raw','Monocopter_XYZ','tpp_roll','tpp_pitch','body_yaw_deg')    
-      
     time_start = time.time()
     time_end = time_start + 1000
     last_time = 0
-
-    UDP_IP = "192.168.65.221"
-    UDP_PORT = 1234
-    test_cmd_1 = float(3.423)
-    test_cmd_2 = float(4.534)
-    test_cmd_3 = float(5.645)
-    test_cmd_4 = float(6.756)
-    final_cmd = np.array([[test_cmd_1,test_cmd_2,test_cmd_3,test_cmd_4]])
-
     count = 0
+
+    # Initialize the joysticks
+    pygame.init()
+    pygame.joystick.init()
+    done = False
+    controllerEnable = False
+    pad_speed = 1
+   
     try:
-        #while time_end > time.time():
         while True:  
             start = timeit.default_timer()  
             abs_time = time.time() - time_start
 
-            # require data from Mocap
-            data = data_receiver_sender.get_data()
+            # dk why need this for python 3.10
+            joystick = pygame.joystick.Joystick(0) # added here to speed up loop
+
+            ## update from transmitter
+            tx_cmds = transmitter_calibration()  # get the joystick commands
+            manual_thrust = tx_cmds[0]  # thrust command
+            button0 = tx_cmds[1]
+            button1 = tx_cmds[2]
+            enable = tx_cmds[5]
+            conPad = tx_cmds[6]
+            button2 = tx_cmds[7]
+
+            a0 = tx_cmds[3]     
+            a1 = tx_cmds[4]
+
+            # if count % 5 == 0:
+            print(f"Thrust: {manual_thrust}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
             
-            # data unpack
-            #data_processor.data_unpack(data)
-            #data_processor.data_filtered()
-            data_processor.data_unpack_filtered(data)
+            #how fast the loop goes at
+            #print("test...")
+            time.sleep(0.05)
+            #count += 1
 
-            # cartesian position
-            pos = data_processor.filted_data
-            #pos = data_processor.raw_data
-            # raw cartesian position
-            pos_raw = data_processor.raw_data
-            
-            # processed tpp data/feedback
-            state_vector = data_processor.get_Omega_dot_dotdot_filt_eul_central_diff()
-            
-            # needa find pitch angle of the body during hover
-            # data_processor.get_rotm_filtered()
-            tpp_angle = data_processor.tpp 
-            tpp_omega = data_processor.Omega
-            tpp_omega_dot = data_processor.Omega_dot
-            body_pitch = data_processor.body_pitch
-            tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
-
-            count = count + 1
-
-            t_diff = abs_time - last_time
-            last_time = abs_time
-
-            tpp_roll = round((tpp_angle[0]*(180/np.pi)),3)
-            tpp_pitch = round((tpp_angle[1]*(180/np.pi)),3)
-
-            yaw = data_processor.yaw
-            yaw_deg = round(yaw*(180/np.pi),2)
-
-            if count % 5 == 0:
-               
-                #print("sampling period and freq: ", t_diff, 1/t_diff) 
-                print("tpp angles in degrees:", tpp_roll, tpp_pitch) # rpy
-                #print("tpp bodypitch:", body_pitch)
-                #print("tpp bodyrates:", tpp_omega) # rpy
-                #print("tpp bodyraterates:", tpp_omega_dot) # rpy
-                print("position: ", pos[0:3])
-                #print("tpp quaternion: ", tpp_quat)
- 
-                print ("yaw_deg: ", yaw_deg)
-
-                #time.sleep(0.05) # impt to pause and see information
-            stop = timeit.default_timer()
-            #print('Program Runtime: ', stop - start)  
-
-            data_saver.add_item(abs_time,
-                                pos_raw[0:3],pos[0:3],tpp_roll,tpp_pitch,yaw_deg)
-            #data_saver.add_item(abs_time,
-            #                    data)
-
-    except KeyboardInterrupt:
-        data_saver.add_item(abs_time,
-                            pos_raw[0:3],pos[0:3],tpp_roll,tpp_pitch,yaw_deg)
-        print('Keyboard interrupt')
+    except KeyboardInterrupt: 
+        print("Exiting the program...")
 
         
-
-# save data
-path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/'
-data_saver.save_data(path)
 

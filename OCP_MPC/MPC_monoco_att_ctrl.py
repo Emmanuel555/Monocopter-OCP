@@ -56,9 +56,10 @@ class att_ctrl(object):
         self.cmd_bod_raterates_final = np.array([0.0,0.0])
         self.cascaded_ref_bod_rates = np.array([0.0,0.0])
 
-        # differential flatness
-        self.ref_rates = np.array([0.0,0.0])
-        self.ref_raterates = np.array([0.0,0.0])
+        # differential flatness - MPC reference states
+        self.ref_att = np.array([0.0,0.0,0.0])
+        self.ref_rates = np.array([0.0,0.0,0.0])
+        self.ref_raterates = np.array([0.0,0.0,0.0])
 
         # attitude error tracking
         self.attitude_error = 0.0
@@ -66,6 +67,7 @@ class att_ctrl(object):
         self.attitude_raterate_error = 0.0
 
         # model
+        self.g = 9.81
         self.monoco = monoco
         self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, model_name=self.monoco.monoco_name+"_monoco_acados_mpc", q_cost=q_cost, r_cost=r_cost)
 
@@ -95,24 +97,24 @@ class att_ctrl(object):
         self.yawrate = yawrate
         
 
-    def update_ref_pos(self, ref_pos):
-        self.ref_pos = ref_pos 
-    
-
     def p_control_input_manual(self,manual_input):
         self.p_control_signal = manual_input
+
+        
+    def opti_ref_states(self):
+        self.ref_acc_att()
+        self.ref_jerk_bod_rates()
+        self.ref_snap_bod_raterate()
+        self.mpc_monoco.set_reference_state(x_target=[self.p_control_signal,self.ref_att,self.ref_vel,self.ref_rates])
     
 
-    def body_rate_loop(self,cascaded_ref_bod_rates):
-        kpr = self.kpr
-        fb = np.array(self.robot_tpp_bod_rate[0:2]) # abt x y z
+    def opti_output_control(self):
+        initial_state = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
+        opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state)
+        control_inputs = opt_output[0]
+        state_outputs = opt_output[1]
+        return (control_inputs, state_outputs)
 
-        # body rate controller
-        cmd_bod_rates_error = cascaded_ref_bod_rates - fb
-        self.attitude_rate_error = cmd_bod_rates_error
-        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error)
-        return (self.cmd_bod_rates_final)
-    
 
     def INDI_loop(self,cascaded_ref_bod_acc):
        
@@ -129,21 +131,6 @@ class att_ctrl(object):
         return (cmd_bod_acc_final)
     
     
-    def get_angle(self): # corrected
-        control_input = self.p_control_signal #+ self.v_control_signal
-        cmd_att = self.attitude_loop(self.robot_quat, control_input)
-        self.cmd_att = cmd_att #rpy
-        return (self.cmd_att)
-    
-
-    def get_body_rate(self,flatness_option):
-        if flatness_option == 0:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
-        else:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att) + self.include_jerk_bod_rates()
-        return (self.cascaded_ref_bod_rates)
-    
-
     def CF_SAM_get_angles_and_thrust(self,enable,flatness_option):
         # output saturation/normalisation
         des_rps = self.des_rps
@@ -193,22 +180,31 @@ class att_ctrl(object):
         return (cmd_bod_acc)
 
 
-    def include_jerk_bod_rates(self):
+    def ref_acc_att(self):
+        ay = self.ref_acc[0]/self.g
+        ax = self.ref_acc[1]/(-1*self.g)
+        
+        ref_att = np.array([ay,ax,0]) # flattened array abt x y z
+        self.ref_att = ref_att 
+        
+        return ref_att    
+
+
+    def ref_jerk_bod_rates(self):
         wy = self.ref_jer[0]/self.g
         wx = self.ref_jer[1]/(-1*self.g)
         
-        ref_bod_rates = np.array([wy,wx]) # flattened array abt x y z
+        ref_bod_rates = np.array([wy,wx,0]) # flattened array abt x y z
         self.ref_rates = ref_bod_rates 
         
-        #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
         return ref_bod_rates
     
 
-    def include_snap_bod_raterate(self):
+    def ref_snap_bod_raterate(self):
         wy_dot = self.ref_sna[0]/self.g
         wx_dot = self.ref_sna[1]/(-1*self.g)
         
-        ref_bod_raterate = np.array([wy_dot,wx_dot]) # flattened array abt x y z
+        ref_bod_raterate = np.array([wy_dot,wx_dot,0]) # flattened array abt x y z
         self.ref_raterates = ref_bod_raterate
 
         #self.cmd_bod_rates = self.kpr*(ref_bod_rates - self.last_angular_rate)
