@@ -55,7 +55,7 @@ class SAM(object):
 
         # Monocopter's intrinsic parameters as a disk
         if monoco_name == 'short':
-            self.J = np.array([1/100000,1/100000,1/1000000])  # N m s^2 = kg m^2
+            self.J = np.array([1/100000,1/100000,0.0])  # N m s^2 = kg m^2
             self.mass = 0.064  # kg
         elif monoco_name == 'long':
             self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
