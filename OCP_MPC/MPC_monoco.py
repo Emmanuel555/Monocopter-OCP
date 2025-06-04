@@ -505,7 +505,7 @@ if __name__ == '__main__':
                     ref_msg = 'Manual_flight'
                     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
                     monoco.p_control_input_manual(ref_pos) # update the ref states
-                    ## test hovering first
+                    ## test manual flight first
 
 
                 # from att ctrl
