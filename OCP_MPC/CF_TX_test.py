@@ -27,9 +27,9 @@ def transmitter_calibration():
     a2 = joystick.get_axis(2)  # thrust
     a3 = joystick.get_axis(3)
 
-    button0 = joystick.get_axis(5)
-    button1 = joystick.get_axis(6)
-    button2 = joystick.get_axis(4)
+    button0 = round(joystick.get_axis(5))
+    button1 = round(joystick.get_axis(6))
+    button2 = round(joystick.get_axis(4))
     
     # thrust from control pad
     conPad = int((a2 - highest) * rate)

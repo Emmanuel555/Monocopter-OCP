@@ -5,7 +5,6 @@ import Utils.Mocap as Mocap
 import Utils.DataSave as DataSave
 
 import math
-from scipy.optimize import fsolve
 from pyrr import quaternion
 import numpy as np
 import numpy.linalg as la

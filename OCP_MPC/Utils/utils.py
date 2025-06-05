@@ -23,10 +23,6 @@ import random
 import pyquaternion
 import numpy as np
 import casadi as cs
-from sklearn import preprocessing
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from scipy.interpolate.interpolate import interp1d
 from config.configuration_parameters import DirectoryConfig as GPConfig
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as XMLtree
@@ -236,30 +232,6 @@ def load_pickled_models(directory='', file_name='', model_options=None):
     return pre_trained_models
 
 
-def interpol_mse(t_1, x_1, t_2, x_2, n_interp_samples=1000):
-    if np.all(t_1 == t_2):
-        return np.mean(np.sqrt(np.sum((x_1 - x_2) ** 2, axis=1)))
-
-    assert x_1.shape[1] == x_2.shape[1]
-
-    t_min = max(t_1[0], t_2[0])
-    t_max = min(t_1[-1], t_2[-1]) 
-
-    t_interp = np.linspace(t_min, t_max, n_interp_samples)
-    err = np.zeros((n_interp_samples, x_1.shape[1]))
-
-    for dim in range(x_1.shape[1]):
-        x1_interp = interp1d(t_1, x_1[:, dim], kind='cubic') # x, y have to be np.array
-        x2_interp = interp1d(t_2, x_2[:, dim], kind='cubic')
-
-        x1_sample = x1_interp(t_interp)
-        x2_sample = x2_interp(t_interp)
-
-        err[:, dim] = x1_sample - x2_sample
-
-    return np.mean(np.sqrt(np.sum(err ** 2, axis=1)))
-
-
 def error_tracking_rmse(error_array,data_size): # solely for position alone 
     error_sampled = error_array[len(error_array)-data_size:,:3]
     error_listed = np.reshape(error_sampled[np.newaxis,:], (data_size,3))
@@ -331,10 +303,10 @@ def unit_quat(q):
     return 1 / q_norm * q
 
 
-def v_dot_q(v, q):
+def v_dot_q(v, q): # vertcat and numpy cannot go tgt, must be pure
     rot_mat = q_to_rot_mat(q) # quarternion to euler rotation mat
-    if isinstance(q, np.ndarray):
-        return rot_mat.dot(v)
+    #if isinstance(q, np.ndarray):
+    #    return rot_mat.dot(v) # this assumes v is a numpy array
 
     return cs.mtimes(rot_mat, v) # rotation matrix x v
 
@@ -342,17 +314,18 @@ def v_dot_q(v, q):
 def q_to_rot_mat(q):
     qw, qx, qy, qz = q[0], q[1], q[2], q[3]
 
-    if isinstance(q, np.ndarray):
+    """ if isinstance(q, np.ndarray):
         rot_mat = np.array([
             [1 - 2 * (qy ** 2 + qz ** 2), 2 * (qx * qy - qw * qz), 2 * (qx * qz + qw * qy)],
             [2 * (qx * qy + qw * qz), 1 - 2 * (qx ** 2 + qz ** 2), 2 * (qy * qz - qw * qx)],
             [2 * (qx * qz - qw * qy), 2 * (qy * qz + qw * qx), 1 - 2 * (qx ** 2 + qy ** 2)]])
 
-    else:
-        rot_mat = cs.vertcat(
-            cs.horzcat(1 - 2 * (qy ** 2 + qz ** 2), 2 * (qx * qy - qw * qz), 2 * (qx * qz + qw * qy)),
-            cs.horzcat(2 * (qx * qy + qw * qz), 1 - 2 * (qx ** 2 + qz ** 2), 2 * (qy * qz - qw * qx)),
-            cs.horzcat(2 * (qx * qz - qw * qy), 2 * (qy * qz + qw * qx), 1 - 2 * (qx ** 2 + qy ** 2)))
+    else: """
+
+    rot_mat = cs.vertcat(
+        cs.horzcat(1 - 2 * (qy ** 2 + qz ** 2), 2 * (qx * qy - qw * qz), 2 * (qx * qz + qw * qy)),
+        cs.horzcat(2 * (qx * qy + qw * qz), 1 - 2 * (qx ** 2 + qz ** 2), 2 * (qy * qz - qw * qx)),
+        cs.horzcat(2 * (qx * qz - qw * qy), 2 * (qy * qz + qw * qx), 1 - 2 * (qx ** 2 + qy ** 2)))
 
     return rot_mat
 

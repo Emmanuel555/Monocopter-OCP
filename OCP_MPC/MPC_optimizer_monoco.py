@@ -70,73 +70,73 @@ class Monoco_Optimizer(object):
         self.monoco_nom_model = self.disk_dynamics() 
         
         # Setup acados model
-        monoco_acados_model, nominal_monoco_dynamics = self.acados_setup_model(
-            self.disk_dynamics(x=self.x, u=self.u)['x_dot'], model_name) # inputs of state and control input
+        #monoco_acados_model, nominal_monoco_dynamics = self.acados_setup_model(
+        #    self.disk_dynamics(x=self.x, u=self.u)['x_dot'], model_name) # inputs of state and control input
        
-        # Convert to Q_diag matrix
-        q_diagonal = np.diag(q_cost)
+        # # Convert to Q_diag matrix
+        # q_diagonal = np.diag(q_cost)
 
-        # Ensure current working directory is current folder
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
-        self.acados_models_dir = '../../acados_models'
-        safe_mkdir_recursive(os.path.join(os.getcwd(), self.acados_models_dir))
+        # # Ensure current working directory is current folder
+        # os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        # self.acados_models_dir = '../../acados_models'
+        # safe_mkdir_recursive(os.path.join(os.getcwd(), self.acados_models_dir))
 
-        # Setup Acados OCP
-        nx = monoco_acados_model.x.size()[0] # initial state - beginning of the series of nodes = 12
-        nu = monoco_acados_model.u.size()[0] # initial inputs = 3
-        ny = nx + nu
-        n_param = monoco_acados_model.p.size()[0] if isinstance(monoco_acados_model.p, cs.MX) else 0
+        # # Setup Acados OCP
+        # nx = monoco_acados_model.x.size()[0] # initial state - beginning of the series of nodes = 12
+        # nu = monoco_acados_model.u.size()[0] # initial inputs = 3
+        # ny = nx + nu
+        # n_param = monoco_acados_model.p.size()[0] if isinstance(monoco_acados_model.p, cs.MX) else 0
 
-        # Create OCP object to formulate the optimization OCP = Optimal control problem
-        ocp = AcadosOcp()
+        # # Create OCP object to formulate the optimization OCP = Optimal control problem
+        # ocp = AcadosOcp()
        
-        ocp.model = monoco_acados_model# acados model is updated here...
-        ocp.dims.N = self.N # time horizon / opt_dt
-        ocp.solver_options.tf = t_horizon
+        # ocp.model = monoco_acados_model# acados model is updated here...
+        # ocp.dims.N = self.N # time horizon / opt_dt
+        # ocp.solver_options.tf = t_horizon
 
-        # Initialize parameters
-        ocp.dims.np = n_param # 12
-        ocp.parameter_values = np.zeros(n_param) # initialise parameters as zeros
+        # # Initialize parameters
+        # ocp.dims.np = n_param # 12
+        # ocp.parameter_values = np.zeros(n_param) # initialise parameters as zeros
 
-        ocp.cost.cost_type = 'LINEAR_LS'
-        ocp.cost.cost_type_e = 'LINEAR_LS'
+        # ocp.cost.cost_type = 'LINEAR_LS'
+        # ocp.cost.cost_type_e = 'LINEAR_LS'
 
-        # Formulate the LQR problem here ***********
-        ocp.cost.W = np.diag(np.concatenate((q_diagonal, r_cost)))
-        ocp.cost.W_e = np.diag(q_diagonal)
-        terminal_cost = 0 if solver_options is None or not solver_options["terminal_cost"] else 1
-        ocp.cost.W_e *= terminal_cost
+        # # Formulate the LQR problem here ***********
+        # ocp.cost.W = np.diag(np.concatenate((q_diagonal, r_cost)))
+        # ocp.cost.W_e = np.diag(q_diagonal)
+        # terminal_cost = 0 if solver_options is None or not solver_options["terminal_cost"] else 1
+        # ocp.cost.W_e *= terminal_cost
 
-        ocp.cost.Vx = np.zeros((ny, nx))
-        ocp.cost.Vx[:nx, :nx] = np.eye(nx)
-        ocp.cost.Vu = np.zeros((ny, nu))
-        ocp.cost.Vu[-3:, -3:] = np.eye(nu)
+        # ocp.cost.Vx = np.zeros((ny, nx))
+        # ocp.cost.Vx[:nx, :nx] = np.eye(nx)
+        # ocp.cost.Vu = np.zeros((ny, nu))
+        # ocp.cost.Vu[-3:, -3:] = np.eye(nu)
 
-        ocp.cost.Vx_e = np.eye(nx)
+        # ocp.cost.Vx_e = np.eye(nx)
 
-        # Initial reference trajectory (will be overwritten)
-        x_ref = np.zeros(nx)
-        ocp.cost.yref = np.concatenate((x_ref, np.array([0.0, 0.0, 0.0]))) # concatenates with control inputs
-        ocp.cost.yref_e = x_ref # terminal shooting node 
+        # # Initial reference trajectory (will be overwritten)
+        # x_ref = np.zeros(nx)
+        # ocp.cost.yref = np.concatenate((x_ref, np.array([0.0, 0.0, 0.0]))) # concatenates with control inputs
+        # ocp.cost.yref_e = x_ref # terminal shooting node 
 
-        # Initial state (will be overwritten) initial conditions can be updated here 
-        ocp.constraints.x0 = x_ref
+        # # Initial state (will be overwritten) initial conditions can be updated here 
+        # ocp.constraints.x0 = x_ref
 
-        # Set constraints
-        ocp.constraints.lbu = np.array([self.min_u] * 3)
-        ocp.constraints.ubu = np.array([self.max_u] * 3)
-        ocp.constraints.idxbu = np.array([0, 1, 2])
+        # # Set constraints
+        # ocp.constraints.lbu = np.array([self.min_u] * 3)
+        # ocp.constraints.ubu = np.array([self.max_u] * 3)
+        # ocp.constraints.idxbu = np.array([0, 1, 2])
 
-        # Solver options
-        ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
-        ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'
-        ocp.solver_options.integrator_type = 'ERK'
-        ocp.solver_options.print_level = 0
-        ocp.solver_options.nlp_solver_type = 'SQP_RTI' if solver_options is None else solver_options["solver_type"]
+        # # Solver options
+        # ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
+        # ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'
+        # ocp.solver_options.integrator_type = 'ERK'
+        # ocp.solver_options.print_level = 0
+        # ocp.solver_options.nlp_solver_type = 'SQP_RTI' if solver_options is None else solver_options["solver_type"]
 
-        # Compile acados OCP solver if necessary
-        json_file = os.path.join(self.acados_models_dir, model_name + '_acados_ocp.json')
-        self.acados_ocp_solver = AcadosOcpSolver(ocp, json_file=json_file) # label and initialise the acadosolver here where ocp refers to the acados object
+        # # Compile acados OCP solver if necessary
+        # json_file = os.path.join(self.acados_models_dir, model_name + '_acados_ocp.json')
+        # self.acados_ocp_solver = AcadosOcpSolver(ocp, json_file=json_file) # label and initialise the acadosolver here where ocp refers to the acados object
 
 
 
@@ -196,6 +196,7 @@ class Monoco_Optimizer(object):
         Inputs: 'x' state of Monocopter (12x1) and 'u' control input (4x1). Output: differential state vector 'x_dot'
         (12x1)
         """
+        
         x_dot = cs.vertcat(self.p_dot_dynamics(), self.ang_dot_dynamics(), self.v_dot_dynamics(), self.w_dot_dynamics()) # 12 x 1
         return cs.Function('x_dot', [self.x[:12], self.u], [x_dot], ['x', 'u'], ['x_dot']) # function (name, args, function/output, [options])
 
@@ -215,7 +216,7 @@ class Monoco_Optimizer(object):
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy
         a_thrust = cs.vertcat(0.0, 0.0, cyclic[0] + cyclic[1] + collective[0]) / self.monoco.mass
 
-        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame
+        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame 
 
         return a_dynamics
 
