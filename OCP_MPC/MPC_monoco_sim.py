@@ -8,6 +8,8 @@ import timeit
 import math
 import numpy.linalg as la
 from pyrr import quaternion
+
+# specific to MPC 
 import SAM
 import MPC_monoco_att_ctrl
 
@@ -42,7 +44,8 @@ if __name__ == '__main__':
     monoco_type = SAM.SAM(monoco_name)
     # MPC Monoco INDI Control & Optimizer
     monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type)
-   
+
+    
     try:
         while True:  
             print("Starting the MPC Monoco simulation...")
