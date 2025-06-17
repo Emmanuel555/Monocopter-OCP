@@ -69,6 +69,7 @@ class Monoco_Optimizer(object):
         # Disk dynamics
         self.monoco_nom_model = self.disk_dynamics() 
         self.monoco_nom_model = self.monoco_nom_model(x=self.x, u=self.u)
+        self.output_shape = self.monoco_nom_model['x_dot'].shape
 
         # Setup acados model
         monoco_acados_model, nominal_monoco_dynamics = self.acados_setup_model(
@@ -130,6 +131,9 @@ class Monoco_Optimizer(object):
         # Compile acados OCP solver if necessary
         self.acados_ocp_solver = AcadosOcpSolver(ocp, json_file=model_name + '_acados_ocp.json') # label and initialise the acadosolver here where ocp refers to the acados object
 
+
+    def ocp_stats(self):
+        print (f"Nom shape: {self.output_shape}")
 
 
     def acados_setup_model(self, nominal, model_name):

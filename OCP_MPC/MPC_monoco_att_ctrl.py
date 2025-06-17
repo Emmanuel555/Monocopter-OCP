@@ -67,8 +67,12 @@ class att_ctrl(object):
         # model
         self.g = 9.81
         self.monoco = monoco
-        self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, model_name=self.monoco.monoco_name+"_monoco_acados_mpc", q_cost=q_cost, r_cost=r_cost)
+        self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, model_name=self.monoco.monoco_name, q_cost=q_cost, r_cost=r_cost)
 
+
+    def ocp_stats(self):
+        self.mpc_monoco.ocp_stats()
+        
 
     def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna):
         self.ref_pos = ref_pos
@@ -141,6 +145,7 @@ class att_ctrl(object):
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
         self.cascaded_ref_bod_rates = cyclic/self.monoco.J[0] 
         cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        raw_cmd_bod_acc = cmd_bod_acc
     
         ## to account for phase delay
         x_sign = math.sin(self.yaw)
@@ -163,7 +168,7 @@ class att_ctrl(object):
         elif final_motor_output < 10:
             final_motor_output = 10
 
-        return (final_motor_output, cmd_bod_acc, des_rps)
+        return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
 
 
     def ref_acc_att(self):

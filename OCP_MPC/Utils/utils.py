@@ -23,7 +23,6 @@ import random
 import pyquaternion
 import numpy as np
 import casadi as cs
-from config.configuration_parameters import DirectoryConfig as GPConfig
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as XMLtree
 
