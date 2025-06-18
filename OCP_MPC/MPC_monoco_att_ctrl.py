@@ -14,7 +14,7 @@ import SAM
 
 
 class att_ctrl(object):
-    def __init__(self, body_rate_rate_gains, q_cost, r_cost, monoco):
+    def __init__(self, body_rate_rate_gains, q_cost, r_cost, monoco, time_horizon, nodes):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -67,7 +67,9 @@ class att_ctrl(object):
         # model
         self.g = 9.81
         self.monoco = monoco
-        self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, model_name=self.monoco.monoco_name, q_cost=q_cost, r_cost=r_cost)
+        self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, 
+                                                                model_name=self.monoco.monoco_name, q_cost=q_cost, 
+                                                                r_cost=r_cost, t_horizon=time_horizon, n_nodes=nodes)
 
 
     def ocp_stats(self):
@@ -169,6 +171,49 @@ class att_ctrl(object):
             final_motor_output = 10
 
         return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
+    
+
+    def test_MPC_SIM_get_angles_and_thrust(self):
+        # run entire MPC-SAM loop
+        opti_outputs = self.opti_output_control()
+        control_inputs = opti_outputs[0]
+        state_outputs = opti_outputs[1]
+
+        # collective thrust
+        des_rps = control_inputs[2] * self.monoco.max_thrust_collective
+        des_rps = des_rps * self.monoco.cf_max
+
+        # cyclic
+        cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
+        cyclic = cyclic * self.monoco.cf_max
+        
+        #self.cascaded_ref_bod_rates = cyclic/self.monoco.J[0] 
+        #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        #raw_cmd_bod_acc = cmd_bod_acc
+    
+        # ## to account for phase delay
+        # x_sign = math.sin(self.yaw)
+        # y_sign = math.cos(self.yaw)
+
+        # cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
+        # cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
+        
+        # # output saturation (cmd_att)
+        # if abs(cmd_bod_acc[0]) > 10000:
+        #     cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
+        # if abs(cmd_bod_acc[1]) > 10000:
+        #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
+
+        # final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
+
+        # # motor saturation
+        # if final_motor_output > 65500:
+        #     final_motor_output = 65500
+        # elif final_motor_output < 10:
+        #     final_motor_output = 10
+
+        # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
+        return (cyclic, des_rps, control_inputs)
 
 
     def ref_acc_att(self):

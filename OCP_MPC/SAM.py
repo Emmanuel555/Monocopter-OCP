@@ -47,8 +47,8 @@ class SAM(object):
         self.max_thrust_collective = 55500/self.cf_max 
 
         # Max & min PWM inputs for the motor 
-        self.max_input_value = 65500/self.cf_max  # Motors at full thrust
-        self.min_input_value = 10/self.cf_max  # Motors turned off
+        self.max_input_value = 65500/self.cf_max  # Motors at full thrust = 1
+        self.min_input_value = -65500/self.cf_max  # Motors turned off = -1
 
         # Monoco name 
         self.monoco_name = monoco_name

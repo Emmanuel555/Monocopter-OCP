@@ -21,7 +21,7 @@ if __name__ == '__main__':
     count = 0
 
     # position
-    kp = np.array([1.3,1.3,1.3])
+    kp = np.array([0.5,0.5,0.5])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -37,25 +37,31 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.01, 0.01, 0.01])
+    r_cost = np.array([0.01, 0.01, 0.05])
+
+    # Solver terms
+    t_horizon = 1/20 # 20 Hz
+    Nodes = 20 
 
     # MPC Monoco Model
     monoco_name = "short"
     monoco_type = SAM.SAM(monoco_name)
-    # MPC Monoco INDI Control & Optimizer
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type)
 
+    # MPC Monoco INDI Control & Optimizer
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
+    
+    time_last = time.time()
     
     try:
         while True:  
-
-            # print("Starting the MPC Monoco simulation...")
+            start = timeit.default_timer() 
+            abs_time = time.time() - time_last
 
             # update positions
             linear_state_vector = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
             rotational_state_vector = [[0,0,0],[0,0,0],[0,0,0]]
             tpp_quat = [[0,0,0,1],[0,0,0,1],[0,0,0,1]]
-            dt = 1/250
+            dt = 1/20
             z_offset = 0.0
             body_yaw = 0.0 # hold on to this first
             yawrate = 11.2 # 11.2 hz
@@ -76,13 +82,17 @@ if __name__ == '__main__':
             monoco.p_control_input_manual(ref_pos) # update the ref states
 
             # from att ctrl
-            control_outputs = monoco.MPC_SAM_get_angles_and_thrust()
-            raw_cmd_bod_acc = control_outputs[3]
-            
-            # att_raterate_error = monoco.attitude_raterate_error
-            
-            print(f"control inputs are: {raw_cmd_bod_acc} and size is: {raw_cmd_bod_acc.shape}")
-            
+            outputs = monoco.test_MPC_SIM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+            motor2torque = outputs[0]
+            des_rps = outputs[1]
+            motor_soln = outputs[2]
+
+            print(f"Roll pitch control inputs are: {motor2torque}, and size is: {motor2torque.shape}, des_rps is {des_rps}, motor_soln size is {motor_soln.shape}")
+            stop = timeit.default_timer()
+            time_last = time.time()
+            print(f"Program Runtime: {stop - start}, Program running at: {1/abs_time} Hz") 
+
+            time.sleep(0.0495)
             #monoco.ocp_stats()
 
     except KeyboardInterrupt: 

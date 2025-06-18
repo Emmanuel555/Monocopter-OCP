@@ -20,7 +20,7 @@ from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
 from Utils.utils import skew_symmetric, v_dot_q, safe_mkdir_recursive, quaternion_inverse, euler_to_quaternion
 
 class Monoco_Optimizer(object):
-    def __init__(self, monoco_type, t_horizon=1, n_nodes=20,
+    def __init__(self, monoco_type, t_horizon=None, n_nodes=None,
                  q_cost=None, r_cost=None,
                  model_name="monoco_acados_mpc", solver_options=None): # insert one more argument here to show that I am using the ith iterated gp...
         
@@ -40,6 +40,10 @@ class Monoco_Optimizer(object):
             q_cost = np.array([10, 10, 10, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05])
         if r_cost is None:
             r_cost = np.array([0.1, 0.1, 0.1])
+        if t_horizon is None:
+            t_horizon = 1
+        if n_nodes is None:
+            n_nodes = 20            
 
         self.T = t_horizon  # Time horizon needs to change 
         self.N = n_nodes  # number of control nodes within horizon - between initial time & time horizon, default value is 20 
@@ -209,7 +213,7 @@ class Monoco_Optimizer(object):
         collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
-        a_thrust = cs.vertcat(0.0, 0.0, cyclic[0] + cyclic[1] + collective[0]) / self.monoco.mass
+        a_thrust = cs.vertcat(0.0, 0.0, cyclic[0] + cyclic[1] + collective[0]) / self.monoco.mass # convert to m/s^2
 
         a_dynamics = v_dot_q(a_thrust, quat) - g # W frame 
 
@@ -245,7 +249,7 @@ class Monoco_Optimizer(object):
 
         # ref state/traj is updated here into the ocp solver where self.N is 20
         for j in range(self.N):
-            self.acados_ocp_solver.set(j, "yref", ref)
+            self.acados_ocp_solver.set(j, "yref", ref) # initial and intermediate shooting nodes 0 to N-1
         self.acados_ocp_solver.set(self.N, "yref", ref[:-3]) # terminal ref doesnt include control inputs
 
         # returns x_target + u_target
@@ -257,7 +261,7 @@ class Monoco_Optimizer(object):
         Optimizes a trajectory to reach the pre-set target state, starting from the input initial state, that minimizes
         the quadratic cost function and respects the constraints of the system
 
-        :param initial_state: 13-element list of the initial state. If None, 0 state will be used
+        :param initial_state: 12-element list of the initial state. If None, 0 state will be used
         """
 
         if initial_state is None:
