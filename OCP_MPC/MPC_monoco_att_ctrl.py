@@ -186,8 +186,9 @@ class att_ctrl(object):
         # cyclic
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
         cyclic = cyclic * self.monoco.cf_max
+        cmd_bod_acc = np.array([cyclic[1], cyclic[0]]) # abt y x only, roll, pitch
         
-        #self.cascaded_ref_bod_rates = cyclic/self.monoco.J[0] 
+        #self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
         #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
         #raw_cmd_bod_acc = cmd_bod_acc
     
@@ -213,7 +214,7 @@ class att_ctrl(object):
         #     final_motor_output = 10
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
-        return (cyclic, des_rps, control_inputs)
+        return (cmd_bod_acc, des_rps, control_inputs)
 
 
     def ref_acc_att(self):

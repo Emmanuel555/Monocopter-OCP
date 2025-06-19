@@ -72,7 +72,7 @@ class Monoco_Optimizer(object):
 
         # Disk dynamics
         self.monoco_nom_model = self.disk_dynamics() 
-        self.monoco_nom_model = self.monoco_nom_model(x=self.x, u=self.u)
+        self.monoco_nom_model = self.monoco_nom_model(x=self.x, u=self.u) # assign it to the x and u behind 
         self.output_shape = self.monoco_nom_model['x_dot'].shape
 
         # Setup acados model
@@ -171,8 +171,8 @@ class Monoco_Optimizer(object):
         # in case we want to add augmentations to the dynamics equations
         augmentations = cs.MX.sym('augmentations',12) 
 
-        # nominal takes in inputs from supposed initial thruster values 
-        dynamics_equations = nominal
+        # nominal dyn in the form of xdot (pdot, angdot, vdot, wdot)
+        dynamics_equations = nominal + augmentations
 
         # state vector
         x_ = self.x
@@ -209,11 +209,11 @@ class Monoco_Optimizer(object):
 
 
     def v_dot_dynamics(self): # dyn from uzh
-        cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
+        # cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
         collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
-        a_thrust = cs.vertcat(0.0, 0.0, cyclic[0] + cyclic[1] + collective[0]) / self.monoco.mass # convert to m/s^2
+        a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2
 
         a_dynamics = v_dot_q(a_thrust, quat) - g # W frame 
 
@@ -224,8 +224,8 @@ class Monoco_Optimizer(object):
         cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
 
         return cs.vertcat(
-            (cyclic[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0],
-            (cyclic[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1],
+            (cyclic[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0], # pitch abt X 
+            (cyclic[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1], # roll abt Y
             0.0)
     
 
@@ -254,7 +254,17 @@ class Monoco_Optimizer(object):
 
         # returns x_target + u_target
         return ref
+    
 
+    def aug_state(self):
+        ## note, cannot predict using dynamic model cos mpc setup cant be iterated, only params can wo compiling..
+        ## somehow, the update must be done externally either via p or x 
+        
+        ## how to change parameter P:
+        aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] # change the first vector to introduce velocity disturbances or permutations  
+        aug_state = np.stack(aug_state)
+        self.acados_ocp_solver.set(0, 'p', aug_state) # aug_state taken from above    
+  
 
     def run_optimization(self, initial_state=None):
         """
@@ -275,13 +285,8 @@ class Monoco_Optimizer(object):
         self.acados_ocp_solver.set(0, 'lbx', x_init) # lower bounds 
         self.acados_ocp_solver.set(0, 'ubx', x_init) # upper bounds 
 
-        ## note, cannot predict using dynamic model cos mpc setup cant be iterated, only params can wo compiling..
-        ## somehow, the update must be done externally either via p or x 
-        
-        ## how to change parameter P:
-        #aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0, 0.0] + [v_b[0],v_b[1],v_b[2]] + [0.0, 0.0, 0.0]
-        #aug_state = np.stack(aug_state)
-        #self.acados_ocp_solver[use_model].set(0, 'p', aug_state) # aug_state taken from above    
+        ## Append augmentations to state vector
+        self.aug_state()
 
         ## Solve OCP
         self.acados_ocp_solver.solve()

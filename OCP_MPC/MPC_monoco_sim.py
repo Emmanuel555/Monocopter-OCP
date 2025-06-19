@@ -21,7 +21,7 @@ if __name__ == '__main__':
     count = 0
 
     # position
-    kp = np.array([0.5,0.5,0.5])
+    kp = np.array([2.5,2.5,2.5])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.01, 0.01, 0.05])
+    r_cost = np.array([0.1, 0.1, 0.05])
 
     # Solver terms
     t_horizon = 1/20 # 20 Hz
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
 
             # update references for manual control
-            manual_cyclic = np.array([0.0, 1.0, 1.0])  # ref pos to xyz
+            manual_cyclic = np.array([1.0, 0.0, 1.0])  # ref pos to xyz
 
             # Simulated control via MPC
             ff = np.array([0.0, 0.0, 0.0])
