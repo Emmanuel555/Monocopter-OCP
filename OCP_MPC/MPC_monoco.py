@@ -295,7 +295,7 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([2.5,2.5,2.5])
+    kp = np.array([5.5,5.5,40.5])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.1, 0.1, 0.05])
+    r_cost = np.array([0.05, 0.05, 0.01])
 
 
      # Initialize references
@@ -363,7 +363,7 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
     #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
@@ -539,7 +539,7 @@ if __name__ == '__main__':
                     print(f"Roll pitch cyclic inputs are: {cyclic}, and size is: {cyclic.shape}, des_rps is {des_rps}, motor_soln is {motor_soln}")
                     print(ref_msg) 
                     #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
-                    print('altitude error: ', linear_state_vector[2])
+                    print('altitude error: ', manual_alt - linear_state_vector[2])
                     print('manual_cyclic_xyz: ', manual_cyclic)
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
 
@@ -553,8 +553,8 @@ if __name__ == '__main__':
                         #print('time step: ', dt, 'abs time: ', abs_time)
 
 
-                # # control loop counter
-                # loop_counter += 1
+                # control loop counter
+                loop_counter += 1
 
 
                 # # auto & collect data
@@ -572,7 +572,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                 
+                time.sleep(0.004) 
                     
 
         except KeyboardInterrupt:  
