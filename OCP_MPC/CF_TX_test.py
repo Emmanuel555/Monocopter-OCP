@@ -47,6 +47,8 @@ def transmitter_calibration():
         enable = 1
 
     cmd = conPad*enable*button0 # thrust
+    if cmd != 0:
+        cmd = cmd/(65500/2)
     print(f"Joystick_axes available: {joystick.get_numaxes()}")
 
     return (cmd, button0, button1, a0, a1, enable, conPad, button2)

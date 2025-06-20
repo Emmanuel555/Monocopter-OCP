@@ -82,12 +82,13 @@ if __name__ == '__main__':
             monoco.p_control_input_manual(ref_pos) # update the ref states
 
             # from att ctrl
-            outputs = monoco.test_MPC_SIM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
-            motor2torque = outputs[0]
-            des_rps = outputs[1]
-            motor_soln = outputs[2]
+            control_outputs = monoco.test_MPC_SIM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+            cmd_bod_acc = control_outputs[0]
+            des_rps = control_outputs[1]
+            cyclic = control_outputs[2]
+            motor_soln = control_outputs[3]
 
-            print(f"Roll pitch control inputs are: {motor2torque}, and size is: {motor2torque.shape}, des_rps is {des_rps}, motor_soln size is {motor_soln.shape}")
+            print(f"Roll pitch cyclic inputs are: {cyclic}, and size is: {cyclic.shape}, des_rps is {des_rps}, motor_soln is {motor_soln}")
             stop = timeit.default_timer()
             time_last = time.time()
             print(f"Program Runtime: {stop - start}, Program running at: {1/abs_time} Hz") 

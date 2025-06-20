@@ -126,7 +126,7 @@ def transmitter_calibration():
     cmd = conPad*enable*button0 # thrust
 
     if cmd != 0:
-        cmd = cmd/(cmd/2)
+        cmd = cmd/(65500/2)
     #print(f"Joystick_axes available: {joystick.get_numaxes()}")
 
     return (cmd, button0, button1, a0, a1, enable, conPad, button2)
@@ -277,7 +277,7 @@ if __name__ == '__main__':
     rate_loop = 1
     
     
-    time_last = 0
+    time_last = time.time()
     count = 0        
     time_start = time.time()
     minutes = 1 # no.of mins to run this loop
@@ -295,23 +295,23 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([1.3,1.3,1.3])
+    kp = np.array([2.5,2.5,2.5])
 
     # angle
-    ka = np.array([0.01,0.01,0.01])
+    ka = np.array([0.0,0.0,0.0])
    
     # velocity
-    kv = np.array([0.01,0.01,0.01])
+    kv = np.array([0.0,0.0,0.0])
     
     # bodyrates
-    kr = np.array([0.01,0.01,0.01])
+    kr = np.array([0.0,0.0,0.0])
 
     # INDI Loop
     krr = [1.0, 1.0] # 1.0
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.01, 0.01, 0.01])
+    r_cost = np.array([0.1, 0.1, 0.05])
 
 
      # Initialize references
@@ -372,11 +372,18 @@ if __name__ == '__main__':
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
 
+    # Solver terms
+    t_horizon = sample_time  # 250 Hz
+    Nodes = 20 
+
+
     # MPC Monoco Model
     monoco_name = "short"
     monoco_type = SAM.SAM(monoco_name)
+
+
     # MPC Monoco INDI Control & Optimizer
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type)
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
     
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
@@ -418,10 +425,9 @@ if __name__ == '__main__':
                 bod_angle_roll = data_processor.body_angle_roll
                 # time difference needed to calculate velocity
                 dt = time.time() - time_last  #  time step/period
-                time_last = time.time()
 
                 # update positions etc.
-                #monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
+                monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
 
                 # update from transmitter
                 tx_cmds = transmitter_calibration()  # get the joystick commands
@@ -434,27 +440,26 @@ if __name__ == '__main__':
 
                 a0 = tx_cmds[3] # x     
                 a1 = tx_cmds[4] # y
-                #print(f"Thrust: {manual_thrust}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
                 
 
-                # # update references for manual control
-                # manual_cyclic = ref_manual_ctrl(a0, a1, manual_alt) # manual position control 
+                ## update references for manual control
+                manual_cyclic = ref_manual_ctrl(a0, a1, manual_alt) # manual position control 
 
 
-                # if button2 == 1:
+                if button2 == 1:
 
-                #     ## hovering test
-                #     if button1 == 0:
-                #         stage == 'hover'
-                #         ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
-                #         hovering_ff = np.array([0.0, 0.0, 0.0])
-                #         ref_pos = ref[0]
-                #         ref_vel = hovering_ff
-                #         ref_acc = hovering_ff
-                #         ref_jerk = hovering_ff
-                #         ref_snap = hovering_ff
-                #         ref_msg = ref[1]
-                #         count = 0
+                    ## hovering test
+                    if button1 == 0:
+                        stage == 'hover'
+                        ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
+                        hovering_ff = np.array([0.0, 0.0, 0.0])
+                        ref_pos = ref[0]
+                        ref_vel = hovering_ff
+                        ref_acc = hovering_ff
+                        ref_jerk = hovering_ff
+                        ref_snap = hovering_ff
+                        ref_msg = ref[1]
+                        count = 0
 
 
                 #     """ ## trajectory inputs
@@ -485,68 +490,67 @@ if __name__ == '__main__':
                 #         ref_msg = ref[1]
                 #         count = 0
 
-                #     # ff references
-                #     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
-                #     # p control
-                #     auto_cyclic = p_control_input(linear_state_vector, kp, kvp, ki, ref_pos, sample_time) # auto position control
-                #     monoco.p_control_input_manual(auto_cyclic)
+                    # ff references
+                    monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
+                    # p control
+                    monoco.p_control_input_manual(ref_pos)
                 #     """
 
-                # else:
+                else:
 
-                #     # Manual control via MPC
-                #     stage == 'Manual_flight'
-                #     ff = np.array([0.0, 0.0, 0.0])
-                #     ref_pos = manual_cyclic
-                #     ref_vel = ff
-                #     ref_acc = ff
-                #     ref_jerk = ff
-                #     ref_snap = ff
-                #     ref_msg = 'Manual_flight'
-                #     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
-                #     monoco.p_control_input_manual(ref_pos) # update the ref states
-                #     ## test manual flight first
+                    # Manual control via MPC
+                    stage == 'Manual_flight'
+                    ff = np.array([0.0, 0.0, 0.0])
+                    ref_pos = manual_cyclic
+                    ref_vel = ff
+                    ref_acc = ff
+                    ref_jerk = ff
+                    ref_snap = ff
+                    ref_msg = 'Manual_flight'
+                    monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
+                    monoco.p_control_input_manual(ref_pos) # update the ref states
+                    ## test manual flight first
 
 
-                # # from att ctrl
-                # control_outputs = monoco.MPC_SAM_get_angles_and_thrust()
-                # cmd_bod_acc = control_outputs[1]
-                # att_raterate_error = monoco.attitude_raterate_error
+                # from att ctrl
+                control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+                cmd_bod_acc = control_outputs[0]
+                des_rps = control_outputs[1]
+                cyclic = control_outputs[2]
+                motor_soln = control_outputs[3]
+                att_raterate_error = monoco.attitude_raterate_error
+
             
+                # motor output
+                motor_cmd = int(motor_soln)*button0*enable
 
-                # # motor output
-                # motor_cmd = int(control_outputs[0])*button0*enable
-
-
-                # # motor saturation - once again just in case
-                # if motor_cmd > 65500:
-                #     motor_cmd = 65500
-                # elif motor_cmd < 10:
-                #     motor_cmd = 10
-
-                
-                # final_cmd = np.array([motor_cmd, motor_cmd, motor_cmd, motor_cmd]) # e.g                
-                # final_cmd = np.array([final_cmd])
-                # seq_args = swarm_exe(final_cmd)
-                # swarm.parallel(arm_throttle, args_dict=seq_args)
+               
+                final_cmd = np.array([motor_cmd, motor_cmd, motor_cmd, motor_cmd]) # e.g                
+                final_cmd = np.array([final_cmd])
+                seq_args = swarm_exe(final_cmd)
+                swarm.parallel(arm_throttle, args_dict=seq_args)
 
 
-                # if loop_counter % 10 == 0:
-                #     print('cmd and button commands: ', motor_cmd, button0, button1)
-                #     print(ref_msg) 
-                #     #print('tx commands: ', a0, a1)
-                #     #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
-                #     print('altitude: ', linear_state_vector[2])
-                #     #print('manual_cyclic_xyz: ', auto_cyclic)
-                #     #print('p_cyclic_xyz: ', monoco.p_control_signal)
-                #     print('att_cmds: ', cmd_bod_acc)
-                #     print('monoco.rates comparison: ', monoco.cmd_bod_rates_final, monoco.ref_rates)
-                #     print('monoco.raterates comparison: ', monoco.cmd_bod_raterates_final, monoco.ref_raterates)
-                #     #print('yawrate: ', yawrate)
+                stop = timeit.default_timer()
+                time_last = time.time()       
 
-                #     if dt > 0.0:
-                #         print('frequency (Hz) = ', 1/dt)
-                #         #print('time step: ', dt, 'abs time: ', abs_time)
+                if loop_counter % 10 == 0:
+                    print(f"Thrust: {manual_alt}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
+                    print(f"Roll pitch cyclic inputs are: {cyclic}, and size is: {cyclic.shape}, des_rps is {des_rps}, motor_soln is {motor_soln}")
+                    print(ref_msg) 
+                    #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                    print('altitude error: ', linear_state_vector[2])
+                    print('manual_cyclic_xyz: ', manual_cyclic)
+                    #print('p_cyclic_xyz: ', monoco.p_control_signal)
+
+                    #print('att_cmds: ', cmd_bod_acc)
+                    #print('monoco.rates comparison: ', monoco.cmd_bod_rates_final, monoco.ref_rates)
+                    #print('monoco.raterates comparison: ', monoco.cmd_bod_raterates_final, monoco.ref_raterates)
+                    #print('yawrate: ', yawrate)
+
+                    if dt > 0.0:
+                        print(f"Program Runtime: {stop - start}, Program running at: {1/dt} Hz") 
+                        #print('time step: ', dt, 'abs time: ', abs_time)
 
 
                 # # control loop counter
@@ -567,7 +571,8 @@ if __name__ == '__main__':
                 #         data_saver.add_item(abs_time,
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
-                        
+
+                 
                     
 
         except KeyboardInterrupt:  

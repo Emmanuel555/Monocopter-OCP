@@ -122,7 +122,7 @@ class att_ctrl(object):
 
     def INDI_loop(self,cascaded_ref_bod_acc):
         kprr = self.kprr
-        fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
+        fb = np.array(self.robot_tpp_bod_raterate[0:2]) # towards x, y - abt y x
         cmd_bod_acc_error = cascaded_ref_bod_acc - fb
         self.attitude_raterate_error = cmd_bod_acc_error
         cmd_bod_acc_final = kprr*(cmd_bod_acc_error) 
@@ -145,9 +145,13 @@ class att_ctrl(object):
 
         # cyclic
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
-        self.cascaded_ref_bod_rates = cyclic/self.monoco.J[0] 
-        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        cyclic = cyclic * self.monoco.cf_max
+        cmd_bod_acc = np.array([cyclic[1], cyclic[0]]) # abt y x only, roll, pitch
         raw_cmd_bod_acc = cmd_bod_acc
+
+        self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
+        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        
     
         ## to account for phase delay
         x_sign = math.sin(self.yaw)
@@ -156,11 +160,11 @@ class att_ctrl(object):
         cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
         cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
         
-        # output saturation (cmd_att)
-        if abs(cmd_bod_acc[0]) > 10000:
-            cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
-        if abs(cmd_bod_acc[1]) > 10000:
-             cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
+        # # output saturation (cmd_att)
+        # if abs(cmd_bod_acc[0]) > 10000:
+        #     cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
+        # if abs(cmd_bod_acc[1]) > 10000:
+        #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
         final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
 
@@ -170,7 +174,8 @@ class att_ctrl(object):
         elif final_motor_output < 10:
             final_motor_output = 10
 
-        return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
+        # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
     
 
     def test_MPC_SIM_get_angles_and_thrust(self):
@@ -187,17 +192,18 @@ class att_ctrl(object):
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
         cyclic = cyclic * self.monoco.cf_max
         cmd_bod_acc = np.array([cyclic[1], cyclic[0]]) # abt y x only, roll, pitch
+        raw_cmd_bod_acc = cmd_bod_acc
         
-        #self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
-        #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
-        #raw_cmd_bod_acc = cmd_bod_acc
+        self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
+        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+       
     
-        # ## to account for phase delay
-        # x_sign = math.sin(self.yaw)
-        # y_sign = math.cos(self.yaw)
+        ## to account for phase delay
+        x_sign = math.sin(self.yaw)
+        y_sign = math.cos(self.yaw)
 
-        # cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
-        # cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
+        cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
+        cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
         
         # # output saturation (cmd_att)
         # if abs(cmd_bod_acc[0]) > 10000:
@@ -205,16 +211,16 @@ class att_ctrl(object):
         # if abs(cmd_bod_acc[1]) > 10000:
         #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
-        # final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
+        final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
 
-        # # motor saturation
-        # if final_motor_output > 65500:
-        #     final_motor_output = 65500
-        # elif final_motor_output < 10:
-        #     final_motor_output = 10
+        # motor saturation
+        if final_motor_output > 65500:
+            final_motor_output = 65500
+        elif final_motor_output < 10:
+            final_motor_output = 10
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
-        return (cmd_bod_acc, des_rps, control_inputs)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
 
 
     def ref_acc_att(self):
