@@ -59,20 +59,20 @@ def init_throttle(scf, cmds):
     try:
         cf = scf.cf
         cf.param.set_value('kalman.resetEstimation', '1')
-        time.sleep(0.1)
+        time.sleep(0.01)
         cf.param.set_value('kalman.resetEstimation', '0')
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         # initialise the controller
         cf.param.add_update_callback(group='stabilizer', name='estimator',
                                  cb=param_stab_est_callback)
         cf.param.set_value('stabilizer.controller', '3')  # 3: INDI controller
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         #cf.commander.send_setpoint(int(cmds[0]), int(cmds[1]), int(cmds[2]), int(cmds[3])) # roll, pitch, yawrate, thrust 
         cf.commander.send_position_setpoint(int(cmds[0]), int(cmds[1]), int(cmds[2]), int(cmds[3])) 
         print("Initialisation monoco....set ur sticks to mid and down")
-        time.sleep(0.1)
+        time.sleep(0.01)
     except Exception as e:
         print("Initialisation error: ", e)
 
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([5.5,5.5,40.5])
+    kp = np.array([0.0,0.0,300])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.05, 0.05, 0.01])
+    r_cost = np.array([0.01, 0.01, 0.02])
 
 
      # Initialize references
@@ -390,17 +390,21 @@ if __name__ == '__main__':
         #swarm.reset_estimators()
         cmd_att_startup = np.array([0, 0, 0, 0]) # init setpt to 0 0 0 0
         cmd_att = np.array([cmd_att_startup])
-        data_log = logging_config()
-        swarm_log = np.array([data_log])
-        seq_args_log = swarm_logging(swarm_log)
+        #data_log = logging_config()
+        #swarm_log = np.array([data_log])
+        #seq_args_log = swarm_logging(swarm_log)
         seq_args = swarm_exe(cmd_att)
         swarm.parallel(init_throttle, args_dict=seq_args)
+        
         #swarm.parallel(log_async, args_dict=seq_args_log) # only can log up to six items at a time
 
         try:
             while True:
                 start = timeit.default_timer() 
                 abs_time = time.time() - time_start
+
+                # dk why need this for python 3.10
+                joystick = pygame.joystick.Joystick(0) # added here to speed up loop
 
                 # require data from Mocap
                 data = data_receiver_sender.get_data()
@@ -524,7 +528,7 @@ if __name__ == '__main__':
                 # motor output
                 motor_cmd = int(motor_soln)*button0*enable
 
-               
+                
                 final_cmd = np.array([motor_cmd, motor_cmd, motor_cmd, motor_cmd]) # e.g                
                 final_cmd = np.array([final_cmd])
                 seq_args = swarm_exe(final_cmd)
@@ -536,11 +540,13 @@ if __name__ == '__main__':
 
                 if loop_counter % 10 == 0:
                     print(f"Thrust: {manual_alt}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
-                    print(f"Roll pitch cyclic inputs are: {cyclic}, and size is: {cyclic.shape}, des_rps is {des_rps}, motor_soln is {motor_soln}")
+                    print(f"Cmd_bod_acc are: {cmd_bod_acc}, roll pitch cyclic inputs are: {cyclic}, des_rps is {des_rps}, motor_soln is {motor_soln}")
                     print(ref_msg) 
                     #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
                     print('altitude error: ', manual_alt - linear_state_vector[2])
-                    print('manual_cyclic_xyz: ', manual_cyclic)
+                    print('manual_alt: ', manual_alt)
+                    print('actual_altitude: ', linear_state_vector[2])
+                    #print('manual_cyclic_xyz: ', manual_cyclic)
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
 
                     #print('att_cmds: ', cmd_bod_acc)
@@ -572,7 +578,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                time.sleep(0.004) 
+                #time.sleep(0.0033) 
                     
 
         except KeyboardInterrupt:  
@@ -586,7 +592,7 @@ if __name__ == '__main__':
             # rmse_num = [final_rmse_x, final_rmse_y, final_rmse_z]  
 
             #print('Emergency Stopped and final rmse produced: ', rmse_num )
-            
+        
                     
 
 # save data
