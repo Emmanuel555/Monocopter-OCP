@@ -215,7 +215,8 @@ class Monoco_Optimizer(object):
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
         a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2
 
-        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame 
+        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame - dyn model may not be the issue
+        # a_dynamics = a_thrust - g # W frame 
 
         return a_dynamics
 

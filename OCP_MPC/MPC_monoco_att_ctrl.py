@@ -166,8 +166,9 @@ class att_ctrl(object):
         # if abs(cmd_bod_acc[1]) > 10000:
         #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
-        final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-
+        #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
+        final_motor_output = des_rps 
+        
         # motor saturation
         if final_motor_output > 65500:
             final_motor_output = 65500
@@ -211,7 +212,8 @@ class att_ctrl(object):
         # if abs(cmd_bod_acc[1]) > 10000:
         #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
-        final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
+        #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
+        final_motor_output = des_rps 
 
         # motor saturation
         if final_motor_output > 65500:

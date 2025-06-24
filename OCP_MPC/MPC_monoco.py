@@ -230,7 +230,7 @@ if __name__ == '__main__':
     data_receiver_sender = Mocap.Udp()
     max_sample_rate = 250 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
-    sample_time = 1 / sample_rate
+    sample_time = 1 / max_sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     #data_saver = DataSave.SaveData('Data_time',
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([0.0,0.0,300])
+    kp = np.array([0.0,0.0,100])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.01, 0.01, 0.02])
+    r_cost = np.array([0.008, 0.008, 0.015])
 
 
      # Initialize references
@@ -578,7 +578,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                #time.sleep(0.0033) 
+                time.sleep(0.0033) 
                     
 
         except KeyboardInterrupt:  
