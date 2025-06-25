@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
     # Solver terms
     t_horizon = sample_time  # 250 Hz
-    Nodes = 20 # try shorter 
+    Nodes = 8 # try shorter *
 
 
     # MPC Monoco Model
@@ -404,7 +404,7 @@ if __name__ == '__main__':
                 abs_time = time.time() - time_start
 
                 # dk why need this for python 3.10
-                joystick = pygame.joystick.Joystick(0) # added here to speed up loop
+                #joystick = pygame.joystick.Joystick(0) # added here to speed up loop
 
                 # require data from Mocap
                 data = data_receiver_sender.get_data()
@@ -597,6 +597,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/MPC_robot/MPC_short_wing_test'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mass'
+data_saver.save_data(path)
 
