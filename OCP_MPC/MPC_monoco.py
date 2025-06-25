@@ -233,12 +233,12 @@ if __name__ == '__main__':
     sample_time = 1 / max_sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
-    #data_saver = DataSave.SaveData('Data_time',
-    #                               'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
+    # data_saver = DataSave.SaveData('Data_time',
+    #                                'Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll',
+    #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll',
-                                   'rmse_num_xyz','att_raterate_error','yawrate')   
+                                   'Monocopter_XYZ','motor_cmd','ref_position') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -300,7 +300,7 @@ if __name__ == '__main__':
     # angle
     ka = np.array([0.0,0.0,0.0])
    
-    # velocity
+    # velocity - try this
     kv = np.array([0.0,0.0,0.0])
     
     # bodyrates
@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
     # Solver terms
     t_horizon = sample_time  # 250 Hz
-    Nodes = 20 
+    Nodes = 20 # try shorter 
 
 
     # MPC Monoco Model
@@ -578,6 +578,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
+                data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos)
                 time.sleep(0.0033) 
                     
 
