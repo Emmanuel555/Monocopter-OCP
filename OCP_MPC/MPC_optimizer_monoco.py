@@ -63,6 +63,7 @@ class Monoco_Optimizer(object):
         # Full state vector (12-dimensional)
         self.x = cs.vertcat(self.pos, self.ang, self.vel, self.bodyrate) # vertical concatenation
         self.state_dim = 12
+        self.vel_term = q_cost[2]/6.4
 
         # Control input vector (rpy + collective thrust)
         u1 = cs.MX.sym('u1') # roll
@@ -131,6 +132,11 @@ class Monoco_Optimizer(object):
         ocp.solver_options.integrator_type = 'ERK'
         ocp.solver_options.print_level = 0
         ocp.solver_options.nlp_solver_type = 'SQP_RTI' if solver_options is None else solver_options["solver_type"]
+
+        # Solver tolerances
+        ocp.solver_options.qp_tol = 1e-4 # loosen QP tolerance
+        ocp.solver_options.nlp_solver_tol_stat = 1e-4
+        ocp.solver_options.nlp_solver_max_iter = 10 # limit iterations
 
         # Compile acados OCP solver if necessary
         self.acados_ocp_solver = AcadosOcpSolver(ocp, json_file=model_name + '_acados_ocp.json') # label and initialise the acadosolver here where ocp refers to the acados object
@@ -212,10 +218,11 @@ class Monoco_Optimizer(object):
         # cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
         collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
+        vel_term = cs.vertcat(0.0, 0.0, self.vel_term)
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
         a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2
 
-        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame - dyn model may not be the issue
+        a_dynamics = v_dot_q(a_thrust, quat) - g - vel_term # W frame - dyn model may not be the issue
         # a_dynamics = a_thrust - g # W frame 
 
         return a_dynamics

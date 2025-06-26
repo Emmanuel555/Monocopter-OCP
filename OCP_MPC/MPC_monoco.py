@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
     # Solver terms
     t_horizon = sample_time  # 250 Hz
-    Nodes = 8 # try shorter *
+    Nodes = 20 # 
 
 
     # MPC Monoco Model
