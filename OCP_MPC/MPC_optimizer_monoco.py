@@ -63,7 +63,7 @@ class Monoco_Optimizer(object):
         # Full state vector (12-dimensional)
         self.x = cs.vertcat(self.pos, self.ang, self.vel, self.bodyrate) # vertical concatenation
         self.state_dim = 12
-        self.vel_term = q_cost[2]/6.4
+        self.vel_term = q_cost[2]/6.5
 
         # Control input vector (rpy + collective thrust)
         u1 = cs.MX.sym('u1') # roll
@@ -134,9 +134,9 @@ class Monoco_Optimizer(object):
         ocp.solver_options.nlp_solver_type = 'SQP_RTI' if solver_options is None else solver_options["solver_type"]
 
         # Solver tolerances
-        ocp.solver_options.qp_tol = 1e-4 # loosen QP tolerance
-        ocp.solver_options.nlp_solver_tol_stat = 1e-4
-        ocp.solver_options.nlp_solver_max_iter = 10 # limit iterations
+        #ocp.solver_options.qp_tol = 1e-4 # loosen QP tolerance
+        #ocp.solver_options.nlp_solver_tol_stat = 1e-4
+        #ocp.solver_options.nlp_solver_max_iter = 10 # limit iterations
 
         # Compile acados OCP solver if necessary
         self.acados_ocp_solver = AcadosOcpSolver(ocp, json_file=model_name + '_acados_ocp.json') # label and initialise the acadosolver here where ocp refers to the acados object

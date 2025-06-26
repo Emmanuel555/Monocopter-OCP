@@ -295,7 +295,7 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([0.0,0.0,100])
+    kp = np.array([0.0,0.0,0.4])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -311,7 +311,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.008, 0.008, 0.015])
+    r_cost = np.array([0.008, 0.008, 0.0])
 
 
      # Initialize references
@@ -429,10 +429,7 @@ if __name__ == '__main__':
                 bod_angle_roll = data_processor.body_angle_roll
                 # time difference needed to calculate velocity
                 dt = time.time() - time_last  #  time step/period
-
-                # update positions etc.
-                monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
-
+                
                 # update from transmitter
                 tx_cmds = transmitter_calibration()  # get the joystick commands
                 manual_alt = tx_cmds[0]  # thrust command
@@ -445,10 +442,11 @@ if __name__ == '__main__':
                 a0 = tx_cmds[3] # x     
                 a1 = tx_cmds[4] # y
                 
-
                 ## update references for manual control
                 manual_cyclic = ref_manual_ctrl(a0, a1, manual_alt) # manual position control 
 
+                # update positions etc.
+                monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
 
                 if button2 == 1:
 
@@ -518,6 +516,7 @@ if __name__ == '__main__':
 
                 # from att ctrl
                 control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+                
                 cmd_bod_acc = control_outputs[0]
                 des_rps = control_outputs[1]
                 cyclic = control_outputs[2]
@@ -527,11 +526,11 @@ if __name__ == '__main__':
             
                 # motor output
                 motor_cmd = int(motor_soln)*button0*enable
-
+                #motor_cmd = 0
                 
                 final_cmd = np.array([motor_cmd, motor_cmd, motor_cmd, motor_cmd]) # e.g                
                 final_cmd = np.array([final_cmd])
-                seq_args = swarm_exe(final_cmd)
+                seq_args = swarm_exe(final_cmd) 
                 swarm.parallel(arm_throttle, args_dict=seq_args)
 
 
@@ -539,13 +538,15 @@ if __name__ == '__main__':
                 time_last = time.time()       
 
                 if loop_counter % 10 == 0:
-                    print(f"Thrust: {manual_alt}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
+                    """ print(f"Thrust: {manual_alt}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
                     print(f"Cmd_bod_acc are: {cmd_bod_acc}, roll pitch cyclic inputs are: {cyclic}, des_rps is {des_rps}, motor_soln is {motor_soln}")
                     print(ref_msg) 
-                    #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2])
+                    #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2]) """
                     print('altitude error: ', manual_alt - linear_state_vector[2])
-                    print('manual_alt: ', manual_alt)
+                    print('manual_alt: ', manual_alt) 
+                    print('motor_soln: ', motor_soln)
                     print('actual_altitude: ', linear_state_vector[2])
+
                     #print('manual_cyclic_xyz: ', manual_cyclic)
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
 
@@ -597,6 +598,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mass'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_vel_damping'
 data_saver.save_data(path)
 
