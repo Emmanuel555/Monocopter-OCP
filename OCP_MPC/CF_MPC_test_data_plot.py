@@ -144,14 +144,17 @@ print('RMSE XYZ: ', final_rmse_x, final_rmse_y, final_rmse_z) """
 ## generate the plot
 #plt.figure(figsize=(10, 5))
 #fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
-fig, ((ax1), (ax2)) = plt.subplots(1, 2, figsize=(40, 10))
+#fig, ((ax1), (ax2)) = plt.subplots(1, 2, figsize=(40, 10))
+fig, ((ax1)) = plt.subplots(1, 1, figsize=(40, 10))
 #print(cmd_x[0])
 
 
 #ax1.plot(traj_time, x_error, label='x err mf', color='blue',linewidth=2)
 #ax1.plot(traj_time, y_error, label='y err mf', color='red',linewidth=2)
+ax1.plot(traj_time, motor_soln[0]/30000, label='PWM', color='green',linewidth=2)
 ax1.plot(traj_time, mf_pz, label='actual_z_alt', color='blue',linewidth=2)
 ax1.plot(traj_time, pz_r[0], label='z_ref', color='red',linewidth=2)
+
 # ax1.plot(traj_time, z_error, label='z err mf', color='green',linewidth=2)
 #ax1.plot(time[0][start:end], median_filtered_px, label='x', color='blue',linewidth=2)
 #ax1.plot(time[0][start:end], median_filtered_py, label='y', color='red',linewidth=2)
@@ -169,7 +172,7 @@ ax1.set_ylabel('Position error(m)')
 
 plt.subplots_adjust(hspace=0.34, wspace=0.2)
 
-ax2.plot(traj_time, motor_soln[0], label='PWM', color='blue',linewidth=2)
+# ax2.plot(traj_time, motor_soln[0], label='PWM', color='blue',linewidth=2)
 # ax2.plot(mf_px, mf_py, label='circle path', color='blue',linewidth=2)
 # ax2.plot(px_r[0][start:end], py_r[0][start:end], label='ref', color='red',linewidth=2)
 # #ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
@@ -181,10 +184,10 @@ ax2.plot(traj_time, motor_soln[0], label='PWM', color='blue',linewidth=2)
 # ax2.set_xlabel('X(m)')
 # ax2.set_ylabel('Y(m)')
 
-ax2.legend()
-ax2.set_title('PWM vs Time', fontsize=20)
-ax2.set_xlabel('Time(s)')
-ax2.set_ylabel('PWM')
+# ax2.legend()
+# ax2.set_title('PWM vs Time', fontsize=20)
+# ax2.set_xlabel('Time(s)')
+# ax2.set_ylabel('PWM')
 
 
 # ax2.plot(time[0], tpp_roll[0], label='tpp_roll_deg', color='blue')

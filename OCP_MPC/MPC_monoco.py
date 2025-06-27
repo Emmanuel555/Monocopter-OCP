@@ -238,7 +238,7 @@ if __name__ == '__main__':
     #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position') 
+                                   'Monocopter_XYZ','motor_cmd','ref_position','motor_actual_cmd') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -545,6 +545,7 @@ if __name__ == '__main__':
                     print('altitude error: ', manual_alt - linear_state_vector[2])
                     print('manual_alt: ', manual_alt) 
                     print('motor_soln: ', motor_soln)
+                    print('motor_soln: ', motor_cmd)
                     print('actual_altitude: ', linear_state_vector[2])
 
                     #print('manual_cyclic_xyz: ', manual_cyclic)
@@ -579,7 +580,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos)
+                data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd)
                 time.sleep(0.0033) 
                     
 
