@@ -545,7 +545,7 @@ if __name__ == '__main__':
                     print('altitude error: ', manual_alt - linear_state_vector[2])
                     print('manual_alt: ', manual_alt) 
                     print('motor_soln: ', motor_soln)
-                    print('motor_soln: ', motor_cmd)
+                    print('actual_motor_cmd: ', motor_cmd)
                     print('actual_altitude: ', linear_state_vector[2])
 
                     #print('manual_cyclic_xyz: ', manual_cyclic)
@@ -599,6 +599,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_vel_damping'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_vel_damping_motor_cmd'
 data_saver.save_data(path)
 
