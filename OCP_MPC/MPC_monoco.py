@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 250 # 360 at 65
+    max_sample_rate = 400 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
@@ -296,7 +296,7 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([0.0,0.0,0.4])
+    kp = np.array([0.0,0.0,1.0])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -558,10 +558,11 @@ if __name__ == '__main__':
                     print(ref_msg) 
                     #print('tpp_position', linear_state_vector[0], linear_state_vector[1], linear_state_vector[2]) """
                     print('altitude error: ', manual_alt - linear_state_vector[2])
-                    print('manual_alt: ', manual_alt) 
-                    print('motor_soln: ', motor_soln)
-                    print('actual_motor_cmd: ', motor_cmd)
-                    print('actual_altitude: ', linear_state_vector[2])
+                    print('ref_alt: ', manual_alt) 
+                    #print('motor_soln: ', motor_soln)
+                    #print('actual_motor_cmd: ', motor_cmd)
+                    print('button2: ', button2)
+                    #print('actual_altitude: ', linear_state_vector[2])
 
                     #print('manual_cyclic_xyz: ', manual_cyclic)
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
@@ -596,7 +597,7 @@ if __name__ == '__main__':
                 #                     rmse_num,att_raterate_error,yawrate)   
 
                 data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd)
-                time.sleep(0.0033) 
+                #time.sleep(0.0033) 
                     
 
         except KeyboardInterrupt:  
@@ -614,6 +615,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_comparison_w_manual'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_again'
 data_saver.save_data(path)
 
