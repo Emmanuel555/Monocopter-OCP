@@ -124,12 +124,13 @@ def transmitter_calibration():
         enable = 1
 
     cmd = conPad*enable*button0 # thrust
+    manual_thrust = conPad*enable*button0
 
     if cmd != 0:
         cmd = cmd/(65500/2)
     #print(f"Joystick_axes available: {joystick.get_numaxes()}")
 
-    return (cmd, button0, button1, a0, a1, enable, conPad, button2)
+    return (cmd, button0, button1, a0, a1, enable, conPad, button2, manual_thrust)
 
 
 def p_control_input(linear_pos,kp,kv,ki,ref_pos,dt):
@@ -438,6 +439,7 @@ if __name__ == '__main__':
                 enable = tx_cmds[5]
                 conPad = tx_cmds[6]
                 button2 = tx_cmds[7]
+                manual_thrust = tx_cmds[8]
 
                 a0 = tx_cmds[3] # x     
                 a1 = tx_cmds[4] # y
@@ -450,18 +452,18 @@ if __name__ == '__main__':
 
                 if button2 == 1:
 
-                    ## hovering test
-                    if button1 == 0:
-                        stage == 'hover'
-                        ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
-                        hovering_ff = np.array([0.0, 0.0, 0.0])
-                        ref_pos = ref[0]
-                        ref_vel = hovering_ff
-                        ref_acc = hovering_ff
-                        ref_jerk = hovering_ff
-                        ref_snap = hovering_ff
-                        ref_msg = ref[1]
-                        count = 0
+                    # ## hovering test
+                    # if button1 == 0:
+                    #     stage == 'hover'
+                    #     ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
+                    #     hovering_ff = np.array([0.0, 0.0, 0.0])
+                    #     ref_pos = ref[0]
+                    #     ref_vel = hovering_ff
+                    #     ref_acc = hovering_ff
+                    #     ref_jerk = hovering_ff
+                    #     ref_snap = hovering_ff
+                    #     ref_msg = ref[1]
+                    #     count = 0
 
 
                 #     """ ## trajectory inputs
@@ -493,15 +495,27 @@ if __name__ == '__main__':
                 #         count = 0
 
                     # ff references
+                    # Manual thrust control
+                    stage == 'TX_Manual_flight'
+                    ff = np.array([0.0, 0.0, 0.0])
+                    ref_pos = manual_cyclic
+                    ref_vel = ff
+                    ref_acc = ff
+                    ref_jerk = ff
+                    ref_snap = ff
+                    ref_msg = 'Manual_flight'
+
                     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
                     # p control
                     monoco.p_control_input_manual(ref_pos)
-                #     """
+                    # alt control with input from TX 
+                    motor_soln = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
+
 
                 else:
 
                     # Manual control via MPC
-                    stage == 'Manual_flight'
+                    stage == 'MPC_Manual_flight'
                     ff = np.array([0.0, 0.0, 0.0])
                     ref_pos = manual_cyclic
                     ref_vel = ff
@@ -513,14 +527,15 @@ if __name__ == '__main__':
                     monoco.p_control_input_manual(ref_pos) # update the ref states
                     ## test manual flight first
 
+                    # from att ctrl
+                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+                    
+                    #cmd_bod_acc = control_outputs[0]
+                    #des_rps = control_outputs[1]
+                    #cyclic = control_outputs[2]
+                    motor_soln = control_outputs[3]
 
-                # from att ctrl
-                control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
-                
-                cmd_bod_acc = control_outputs[0]
-                des_rps = control_outputs[1]
-                cyclic = control_outputs[2]
-                motor_soln = control_outputs[3]
+
                 att_raterate_error = monoco.attitude_raterate_error
 
             
@@ -599,6 +614,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_vel_damping_motor_cmd'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_comparison_w_manual'
 data_saver.save_data(path)
 

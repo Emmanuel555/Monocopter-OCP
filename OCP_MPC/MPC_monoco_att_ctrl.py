@@ -63,6 +63,7 @@ class att_ctrl(object):
         self.attitude_error = 0.0
         self.attitude_rate_error = 0.0
         self.attitude_raterate_error = 0.0
+        self.position_error_last = np.array([0.0, 0.0, 0.0])
 
         # model
         self.g = 9.81
@@ -113,8 +114,8 @@ class att_ctrl(object):
     
 
     def opti_output_control(self):
-        initial_state = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
-        opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state)
+        initial_state_taken = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
+        opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state_taken)
         control_inputs = opt_output[0]
         state_outputs = opt_output[1]
         return (control_inputs, state_outputs)
@@ -131,6 +132,21 @@ class att_ctrl(object):
         ## NDI
         #cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
         return (cmd_bod_acc_final)
+    
+
+    def manual_collective_thrust(self,kpz,kdz,kiz,manual_thrust): 
+        # weight of the robot
+        robot_mg = np.array([0.0,0.0,1000*self.g]) # robot weight, cf = 47500
+        self.z_error = self.p_control_input_manual[2] - self.robot_pos[2]
+        rate_position_error_z = (self.z_error - self.position_error_last[2])/self.dt
+        integral_error_z = (self.z_error*self.dt)
+        self.position_error_last[2] = self.z_error 
+
+        p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
+        
+        self.des_rps = p_error_z + manual_thrust
+        
+        return (self.des_rps)
     
     
     def MPC_SAM_get_angles_and_thrust(self):

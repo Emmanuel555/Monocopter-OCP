@@ -24,6 +24,7 @@ time = mat_data['Data_time']
 position = mat_data['Monocopter_XYZ']
 ref_position = mat_data['ref_position']
 motor_soln = mat_data['motor_cmd']
+motor_cmd = mat_data['motor_actual_cmd']
  
 """ tpp_roll = mat_data['tpp_roll']
 tpp_pitch = mat_data['tpp_pitch']
@@ -149,11 +150,14 @@ fig, ((ax1)) = plt.subplots(1, 1, figsize=(40, 10))
 #print(cmd_x[0])
 
 
+motor_soln = ndimage.median_filter(motor_soln[0][start:end], size=100)
+motor_cmd = ndimage.median_filter(motor_cmd[0][start:end], size=100)
 #ax1.plot(traj_time, x_error, label='x err mf', color='blue',linewidth=2)
 #ax1.plot(traj_time, y_error, label='y err mf', color='red',linewidth=2)
-ax1.plot(traj_time, motor_soln[0]/30000, label='PWM', color='green',linewidth=2)
+#ax1.plot(traj_time, motor_soln/30000, label='Soln_PWM', color='green',linewidth=2)
 ax1.plot(traj_time, mf_pz, label='actual_z_alt', color='blue',linewidth=2)
 ax1.plot(traj_time, pz_r[0], label='z_ref', color='red',linewidth=2)
+ax1.plot(traj_time, motor_cmd/30000, label='Actual_PWM', color='black',linewidth=2)
 
 # ax1.plot(traj_time, z_error, label='z err mf', color='green',linewidth=2)
 #ax1.plot(time[0][start:end], median_filtered_px, label='x', color='blue',linewidth=2)
