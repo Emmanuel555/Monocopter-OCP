@@ -296,13 +296,13 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
-    kp = np.array([0.0,0.0,1.0])
+    kp = np.array([0.0,0.0,1.2])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
    
     # velocity - try this
-    kv = np.array([0.0,0.0,0.0])
+    kv = np.array([0.0,0.0,0.0001])
     
     # bodyrates
     kr = np.array([0.0,0.0,0.0])
@@ -312,7 +312,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.008, 0.008, 0.0])
+    r_cost = np.array([0.0, 0.0, 0.0])
 
 
      # Initialize references
