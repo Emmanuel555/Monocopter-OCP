@@ -509,7 +509,7 @@ if __name__ == '__main__':
                     # p control
                     monoco.p_control_input_manual(ref_pos)
                     # alt control with input from TX 
-                    motor_soln = monoco.manual_collective_thrust(kpz,kdz,kiz,manual_thrust)
+                    motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
 
 
                 else:

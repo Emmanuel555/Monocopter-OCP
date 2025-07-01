@@ -9,7 +9,7 @@ from numpy import linalg as la
 import statistics
   
 
-file_path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/'
+file_path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/test_data/'
 files = os.listdir(file_path)
 files.sort(key=lambda x: os.path.getmtime(os.path.join(file_path, x)), reverse=True)
 

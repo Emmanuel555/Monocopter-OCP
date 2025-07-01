@@ -134,7 +134,7 @@ class att_ctrl(object):
         return (cmd_bod_acc_final)
     
 
-    def manual_collective_thrust(self,kpz,kdz,kiz,manual_thrust): 
+    def manual_collective_thrust(self,kpz,kdz,kiz): 
         # weight of the robot
         robot_mg = np.array([0.0,0.0,1000*self.g]) # robot weight, cf = 47500
         self.z_error = self.p_control_signal[2] - self.robot_pos[2]
@@ -144,7 +144,8 @@ class att_ctrl(object):
 
         p_error_z = kpz*(self.z_error) + kdz*(rate_position_error_z) + robot_mg[2] + kiz*(integral_error_z) + self.ref_acc[2] # z error
         
-        self.des_rps = p_error_z + manual_thrust
+        # self.des_rps = p_error_z + manual_thrust
+        self.des_rps = p_error_z
         
         return (self.des_rps)
     

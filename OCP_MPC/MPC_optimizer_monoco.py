@@ -218,7 +218,7 @@ class Monoco_Optimizer(object):
         # cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
         collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
-        vel_term = cs.vertcat(0.0, 0.0, self.vel_term)
+        vel_term = cs.vertcat(0.0, 0.0, self.vel_term*self.vel[2])
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
         a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2
 
