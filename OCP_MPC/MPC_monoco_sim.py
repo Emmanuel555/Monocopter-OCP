@@ -39,6 +39,9 @@ if __name__ == '__main__':
     q_cost = np.concatenate((kp,ka,kv,kr))
     r_cost = np.array([0.1, 0.1, 0.05])
 
+    # thrust rate
+    ku = 1.0
+
     # Solver terms
     t_horizon = 1/20 # 20 Hz
     Nodes = 20 
@@ -48,7 +51,7 @@ if __name__ == '__main__':
     monoco_type = SAM.SAM(monoco_name)
 
     # MPC Monoco INDI Control & Optimizer
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
     
     time_last = time.time()
     

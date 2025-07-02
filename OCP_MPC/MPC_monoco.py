@@ -314,6 +314,8 @@ if __name__ == '__main__':
     q_cost = np.concatenate((kp,ka,kv,kr))
     r_cost = np.array([0.0, 0.0, 0.0])
 
+    # thrust rate
+    ku = 1.0
 
      # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])
@@ -384,7 +386,7 @@ if __name__ == '__main__':
 
 
     # MPC Monoco INDI Control & Optimizer
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
     
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:

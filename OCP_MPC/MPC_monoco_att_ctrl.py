@@ -14,7 +14,7 @@ import SAM
 
 
 class att_ctrl(object):
-    def __init__(self, body_rate_rate_gains, q_cost, r_cost, monoco, time_horizon, nodes):
+    def __init__(self, body_rate_rate_gains, thrust_rate, q_cost, r_cost, monoco, time_horizon, nodes):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -64,6 +64,10 @@ class att_ctrl(object):
         self.attitude_rate_error = 0.0
         self.attitude_raterate_error = 0.0
         self.position_error_last = np.array([0.0, 0.0, 0.0])
+
+        # thrust rate
+        self.previous_motor_cmd = 0.0
+        self.ku = thrust_rate
 
         # model
         self.g = 9.81
@@ -184,13 +188,15 @@ class att_ctrl(object):
         #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
         #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-        final_motor_output = des_rps 
+        final_motor_output = self.previous_motor_cmd + self.ku*(des_rps - self.previous_motor_cmd) 
         
         # motor saturation
         if final_motor_output > 65500:
             final_motor_output = 65500
         elif final_motor_output < 10:
             final_motor_output = 10
+
+        self.previous_motor_cmd = final_motor_output
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
         return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
