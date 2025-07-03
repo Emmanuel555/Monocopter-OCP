@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 400 # 360 at 65
+    max_sample_rate = 420 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
@@ -296,13 +296,14 @@ if __name__ == '__main__':
     aiz = 1000 # | 128
 
     # position
+
     kp = np.array([0.0,0.0,1.2])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
    
     # velocity - try this
-    kv = np.array([0.0,0.0,0.0001])
+    kv = np.array([0.0,0.0,0.0])
     
     # bodyrates
     kr = np.array([0.0,0.0,0.0])
@@ -315,7 +316,7 @@ if __name__ == '__main__':
     r_cost = np.array([0.0, 0.0, 0.0])
 
     # thrust rate
-    ku = 1.0
+    ku = np.array([1.5,0.0,0.0])
 
      # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])

@@ -63,7 +63,8 @@ class Monoco_Optimizer(object):
         # Full state vector (12-dimensional)
         self.x = cs.vertcat(self.pos, self.ang, self.vel, self.bodyrate) # vertical concatenation
         self.state_dim = 12
-        self.vel_term = q_cost[2]/15 # adjust this again
+        self.vel_term_quad = q_cost[2]/20 # adjust this again
+        self.vel_term = q_cost[2]/5 # adjust this again
 
         # Control input vector (rpy + collective thrust)
         u1 = cs.MX.sym('u1') # roll
@@ -221,8 +222,8 @@ class Monoco_Optimizer(object):
 
         ## needa test this shit tmr
         # vel_term = cs.vertcat(0.0, 0.0, self.vel_term*self.vel[2])
-        vel_term = cs.vertcat(0.0, 0.0, self.vel_term*self.vel[2]) / self.monoco.mass
-        # vel_term = cs.vertcat(0.0, 0.0, self.vel_term*pow(self.vel[2],3)) / self.monoco.mass # needa play with the power abit 
+        # vel_term = cs.vertcat(0.0, 0.0, self.vel_term*self.vel[2]) / self.monoco.mass
+        vel_term = cs.vertcat(0.0, 0.0, self.vel_term_quad*pow(self.vel[2],2)) # needa play with the power abit 
         
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
         a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2

@@ -67,7 +67,11 @@ class att_ctrl(object):
 
         # thrust rate
         self.previous_motor_cmd = 0.0
-        self.ku = thrust_rate
+        self.previous_motor_error = 0.0
+        self.kup = thrust_rate[0]
+        self.kud = thrust_rate[1]
+        self.kui = thrust_rate[2]
+
 
         # model
         self.g = 9.81
@@ -117,7 +121,7 @@ class att_ctrl(object):
         self.mpc_monoco.set_reference_state(x_target=[self.p_control_signal,self.ref_att,self.ref_vel,self.ref_rates])
     
 
-    def opti_output_control(self):
+    def opti_output_control(self): # change robot pos[2] to rotational rate tmr...
         initial_state_taken = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
         opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state_taken)
         control_inputs = opt_output[0]
@@ -150,6 +154,12 @@ class att_ctrl(object):
         
         # self.des_rps = p_error_z + manual_thrust
         self.des_rps = p_error_z
+
+        # motor saturation
+        if self.des_rps > 65500:
+            self.des_rps = 65500
+        elif self.des_rps < 10:
+            self.des_rps = 10
         
         return (self.des_rps)
     
@@ -188,7 +198,9 @@ class att_ctrl(object):
         #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
         #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-        final_motor_output = self.previous_motor_cmd + self.ku*(des_rps - self.previous_motor_cmd) 
+        motor_error = des_rps - self.previous_motor_cmd
+        motor_error_error = motor_error-self.previous_motor_error
+        final_motor_output = self.previous_motor_cmd + self.kup*(motor_error) + self.kud*(motor_error_error) + self.kui*(motor_error*self.dt)  # collective thrust + cyclic
         
         # motor saturation
         if final_motor_output > 65500:
@@ -197,6 +209,7 @@ class att_ctrl(object):
             final_motor_output = 10
 
         self.previous_motor_cmd = final_motor_output
+        self.previous_motor_error = motor_error_error
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
         return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
