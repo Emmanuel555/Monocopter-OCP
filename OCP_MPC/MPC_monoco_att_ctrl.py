@@ -119,8 +119,12 @@ class att_ctrl(object):
         self.ref_jerk_bod_rates()
         self.ref_snap_bod_raterate()
         self.mpc_monoco.set_reference_state(x_target=[self.p_control_signal,self.ref_att,self.ref_vel,self.ref_rates])
-    
 
+
+    def rotational_drag(self):
+        self.mpc_monoco.rotational_drag(self.yawrate)
+
+    
     def opti_output_control(self): # change robot pos[2] to rotational rate tmr...
         initial_state_taken = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
         opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state_taken)
@@ -171,8 +175,13 @@ class att_ctrl(object):
         state_outputs = opti_outputs[1]
 
         # collective thrust
-        des_rps = control_inputs[2] * self.monoco.max_thrust_collective
-        des_rps = des_rps * self.monoco.cf_max
+        #des_rps = control_inputs[2] * self.monoco.max_thrust_collective
+        #des_rps = des_rps * self.monoco.cf_max
+
+        des_rps = control_inputs[2] * pow(self.monoco.max_thrust_collective,2)
+        if des_rps < 0.0:
+            des_rps = 0.0
+        des_rps = np.sqrt(des_rps) * self.monoco.cf_max
 
         # cyclic
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
@@ -200,7 +209,7 @@ class att_ctrl(object):
         #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
         motor_error = des_rps - self.previous_motor_cmd
         motor_error_error = motor_error-self.previous_motor_error
-        final_motor_output = self.previous_motor_cmd + self.kup*(motor_error) + self.kud*(motor_error_error) + self.kui*(motor_error*self.dt)  # collective thrust + cyclic
+        final_motor_output = self.previous_motor_cmd + self.kup*(motor_error) # collective thrust + cyclic
         
         # motor saturation
         if final_motor_output > 65500:

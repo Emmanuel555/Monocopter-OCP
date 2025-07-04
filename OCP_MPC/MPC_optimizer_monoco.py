@@ -66,6 +66,10 @@ class Monoco_Optimizer(object):
         self.vel_term_quad = q_cost[2]/20 # adjust this again
         self.vel_term = q_cost[2]/5 # adjust this again
 
+        # Rotational drag
+        self.rot_drag_term = 1.0
+        self.rot_drag = 0.0
+
         # Control input vector (rpy + collective thrust)
         u1 = cs.MX.sym('u1') # roll
         u2 = cs.MX.sym('u2') # pitch
@@ -217,7 +221,8 @@ class Monoco_Optimizer(object):
 
     def v_dot_dynamics(self): # dyn from uzh
         # cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
-        collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
+        #collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
+        collective = self.u[-1] * pow(self.monoco.max_thrust_collective,2) # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
 
         ## needa test this shit tmr
@@ -226,7 +231,8 @@ class Monoco_Optimizer(object):
         vel_term = cs.vertcat(0.0, 0.0, self.vel_term_quad*pow(self.vel[2],2)) # needa play with the power abit 
         
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
-        a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2
+        bemt = 1/6 * pow(self.monoco.radius,3) * self.monoco.rho * self.monoco.chord * self.monoco.cla * self.monoco.AoA
+        a_thrust = cs.vertcat(0.0, 0.0, collective[0]*bemt) / self.monoco.mass # convert to m/s^2
 
         a_dynamics = v_dot_q(a_thrust, quat) - g - vel_term # W frame - dyn model may not be the issue
         # a_dynamics = a_thrust - g # W frame 
@@ -270,12 +276,16 @@ class Monoco_Optimizer(object):
         return ref
     
 
+    def rotational_drag(self, yawrate):
+        self.rot_drag = self.rot_drag_term * pow(yawrate,2)
+
+
     def aug_state(self):
         ## note, cannot predict using dynamic model cos mpc setup cant be iterated, only params can wo compiling..
         ## somehow, the update must be done externally either via p or x 
         
         ## how to change parameter P:
-        aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] # change the first vector to introduce velocity disturbances or permutations  
+        aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, -self.rot_drag] + [0.0, 0.0, 0.0] # change the first vector to introduce velocity disturbances or permutations  
         aug_state = np.stack(aug_state)
         self.acados_ocp_solver.set(0, 'p', aug_state) # aug_state taken from above    
   

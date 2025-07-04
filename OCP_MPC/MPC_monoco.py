@@ -528,7 +528,7 @@ if __name__ == '__main__':
                     ref_msg = 'Manual_flight'
                     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
                     monoco.p_control_input_manual(ref_pos) # update the ref states
-                    ## test manual flight first
+                    monoco.rotational_drag()
 
                     # from att ctrl
                     control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
