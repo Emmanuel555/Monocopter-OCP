@@ -63,11 +63,11 @@ class Monoco_Optimizer(object):
         # Full state vector (12-dimensional)
         self.x = cs.vertcat(self.pos, self.ang, self.vel, self.bodyrate) # vertical concatenation
         self.state_dim = 12
-        self.vel_term_quad = q_cost[2]/20 # adjust this again
+        self.vel_term_quad = 1*q_cost[2]/20 # adjust this again
         self.vel_term = q_cost[2]/5 # adjust this again
 
         # Rotational drag
-        self.rot_drag_term = 1.0
+        self.rot_drag_term = 0.0
         self.rot_drag = 0.0
 
         # Control input vector (rpy + collective thrust)

@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
     # position
 
-    kp = np.array([0.0,0.0,1.2])
+    kp = np.array([0.0,0.0,1200.0])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -316,7 +316,7 @@ if __name__ == '__main__':
     r_cost = np.array([0.0, 0.0, 0.0])
 
     # thrust rate
-    ku = np.array([1.5,0.0,0.0])
+    ku = np.array([2.0,0.0,0.0]) #1.5
 
      # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])
@@ -618,6 +618,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_again'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_again_indi'
 data_saver.save_data(path)
 
