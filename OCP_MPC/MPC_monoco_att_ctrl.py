@@ -93,7 +93,7 @@ class att_ctrl(object):
         self.ref_sna = ref_sna 
 
 
-    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset, yaw, quat_x, quat_y, yawrate):
+    def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset, yaw, quat_x, quat_y, yawrate, bod_pitch):
         self.z_offset = z_offset
         self.robot_pos = np.array(linear_pos[0:3])
         self.robot_vel = np.array(linear_pos[3:6])
@@ -107,6 +107,7 @@ class att_ctrl(object):
         self.robot_quat_x = quat_x
         self.robot_quat_y = quat_y
         self.yawrate = yawrate
+        self.bod_pitch = bod_pitch
         
 
     def p_control_input_manual(self,manual_input):
@@ -122,7 +123,7 @@ class att_ctrl(object):
 
 
     def rotational_drag(self):
-        self.mpc_monoco.rotational_drag(self.yawrate)
+        self.mpc_monoco.rotational_drag(self.bod_pitch)
 
     
     def opti_output_control(self): # change robot pos[2] to rotational rate tmr...

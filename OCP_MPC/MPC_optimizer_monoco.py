@@ -276,8 +276,8 @@ class Monoco_Optimizer(object):
         return ref
     
 
-    def rotational_drag(self, yawrate):
-        self.rot_drag = self.rot_drag_term * pow(yawrate,2)
+    def rotational_drag(self, bod_pitch):
+        self.rot_drag = self.rot_drag_term / bod_pitch
 
 
     def aug_state(self):

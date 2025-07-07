@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
     # position
 
-    kp = np.array([0.0,0.0,1200.0])
+    kp = np.array([0.0,0.0,1200])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -451,7 +451,7 @@ if __name__ == '__main__':
                 manual_cyclic = ref_manual_ctrl(a0, a1, manual_alt) # manual position control 
 
                 # update positions etc.
-                monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
+                monoco.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate, body_pitch)
 
                 if button2 == 1:
 
@@ -533,10 +533,15 @@ if __name__ == '__main__':
                     # from att ctrl
                     control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
                     
-                    #cmd_bod_acc = control_outputs[0]
+                    cmd_bod_acc = control_outputs[0]
                     #des_rps = control_outputs[1]
                     #cyclic = control_outputs[2]
                     motor_soln = control_outputs[3]
+
+
+                    ## alt control with input from TX 
+                    # motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
+                    motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
 
 
                 att_raterate_error = monoco.attitude_raterate_error
