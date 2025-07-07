@@ -143,7 +143,7 @@ class att_ctrl(object):
         self.cmd_bod_raterates_final = cmd_bod_acc_final # for logging purposes
 
         ## NDI
-        #cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
+        cmd_bod_acc_final = kprr*(cascaded_ref_bod_acc)
         return (cmd_bod_acc_final)
     
 
@@ -161,8 +161,8 @@ class att_ctrl(object):
         self.des_rps = p_error_z
 
         # motor saturation
-        if self.des_rps > 65500:
-            self.des_rps = 65500
+        if self.des_rps > 55500:
+            self.des_rps = 55500
         elif self.des_rps < 10:
             self.des_rps = 10
         
@@ -222,7 +222,7 @@ class att_ctrl(object):
         self.previous_motor_error = motor_error_error
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
-        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output, state_outputs)
     
 
     def test_MPC_SIM_get_angles_and_thrust(self):

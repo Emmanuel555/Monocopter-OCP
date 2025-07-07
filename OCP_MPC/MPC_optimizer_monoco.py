@@ -277,6 +277,8 @@ class Monoco_Optimizer(object):
     
 
     def rotational_drag(self, bod_pitch):
+        if bod_pitch >= 0.0:
+            bod_pitch = 0.1
         self.rot_drag = self.rot_drag_term / bod_pitch
 
 
