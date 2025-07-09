@@ -235,6 +235,8 @@ class Monoco_Optimizer(object):
         a_thrust = cs.vertcat(0.0, 0.0, collective[0]*bemt) / self.monoco.mass # convert to m/s^2
 
         a_dynamics = v_dot_q(a_thrust, quat) - g - vel_term # W frame - dyn model may not be the issue
+
+        # a_dynamics = a_thrust - g - vel_term # try this 
         # a_dynamics = a_thrust - g # W frame 
 
         return a_dynamics
