@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 250 # 360 at 65
+    max_sample_rate = 100 # 360 at 65
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
@@ -313,7 +313,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.0, 0.0, 0.0])
+    r_cost = np.array([0.00000, 0.00000, 0.0])
 
     # thrust rate
     ku = np.array([1.2,0.0,0.0]) #1.5
@@ -534,9 +534,6 @@ if __name__ == '__main__':
                     control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
                     
                     cmd_bod_acc = control_outputs[0]
-                    state_outputs = control_outputs[4]
-                    roll_soln = state_outputs[1,-3]  # roll
-                    pitch_soln = state_outputs[1,-2]  # pitch
                     #des_rps = control_outputs[1]
                     #cyclic = control_outputs[2]
                     #motor_soln = control_outputs[3]
@@ -560,7 +557,7 @@ if __name__ == '__main__':
                 final_cmd = np.array([motor_cmd, motor_cmd, motor_cmd, motor_cmd]) # e.g                
                 final_cmd = np.array([final_cmd])
                 seq_args = swarm_exe(final_cmd) 
-                #swarm.parallel(arm_throttle, args_dict=seq_args)
+                swarm.parallel(arm_throttle, args_dict=seq_args)
 
 
                 stop = timeit.default_timer()
@@ -588,7 +585,6 @@ if __name__ == '__main__':
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
 
                     print('raw att_cmds: ', control_outputs[2])
-                    print('bod_rates soln: ', roll_soln, pitch_soln)
                     #print('monoco.rates comparison: ', monoco.cmd_bod_rates_final, monoco.ref_rates)
                     #print('monoco.raterates comparison: ', monoco.cmd_bod_raterates_final, monoco.ref_raterates)
                     #print('yawrate: ', yawrate)
@@ -636,6 +632,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_again'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_rot_z'
+data_saver.save_data(path)
 
