@@ -127,6 +127,7 @@ class att_ctrl(object):
 
     
     def opti_output_control(self): # change robot pos[2] to rotational rate tmr...
+        self.robot_tpp_bod_rate[2] = self.yawrate
         initial_state_taken = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
         opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state_taken)
         control_inputs = opt_output[0]
