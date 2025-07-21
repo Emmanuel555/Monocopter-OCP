@@ -229,9 +229,11 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 100 # 360 at 65
+    max_sample_rate = 250 # 360 at 65
+    mpc_rate = 100 # best - 100
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
+    mpc_sample_time = 1/mpc_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     # data_saver = DataSave.SaveData('Data_time',
@@ -313,7 +315,7 @@ if __name__ == '__main__':
 
     # MPC gains
     q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.00000, 0.00000, 0.0])
+    r_cost = np.array([0.0, 0.0, 0.0])
 
     # thrust rate
     ku = np.array([1.2,0.0,0.0]) #1.5
@@ -377,7 +379,7 @@ if __name__ == '__main__':
 
 
     # Solver terms
-    t_horizon = sample_time  # 250 Hz
+    t_horizon = mpc_sample_time # 100 Hz
     Nodes = 20 # 
 
 
@@ -632,6 +634,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_rot_z'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_translation'
 data_saver.save_data(path)
 
