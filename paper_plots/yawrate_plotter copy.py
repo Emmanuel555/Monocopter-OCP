@@ -51,10 +51,10 @@ for a in range(len(wing)): # 3 trajs
     ax1.plot(traj_time_yawrate, yawrate, color=colors[a], linestyle='solid', linewidth=3.0, label=wing_label)
     
 ax1.set_xlabel('Time(s)', fontsize=25)
-ax1.set_ylabel('hz', fontsize=25)
+ax1.set_ylabel('Hz', fontsize=25)
 ax1.tick_params(axis='both', labelsize=25)
 ax1.legend(loc='upper right', fontsize=25)
-ax1.set_title('Body rotational rate @ cir 0.3m/s', fontsize=30, fontweight='bold')
+ax1.set_title('Body yaw rotational rate @ cir 0.3m/s', fontsize=30, fontweight='bold')
 ax1.grid(linewidth=2.0)    
   
 plt.savefig('yawrate.png', dpi=300, bbox_inches='tight')  

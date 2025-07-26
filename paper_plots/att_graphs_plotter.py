@@ -52,9 +52,9 @@ for t in range(3): # trajectories
 
     for a in range(2): # 2 graphs per traj
         if a == 0:
-            att_label = '∥¨ωDE∥ (rad/s^2)'   
+            att_label = '∥˙ωDE∥ (rad/s^2)'   
         elif a == 1:
-            att_label = 'Body rotational rate (hz)'  
+            att_label = 'Body yaw rotational rate (Hz)'  
 
         if a == 1:
             for m in range(2): # 0.5 INDI and NDI  
