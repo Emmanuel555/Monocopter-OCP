@@ -369,7 +369,7 @@ if __name__ == '__main__':
     ## 2 pt line
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
     #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
@@ -457,64 +457,68 @@ if __name__ == '__main__':
 
                 if button2 == 1:
 
-                    # ## hovering test
-                    # if button1 == 0:
-                    #     stage == 'hover'
-                    #     ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
-                    #     hovering_ff = np.array([0.0, 0.0, 0.0])
-                    #     ref_pos = ref[0]
-                    #     ref_vel = hovering_ff
-                    #     ref_acc = hovering_ff
-                    #     ref_jerk = hovering_ff
-                    #     ref_snap = hovering_ff
-                    #     ref_msg = ref[1]
-                    #     count = 0
+                    ## hovering test
+                    if button1 == 0:
+                        stage == 'hover'
+                        ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
+                        hovering_ff = np.array([0.0, 0.0, 0.0])
+                        ref_pos = ref[0]
+                        ref_vel = hovering_ff
+                        ref_acc = hovering_ff
+                        ref_jerk = hovering_ff
+                        ref_snap = hovering_ff
+                        ref_msg = ref[1]
+                        count = 0
 
 
-                #     """ ## trajectory inputs
-                #     elif button1 == 1:
-                #         stage == 'trajectory on'
-                #         ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
-                #         ref_pos = ref_derivatives[0]
-                #         ref_vel = ref_derivatives[1]
-                #         ref_acc = ref_derivatives[2]
-                #         ref_jerk = ref_derivatives[3]
-                #         ref_snap = ref_derivatives[4]
-                #         ref_msg = ref_derivatives[5]  
-                #         # compute bem thrust
-                #         monoco.compute_bem_wo_rps(body_pitch) 
-                #         count += 1 
+                    ## trajectory inputs
+                    elif button1 == 1:
+                        stage == 'trajectory on'
+                        ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
+                        ref_pos = ref_derivatives[0]
+                        ref_vel = ref_derivatives[1]
+                        ref_acc = ref_derivatives[2]
+                        ref_jerk = ref_derivatives[3]
+                        ref_snap = ref_derivatives[4]
+                        ref_msg = ref_derivatives[5]  
+                        count += 1 
 
 
-                #     ## landing 
-                #     elif button1 == -1:
-                #         stage == 'land'
-                #         ref = traj_gen.hover_test(x_land_offset,y_land_offset,z_land_offset)
-                #         hovering_ff = np.array([0.0, 0.0, 0.0])
-                #         ref_pos = ref[0]
-                #         ref_vel = hovering_ff
-                #         ref_acc = hovering_ff
-                #         ref_jerk = hovering_ff
-                #         ref_snap = hovering_ff
-                #         ref_msg = ref[1]
-                #         count = 0
+                    ## landing 
+                    elif button1 == -1:
+                        stage == 'land'
+                        ref = traj_gen.hover_test(x_land_offset,y_land_offset,z_land_offset)
+                        hovering_ff = np.array([0.0, 0.0, 0.0])
+                        ref_pos = ref[0]
+                        ref_vel = hovering_ff
+                        ref_acc = hovering_ff
+                        ref_jerk = hovering_ff
+                        ref_snap = hovering_ff
+                        ref_msg = ref[1]
+                        count = 0
 
                     # ff references
                     # Manual thrust control
-                    stage == 'TX_Manual_flight'
-                    ff = np.array([0.0, 0.0, 0.0])
-                    ref_pos = manual_cyclic
-                    ref_vel = ff
-                    ref_acc = ff
-                    ref_jerk = ff
-                    ref_snap = ff
-                    ref_msg = 'Manual_flight'
+                    # stage == 'TX_Manual_flight'
+                    # ff = np.array([0.0, 0.0, 0.0])
+                    # ref_pos = manual_cyclic
+                    # ref_vel = ff
+                    # ref_acc = ff
+                    # ref_jerk = ff
+                    # ref_snap = ff
+                    # ref_msg = 'Manual_flight'
 
                     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
                     # p control
                     monoco.p_control_input_manual(ref_pos)
+                    
+                    # from att ctrl
+                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+                    cmd_bod_acc = control_outputs[0]
+
                     # alt control with input from TX 
                     motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
+                    motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
 
 
                 else:
@@ -565,6 +569,7 @@ if __name__ == '__main__':
                 stop = timeit.default_timer()
                 time_last = time.time()       
 
+
                 if loop_counter % 20 == 0:
                     """ print(f"Thrust: {manual_alt}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
                     print(f"Cmd_bod_acc are: {cmd_bod_acc}, roll pitch cyclic inputs are: {cyclic}, des_rps is {des_rps}, motor_soln is {motor_soln}")
@@ -580,7 +585,7 @@ if __name__ == '__main__':
                     #print('ref_alt: ', manual_alt) 
                     #print('motor_soln: ', motor_soln)
                     #print('actual_motor_cmd: ', motor_cmd)
-                    print('button2: ', button2)
+                    print(f'button2: {button2}, button1: {button1}')
                     #print('actual_altitude: ', linear_state_vector[2])
 
                     #print('manual_cyclic_xyz: ', manual_cyclic)
@@ -601,8 +606,8 @@ if __name__ == '__main__':
 
 
                 # # auto & collect data
-                # if button2 == 1: 
-                #     if stage == 'trajectory on':
+                if button2 == 1: 
+                    if stage == 'trajectory on':
                 #         x_error = ref_pos[0]-x_offset-linear_state_vector[0]
                 #         y_error = ref_pos[1]-y_offset-linear_state_vector[1]
                 #         z_error = ref_pos[2]-z_offset-linear_state_vector[2]
@@ -615,8 +620,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc)
-                #time.sleep(0.0033) 
+                        data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc) 
                     
 
         except KeyboardInterrupt:  
@@ -634,6 +638,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_test_mpc_translation'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle'
 data_saver.save_data(path)
 
