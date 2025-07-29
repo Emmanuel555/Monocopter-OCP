@@ -229,11 +229,11 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 250 # 360 at 65
+    max_sample_rate = 100 # 360 at 65
     mpc_rate = 100 # best - 100
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
-    mpc_sample_time = 1/mpc_rate
+    mpc_sample_time = 1 / mpc_rate
     data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     # data_saver = DataSave.SaveData('Data_time',
@@ -352,8 +352,8 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 1.0 # 0.5
-    speedX = 5.0 # 0.5 m/s the best thus far
+    radius = 0.5 # 0.5
+    speedX = 3.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -459,7 +459,7 @@ if __name__ == '__main__':
 
                     ## hovering test
                     if button1 == 0:
-                        stage == 'hover'
+                        stage = 'hover'
                         ref = traj_gen.hover_test(x_hover_offset,y_hover_offset,z_hover_offset)
                         hovering_ff = np.array([0.0, 0.0, 0.0])
                         ref_pos = ref[0]
@@ -473,7 +473,7 @@ if __name__ == '__main__':
 
                     ## trajectory inputs
                     elif button1 == 1:
-                        stage == 'trajectory on'
+                        stage = 'trajectory on'
                         ref_derivatives = traj_gen.jerk_snap_circle(pva,num_pts,count,alt)
                         ref_pos = ref_derivatives[0]
                         ref_vel = ref_derivatives[1]
@@ -486,7 +486,7 @@ if __name__ == '__main__':
 
                     ## landing 
                     elif button1 == -1:
-                        stage == 'land'
+                        stage = 'land'
                         ref = traj_gen.hover_test(x_land_offset,y_land_offset,z_land_offset)
                         hovering_ff = np.array([0.0, 0.0, 0.0])
                         ref_pos = ref[0]
@@ -579,19 +579,19 @@ if __name__ == '__main__':
                     #print('x error: ', ref_pos[0] - linear_state_vector[0])
                     #print('y error: ', ref_pos[1] - linear_state_vector[1])
 
-                    print('x ref: ', ref_pos[0])
-                    print('y ref: ', ref_pos[1])
+                    print(f'x ref: {ref_pos[0]}, y_ref: {ref_pos[1]}')
 
                     #print('ref_alt: ', manual_alt) 
                     #print('motor_soln: ', motor_soln)
                     #print('actual_motor_cmd: ', motor_cmd)
                     print(f'button2: {button2}, button1: {button1}')
+                    print(f'Stage: {stage}')
                     #print('actual_altitude: ', linear_state_vector[2])
 
                     #print('manual_cyclic_xyz: ', manual_cyclic)
                     #print('p_cyclic_xyz: ', monoco.p_control_signal)
 
-                    print('raw att_cmds: ', control_outputs[2])
+                    #print('raw att_cmds: ', control_outputs[2])
                     #print('monoco.rates comparison: ', monoco.cmd_bod_rates_final, monoco.ref_rates)
                     #print('monoco.raterates comparison: ', monoco.cmd_bod_raterates_final, monoco.ref_raterates)
                     #print('yawrate: ', yawrate)
@@ -638,6 +638,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_no_t_matrix'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_100'
 data_saver.save_data(path)
 
