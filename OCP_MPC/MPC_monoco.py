@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 100 # 360 at 65
+    max_sample_rate = 250 # 360 at 65
     mpc_rate = 100 # best - 100
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
@@ -582,10 +582,10 @@ if __name__ == '__main__':
                     print(f'x ref: {ref_pos[0]}, y_ref: {ref_pos[1]}')
 
                     #print('ref_alt: ', manual_alt) 
-                    #print('motor_soln: ', motor_soln)
+                    print('motor_soln: ', motor_soln)
                     #print('actual_motor_cmd: ', motor_cmd)
                     print(f'button2: {button2}, button1: {button1}')
-                    print(f'Stage: {stage}')
+                    print(f'Stage: {stage}, Ref Msg: {ref_msg}')
                     #print('actual_altitude: ', linear_state_vector[2])
 
                     #print('manual_cyclic_xyz: ', manual_cyclic)
