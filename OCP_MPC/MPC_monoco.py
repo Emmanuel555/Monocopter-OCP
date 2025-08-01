@@ -297,15 +297,17 @@ if __name__ == '__main__':
     adz = 50000 
     aiz = 1000 # | 128
 
-    # position
+    # null
+    kn = np.array([0.0,0.0,0.0])
 
+    # position
     kp = np.array([1000,1000,1200])
 
     # angle
     ka = np.array([0.0,0.0,0.0])
    
     # velocity - try this
-    kv = np.array([0.0,0.0,0.0])
+    kv = np.array([1.0,1.0,1.0])
     
     # bodyrates
     kr = np.array([0.0,0.0,0.0])
@@ -314,8 +316,14 @@ if __name__ == '__main__':
     krr = [1.0, 1.0] # 1.0
 
     # MPC gains
-    q_cost = np.concatenate((kp,ka,kv,kr))
-    r_cost = np.array([0.0, 0.0, 0.0])
+    # hover
+    h_q_cost = np.concatenate((kp,kn,kn,kn))
+    h_r_cost = np.array([0.0, 0.0, 0.0])
+
+    # trajectory
+    t_q_cost = np.concatenate((kp,ka,kv,kr))
+    t_r_cost = np.array([0.0, 0.0, 0.0])
+
 
     # thrust rate
     ku = np.array([1.2,0.0,0.0]) #1.5
@@ -389,7 +397,7 @@ if __name__ == '__main__':
 
 
     # MPC Monoco INDI Control & Optimizer
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, q_cost, r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, h_q_cost, h_r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
     
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
@@ -468,6 +476,8 @@ if __name__ == '__main__':
                         ref_jerk = hovering_ff
                         ref_snap = hovering_ff
                         ref_msg = ref[1]
+                        q = h_q_cost
+                        r = h_r_cost
                         count = 0
 
 
@@ -481,6 +491,8 @@ if __name__ == '__main__':
                         ref_jerk = ref_derivatives[3]
                         ref_snap = ref_derivatives[4]
                         ref_msg = ref_derivatives[5]  
+                        q = t_q_cost
+                        r = t_r_cost
                         count += 1 
 
 
@@ -495,6 +507,8 @@ if __name__ == '__main__':
                         ref_jerk = hovering_ff
                         ref_snap = hovering_ff
                         ref_msg = ref[1]
+                        q = h_q_cost
+                        r = h_r_cost
                         count = 0
 
                     # ff references
@@ -513,7 +527,7 @@ if __name__ == '__main__':
                     monoco.p_control_input_manual(ref_pos)
                     
                     # from att ctrl
-                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust(q,r) # roll and pitch torque requirements into motor values 
                     cmd_bod_acc = control_outputs[0]
 
                     # alt control with input from TX 
@@ -532,12 +546,14 @@ if __name__ == '__main__':
                     ref_jerk = ff
                     ref_snap = ff
                     ref_msg = 'Manual_flight'
+                    q = h_q_cost
+                    r = h_r_cost
                     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
                     monoco.p_control_input_manual(ref_pos) # update the ref states
                     #monoco.rotational_drag()
 
                     # from att ctrl
-                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust() # roll and pitch torque requirements into motor values 
+                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust(q,r) # roll and pitch torque requirements into motor values 
                     
                     cmd_bod_acc = control_outputs[0]
                     #des_rps = control_outputs[1]

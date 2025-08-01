@@ -88,9 +88,9 @@ traj_time = time[0][start:end]
 #mf_x_e = ndimage.median_filter(x_e[0][start:end], size=200)
 #mf_y_e = ndimage.median_filter(y_e[0][start:end], size=200)
 #mf_z_e = ndimage.median_filter(z_e[0][start:end], size=200)
-mf_px = ndimage.median_filter(px[0][start:end], size=30)
-mf_py = ndimage.median_filter(py[0][start:end], size=30)
-mf_pz = ndimage.median_filter(pz[0][start:end], size=30)
+mf_px = ndimage.median_filter(px[0][start:end], size=300)
+mf_py = ndimage.median_filter(py[0][start:end], size=300)
+mf_pz = ndimage.median_filter(pz[0][start:end], size=300)
 
 
 print('len: ', len(mf_px)) # must use x_e[0] to get the length of the array

@@ -126,10 +126,10 @@ class att_ctrl(object):
         self.mpc_monoco.rotational_drag(self.bod_pitch)
 
     
-    def opti_output_control(self): # change robot pos[2] to rotational rate tmr...
+    def opti_output_control(self,q,r): # change robot pos[2] to rotational rate tmr...
         self.robot_tpp_bod_rate[2] = self.yawrate
         initial_state_taken = np.concatenate((self.robot_pos,self.robot_tpp,self.robot_vel,self.robot_tpp_bod_rate))
-        opt_output = self.mpc_monoco.run_optimization(initial_state=initial_state_taken)
+        opt_output = self.mpc_monoco.run_optimization(initial_state_taken,q,r)
         control_inputs = opt_output[0]
         state_outputs = opt_output[1]
         return (control_inputs, state_outputs)
@@ -170,9 +170,9 @@ class att_ctrl(object):
         return (self.des_rps)
     
     
-    def MPC_SAM_get_angles_and_thrust(self):
+    def MPC_SAM_get_angles_and_thrust(self,q,r):
         # run entire MPC-SAM loop
-        opti_outputs = self.opti_output_control()
+        opti_outputs = self.opti_output_control(q,r)
         control_inputs = opti_outputs[0]
         state_outputs = opti_outputs[1]
 

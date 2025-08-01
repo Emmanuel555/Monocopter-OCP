@@ -294,7 +294,7 @@ class Monoco_Optimizer(object):
         self.acados_ocp_solver.set(0, 'p', aug_state) # aug_state taken from above    
   
 
-    def run_optimization(self, initial_state=None):
+    def run_optimization(self, initial_state, q, r):
         """
         Optimizes a trajectory to reach the pre-set target state, starting from the input initial state, that minimizes
         the quadratic cost function and respects the constraints of the system
@@ -308,6 +308,10 @@ class Monoco_Optimizer(object):
         # Set initial state. Add gp state if needed
         x_init = initial_state
         x_init = np.stack(x_init)
+
+        # updated cost_matrix depending on phase
+        W = np.diag(np.concatenate((q, r)))
+        self.acados_ocp_solver.cost_set(0, 'W', W)        
 
         ## Input initial states
         self.acados_ocp_solver.set(0, 'lbx', x_init) # lower bounds 
