@@ -169,8 +169,70 @@ class att_ctrl(object):
         
         return (self.des_rps)
     
-    
+
     def MPC_SAM_get_angles_and_thrust(self,q,r):
+        # run entire MPC-SAM loop
+        opti_outputs = self.opti_output_control(q,r)
+        control_inputs = opti_outputs[0]
+        state_outputs = opti_outputs[1]
+
+        # collective thrust
+        #des_rps = control_inputs[2] * self.monoco.max_thrust_collective
+        #des_rps = des_rps * self.monoco.cf_max
+
+        des_rps = control_inputs[2] * pow(self.monoco.max_thrust_collective,2)
+        if des_rps < 0.0:
+            des_rps = 0.0
+        des_rps = np.sqrt(des_rps) * self.monoco.cf_max
+
+        # cyclic
+        cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
+        cyclic = cyclic * self.monoco.cf_max
+        cmd_bod_acc = np.array([cyclic[1], cyclic[0]]) # abt y x only, roll, pitch
+        raw_cmd_bod_acc = cmd_bod_acc
+
+        self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
+        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        
+    
+        ### to be continued..., maybe got chance to turn this into precession driven MPC
+        # - alter optimizer function for w,
+        # - alter control effectiveness, maybe may not even need to account for phase delay and control effectiveness
+        # - INDI lastly for torque compensation 
+
+
+        ## to account for phase delay
+        x_sign = math.sin(self.yaw)
+        y_sign = math.cos(self.yaw)
+
+        cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
+        cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
+        
+        # # output saturation (cmd_att)
+        # if abs(cmd_bod_acc[0]) > 10000:
+        #     cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
+        # if abs(cmd_bod_acc[1]) > 10000:
+        #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
+
+        #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
+        motor_error = des_rps - self.previous_motor_cmd
+        motor_error_error = motor_error-self.previous_motor_error
+        final_motor_output = self.previous_motor_cmd + self.kup*(motor_error) # collective thrust + cyclic
+        
+        # motor saturation
+        if final_motor_output > 65500:
+            final_motor_output = 65500
+        elif final_motor_output < 10:
+            final_motor_output = 10
+
+        self.previous_motor_cmd = final_motor_output
+        self.previous_motor_error = motor_error_error
+
+        # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
+    
+    
+    """ def MPC_SAM_get_angles_and_thrust(self,q,r):
         # run entire MPC-SAM loop
         opti_outputs = self.opti_output_control(q,r)
         control_inputs = opti_outputs[0]
@@ -223,7 +285,7 @@ class att_ctrl(object):
         self.previous_motor_error = motor_error_error
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
-        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output) """
     
 
     def test_MPC_SIM_get_angles_and_thrust(self):
