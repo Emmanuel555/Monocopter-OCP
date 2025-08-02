@@ -71,8 +71,8 @@ class Monoco_Optimizer(object):
         self.rot_drag = 0.0
 
         # Control input vector (rpy + collective thrust)
-        u1 = cs.MX.sym('u1') # roll
-        u2 = cs.MX.sym('u2') # pitch
+        u1 = cs.MX.sym('u1') # pitch(abt x)
+        u2 = cs.MX.sym('u2') # roll(abt y)
         u3 = cs.MX.sym('u3') # collective thrust
         self.u = cs.vertcat(u1, u2, u3)
 
@@ -242,23 +242,15 @@ class Monoco_Optimizer(object):
         return a_dynamics
 
 
-    """ def w_dot_dynamics(self):
+    def w_dot_dynamics(self):
         cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
 
         return cs.vertcat(
             (cyclic[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0], # pitch abt X 
             (cyclic[1] + (self.monoco.J[2] - self.monoco.J[0]) * self.bodyrate[2] * self.bodyrate[0]) / self.monoco.J[1], # roll abt Y
-            0.0) """
-    
-    def w_dot_dynamics(self):
-        cyclic = self.u[0] * self.monoco.max_thrust_cyclic # max force value allocated
-
-        return cs.vertcat(
-            (cyclic[0] + (self.monoco.J[1] - self.monoco.J[2]) * self.bodyrate[1] * self.bodyrate[2]) / self.monoco.J[0], # pitch abt X 
-            0.0, # roll abt Y
             0.0)
     
-
+    
     def set_reference_state(self, x_target=None, u_target=None): # set references here in this function 
         """
         Sets the target state and pre-computes the integration dynamics with cost equations
@@ -317,7 +309,7 @@ class Monoco_Optimizer(object):
         x_init = initial_state
         x_init = np.stack(x_init)
 
-        # updated cost_matrix depending on phase
+        ## Update cost_matrix depending on phase
         W = np.diag(np.concatenate((q, r)))
         self.acados_ocp_solver.cost_set(0, 'W', W)        
 
@@ -336,7 +328,7 @@ class Monoco_Optimizer(object):
         x_opt_acados = np.ndarray((self.N + 1, len(x_init))) # N +1 due to terminal state
         x_opt_acados[0, :] = self.acados_ocp_solver.get(0, "x") # same dim and same values as initial state aka x_init
         for i in range(self.N):
-            w_opt_acados[i, :] = self.acados_ocp_solver.get(i, "u") # pitch, roll, collective thrust 
+            w_opt_acados[i, :] = self.acados_ocp_solver.get(i, "u") # pitch(abt x), roll(abt y), collective thrust 
             x_opt_acados[i + 1, :] = self.acados_ocp_solver.get(i + 1, "x") # states output - same dim as initial state but the back 3 are taken as body rates aka angular velocity
 
         w_opt_acados = np.reshape(w_opt_acados, (-1)) # first 3 values amount to roll, pitch, and thrust (only take this...)
