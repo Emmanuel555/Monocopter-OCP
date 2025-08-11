@@ -200,7 +200,7 @@ class att_ctrl(object):
 
         cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
         cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
-        
+
         # # output saturation (cmd_att)
         # if abs(cmd_bod_acc[0]) > 10000:
         #     cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        

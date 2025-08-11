@@ -307,10 +307,10 @@ if __name__ == '__main__':
     ka = np.array([0.0,0.0,0.0])
    
     # velocity - try this
-    kv = np.array([1.0,1.0,1.0])
+    kv = np.array([10.0,10.0,1.0])
     
     # bodyrates
-    kr = np.array([0.0,0.0,0.0])
+    kr = np.array([100.0,100.0,0.0])
 
     # INDI Loop
     krr = [1.0, 1.0] # 1.0
@@ -360,8 +360,8 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 0.5 # 0.5
-    speedX = 3.0 # 0.5 m/s the best thus far
+    radius = 1.0 # 0.5
+    speedX = 5.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -654,6 +654,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_100'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_new'
 data_saver.save_data(path)
 
