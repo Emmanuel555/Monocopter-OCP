@@ -307,10 +307,10 @@ if __name__ == '__main__':
     ka = np.array([0.0,0.0,0.0])
    
     # velocity - try this
-    kv = np.array([10.0,10.0,1.0])
+    kv = np.array([10.0,10.0,10.0])
     
     # bodyrates
-    kr = np.array([100.0,100.0,0.0])
+    kr = np.array([500.0,500.0,0.0])
 
     # INDI Loop
     krr = [1.0, 1.0] # 1.0
@@ -322,13 +322,13 @@ if __name__ == '__main__':
 
     # trajectory
     t_q_cost = np.concatenate((kp,ka,kv,kr))
-    t_r_cost = np.array([0.0, 0.0, 0.0])
+    t_r_cost = np.array([0.0, 0.0, 0.0]) # dun tune U, not good in general
 
 
     # thrust rate
     ku = np.array([1.2,0.0,0.0]) #1.5
 
-     # Initialize references
+    # Initialize references
     ref_pos_circle = np.array([0.0,0.0,0.0])
     ref_pos = np.array([1.0,0.0,1.0]) # 0,0 fked up for some reason
     land_pos = np.array([0.0,0.0,0.4])

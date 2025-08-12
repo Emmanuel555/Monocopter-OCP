@@ -612,16 +612,17 @@ class RealTimeProcessor(object):
         self.Omega = [rollrate_x, pitchrate_y, 0.0] # 3 x 1 - towards x, y, z - abt y x z
         self.Omega_dot = [rollraterate_x, pitchraterate_y, 0.0] # 3 x 1 - towards x, y, z - abt y x z
 
+        ## convert to disk frame
         rot_mat_world2tpp = [[1, 0, -math.sin(pitch)],
                              [0, math.cos(roll), math.cos(pitch)*math.sin(roll)],
                              [0, -math.sin(roll), math.cos(pitch)*math.cos(roll)]]
         
-        #self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
-        #self.Omega_dot = np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
-
-        #self.Omega[0] = self.rX.filter(self.Omega[0])
-        #self.Omega[1] = self.pY.filter(self.Omega[1])
-        #self.Omega[2] = self.yZ.filter(self.Omega[2])
+        dot_rot_mat_world2tpp = [[0, 0, (-math.cos(pitch))*pitchrate_y],
+                             [0, (-math.sin(roll))*rollrate_x, (-math.sin(pitch)*math.sin(roll)*pitchrate_y) + (math.cos(pitch)*math.cos(roll)*rollrate_x)],
+                             [0, (-math.cos(roll))*rollrate_x, (-math.sin(pitch)*math.cos(roll)*pitchrate_y) - (math.cos(pitch)*math.sin(roll)*rollrate_x)]]
+        
+        self.Omega_dot = np.dot(dot_rot_mat_world2tpp, self.Omega) + np.dot(rot_mat_world2tpp, self.Omega_dot) # 3 x 1 - about x, y, z
+        self.Omega = np.dot(rot_mat_world2tpp, self.Omega) # 3 x 1 - about x, y, z
 
         #self.Omega_dot[0] = self.rX.filter(self.Omega_dot[0])
         #self.Omega_dot[1] = self.pY.filter(self.Omega_dot[1])

@@ -88,8 +88,8 @@ traj_time = time[0][start:end]
 #mf_x_e = ndimage.median_filter(x_e[0][start:end], size=200)
 #mf_y_e = ndimage.median_filter(y_e[0][start:end], size=200)
 #mf_z_e = ndimage.median_filter(z_e[0][start:end], size=200)
-mf_px = ndimage.median_filter(px[0][start:end], size=300)
-mf_py = ndimage.median_filter(py[0][start:end], size=300)
+mf_px = ndimage.median_filter(px[0][start:end], size=100)
+mf_py = ndimage.median_filter(py[0][start:end], size=100)
 mf_pz = ndimage.median_filter(pz[0][start:end], size=300)
 
 
@@ -115,9 +115,9 @@ for i in range(len(mf_px)):
     x_error_squared.append((px_r[0][i] - mf_px[i]) ** 2)
     y_error_squared.append((py_r[0][i] - mf_py[i]) ** 2)    
     z_error_squared.append((pz_r[0][i] - mf_pz[i]) ** 2)
-    x_error.append((px_r[0][i] - mf_px[i]))
-    y_error.append((py_r[0][i] - mf_py[i]))
-    z_error.append((pz_r[0][i] - mf_pz[i]))
+    x_error.append(abs(px_r[0][i] - mf_px[i]))
+    y_error.append(abs(py_r[0][i] - mf_py[i]))
+    z_error.append(abs(pz_r[0][i] - mf_pz[i]))
 
 # for i in range(len(mf_x_e)):
 #     x_error_squared.append((mf_x_e[i]) ** 2)
@@ -127,7 +127,7 @@ for i in range(len(mf_px)):
 #     # y_error.append((ref_y - median_filtered_py[i]))
 #     # z_error.append((ref_z - median_filtered_pz[i]))
     
-""" print('x error len: ', len(mf_px))
+print('x error len: ', len(mf_px))
 final_rmse_x = math.sqrt(sum(x_error_squared)/(end-start))
 final_rmse_y = math.sqrt(sum(y_error_squared)/(end-start))
 final_rmse_z = math.sqrt(sum(z_error_squared)/(end-start))
@@ -137,11 +137,15 @@ final_rmse = la.norm([final_rmse_x, final_rmse_y,final_rmse_z], 2)
 x_med = statistics.median(x_error)
 y_med = statistics.median(y_error)
 z_med = statistics.median(z_error)  
+x_avg = statistics.mean(x_error)
+y_avg = statistics.mean(y_error)
+z_avg = statistics.mean(z_error)  
 med_err = la.norm([x_med, y_med, z_med], 2)
 print('error med: ', x_med, y_med, z_med)
+print('error avg: ', x_avg, y_avg, z_avg)
 print('error med norm: ', med_err)
 print('Final RMSE: ', final_rmse)
-print('RMSE XYZ: ', final_rmse_x, final_rmse_y, final_rmse_z) """
+print('RMSE XYZ: ', final_rmse_x, final_rmse_y, final_rmse_z)
 
 
 ## generate the plot
