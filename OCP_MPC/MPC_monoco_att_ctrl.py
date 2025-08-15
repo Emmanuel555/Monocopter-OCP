@@ -174,7 +174,7 @@ class att_ctrl(object):
         # run entire MPC-SAM loop
         opti_outputs = self.opti_output_control(q,r)
         control_inputs = opti_outputs[0]
-        state_outputs = opti_outputs[1]
+        nom_state = opti_outputs[1][1]
 
         # collective thrust
         #des_rps = control_inputs[2] * self.monoco.max_thrust_collective
@@ -185,14 +185,14 @@ class att_ctrl(object):
             des_rps = 0.0
         des_rps = np.sqrt(des_rps) * self.monoco.cf_max
 
-        # cyclic
+        # mpc cyclic
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
         cyclic = cyclic * self.monoco.cf_max
         cmd_bod_acc = np.array([cyclic[1], cyclic[0]]) # abt y x only, roll, pitch
         raw_cmd_bod_acc = cmd_bod_acc
 
-        self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
-        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        #self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
+        #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
         
         ## to account for phase delay
         x_sign = math.sin(self.yaw)
@@ -208,28 +208,28 @@ class att_ctrl(object):
         #      cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
         #final_motor_output = des_rps + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-        motor_error = des_rps - self.previous_motor_cmd
-        motor_error_error = motor_error-self.previous_motor_error
-        final_motor_output = self.previous_motor_cmd + self.kup*(motor_error) # collective thrust + cyclic
+        #motor_error = des_rps - self.previous_motor_cmd
+        #motor_error_error = motor_error-self.previous_motor_error
+        #final_motor_output = self.previous_motor_cmd + self.kup*(motor_error) # collective thrust + cyclic
         
         # motor saturation
-        if final_motor_output > 65500:
-            final_motor_output = 65500
-        elif final_motor_output < 10:
-            final_motor_output = 10
+        #if final_motor_output > 65500:
+        #    final_motor_output = 65500
+        #elif final_motor_output < 10:
+        #    final_motor_output = 10
 
-        self.previous_motor_cmd = final_motor_output
-        self.previous_motor_error = motor_error_error
+        #self.previous_motor_cmd = final_motor_output
+        #self.previous_motor_error = motor_error_error
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
-        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, nom_state)
     
 
-    def test_MPC_SIM_get_angles_and_thrust(self):
+    """ def test_MPC_SIM_get_angles_and_thrust(self):
         # run entire MPC-SAM loop
         opti_outputs = self.opti_output_control()
         control_inputs = opti_outputs[0]
-        state_outputs = opti_outputs[1]
+        nom_state = opti_outputs[1][1]
 
         # collective thrust
         des_rps = control_inputs[2] * self.monoco.max_thrust_collective
@@ -268,7 +268,7 @@ class att_ctrl(object):
             final_motor_output = 10
 
         # return (final_motor_output, cmd_bod_acc, des_rps, raw_cmd_bod_acc)
-        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output)
+        return (cmd_bod_acc, des_rps, raw_cmd_bod_acc, final_motor_output) """
 
 
     def ref_acc_att(self):
