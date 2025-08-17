@@ -11,7 +11,7 @@ import numpy as np
 import numpy.linalg as la
 
 
-class att_ctrl(object):
+class stab_att_ctrl(object):
     def __init__(self,p_gains,d_gains,i_gains,vel_gains,angle_gains,body_rate_gains,body_rate_rate_gains):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
@@ -123,13 +123,11 @@ class att_ctrl(object):
         self.lift_rotation_wo_rps = (self.cl*pitch*self.rho*self.chord_length*(self.wing_radius**3))/6 # has mass inside
 
 
-    def linear_ref(self,ref_pos,ref_vel,ref_acc,ref_jer,ref_sna,ref_pos_z):
-        self.ref_pos = ref_pos
-        self.ref_pos_z = ref_pos_z
-        self.ref_vel = ref_vel
-        self.ref_acc = ref_acc    
-        self.ref_jer = ref_jer
-        self.ref_sna = ref_sna 
+    def linear_ref(self,nom_state):
+        self.ref_pos = nom_state[0:3]
+        self.ref_vel = nom_state[3:6]
+        self.ref_att = nom_state[6:9]
+        self.ref_rates = nom_state[9:]
 
 
     def update(self, linear_pos, rotational_pos, rotational_quat, dt, z_offset, yaw, quat_x, quat_y, yawrate):
@@ -313,14 +311,20 @@ class att_ctrl(object):
         return (self.des_rps,self.cmd_z)
         
 
-    def body_rate_loop(self,cascaded_ref_bod_rates):
+    def body_rate_loop(self,cascaded_nom_bod_rates):
         kpr = self.kpr
         fb = np.array(self.robot_tpp_bod_rate[0:2]) # abt x y z
 
         # body rate controller
-        cmd_bod_rates_error = cascaded_ref_bod_rates - fb
+        """ cmd_bod_rates_error = cascaded_ref_bod_rates - fb
+        self.attitude_rate_error = cmd_bod_rates_error
+        self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error) """
+
+        # stab term
+        cmd_bod_rates_error = fb - cascaded_nom_bod_rates # abt x y, the other way round
         self.attitude_rate_error = cmd_bod_rates_error
         self.cmd_bod_rates_final = kpr*(cmd_bod_rates_error)
+
         return (self.cmd_bod_rates_final)
     
 
@@ -329,7 +333,10 @@ class att_ctrl(object):
         kprr = self.kprr
        
         fb = np.array(self.robot_tpp_bod_raterate[0:2]) # abt x y z
-        cmd_bod_acc_error = cascaded_ref_bod_acc - fb
+        #cmd_bod_acc_error = cascaded_ref_bod_acc - fb
+        
+        # stab term
+        cmd_bod_acc_error = fb - cascaded_ref_bod_acc # abt x y, the other way round
         self.attitude_raterate_error = cmd_bod_acc_error
         cmd_bod_acc_final = kprr*(cmd_bod_acc_error) 
         self.cmd_bod_raterates_final = cmd_bod_acc_final # for logging purposes
@@ -342,38 +349,19 @@ class att_ctrl(object):
     def get_angle(self): # corrected
         control_input = self.p_control_signal #+ self.v_control_signal
         cmd_att = self.attitude_loop(self.robot_quat, control_input)
-        self.cmd_att = cmd_att #rpy
+        self.cmd_att = cmd_att + self.ref_rates[0:2] # rpy - added nom bod rates
         return (self.cmd_att)
     
 
-    def get_body_rate(self,flatness_option):
-        if flatness_option == 0:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
-        else:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att) + self.include_jerk_bod_rates()
+    def get_body_rate(self):
+        # get body rate
+        self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
         return (self.cascaded_ref_bod_rates)
     
 
-    def CF_SAM_get_angles_and_thrust(self,enable,flatness_option):
-        # output saturation/normalisation
-        des_rps = self.des_rps
-        #cmd_bod_acc = self.cmd_att
+    def CF_SAM_get_angles_and_thrust(self):
+        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
         
-        ## icra method
-        #cmd_bod_acc = self.cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
-
-
-        if flatness_option == 0:
-            #cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
-            cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
-        else:
-            #cascaded_ref_bod_rates = self.body_rate_loop(cmd_att)
-            #cascaded_ref_bod_rates = self.include_jerk_bod_rates() + cascaded_ref_bod_rates
-            cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
-            cmd_bod_acc = self.include_snap_bod_raterate() + cmd_bod_acc
-            #cmd_att = cmd_att + self.include_snap_bod_raterate() + self.include_jerk_bod_rates()
-        
-
         ## to account for phase delay
         x_sign = math.sin(self.yaw)
         y_sign = math.cos(self.yaw)
@@ -381,25 +369,12 @@ class att_ctrl(object):
         cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
         cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
         
-
         # output saturation (cmd_att)
         if abs(cmd_bod_acc[0]) > 10000:
             cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
         if abs(cmd_bod_acc[1]) > 10000:
              cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
-
-        # motor saturation
-        # if final_motor_output > 65500:
-        #     final_motor_output = 65500
-        # elif final_motor_output < 10:
-        #     final_motor_output = 10
-
-        #final_cmd = np.array([final_motor_output, final_motor_output, final_motor_output, final_motor_output])
-        
-        #self.cmd_z = enable*des_thrust
-
-        #return (final_cmd)
         return (cmd_bod_acc)
 
     

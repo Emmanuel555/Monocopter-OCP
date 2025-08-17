@@ -20,6 +20,8 @@ import Utils.trajectory_generator as trajectory_generator
 import timeit
 from pynput import keyboard
 
+import stab_monoco_att_ctrl
+
 import SAM
 import MPC_optimizer_monoco
 
@@ -133,11 +135,11 @@ def transmitter_calibration():
     return (cmd, button0, button1, a0, a1, enable, conPad, button2, manual_thrust)
 
 
-def p_control_input(linear_pos,kp,kv,ki,ref_pos,dt):
+def p_control_input(linear_pos,kpn,kvn,kin,nom_pos,dt):
     """ position control """
     # error
-    control_x = kp[0]*(ref_pos[0] - linear_pos[0]) - kv[0]*(linear_pos[3]) + ki[0]*(ref_pos[0] - linear_pos[0])*dt
-    control_y = kp[1]*(ref_pos[1] - linear_pos[1]) - kv[1]*(linear_pos[4]) + ki[1]*(ref_pos[1] - linear_pos[1])*dt
+    control_x = kpn[0]*(linear_pos[0] - nom_pos[0]) + kvn[0]*(linear_pos[3] - nom_pos[3]) + kin[0]*(linear_pos[0] - nom_pos[0])*dt
+    control_y = kpn[1]*(linear_pos[1] - nom_pos[1]) + kvn[1]*(linear_pos[4] - nom_pos[4]) + kin[1]*(linear_pos[1] - nom_pos[1])*dt
     control_z = 1.0
 
     cmd = np.array([control_x, control_y, control_z])  # roll, pitch, yawrate, thrust
@@ -297,6 +299,18 @@ if __name__ == '__main__':
     adz = 50000 
     aiz = 1000 # | 128
 
+    # cyclic xyz (stab position)
+    kpn = [1.3,1.3,0.0] # 0.04
+    kdn = [0.0005,0.0005,0.0] # not in use
+    kin = [10.0,10.0,0.0] 
+
+    # cyclic xyz (stab velocity)
+    kvn = [0.0001,0.0001,0.0] 
+    
+    # cyclic xy (stab attitude) - heuristic gains thus far
+    kan = [6000, 6000]  # 6000
+    krn = [10.0, 10.0] # 10
+
     # null
     kn = np.array([0.0,0.0,0.0])
 
@@ -396,9 +410,13 @@ if __name__ == '__main__':
     monoco_type = SAM.SAM(monoco_name)
 
 
-    # MPC Monoco INDI Control & Optimizer
+    # MPC Monoco Control & Optimizer
     monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, h_q_cost, h_r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
     
+
+    # MPC Monoco Stab INDI Control
+    monoco_stab = stab_monoco_att_ctrl.stab_att_ctrl(kpn, kvn, kin, kan, krn, krr)
+
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
@@ -523,18 +541,33 @@ if __name__ == '__main__':
                     # ref_msg = 'Manual_flight'
 
                     monoco.linear_ref(ref_pos,ref_vel,ref_acc,ref_jerk,ref_snap)
-                    # p control
+                    # mpc p control
                     monoco.p_control_input_manual(ref_pos)
                     
-                    # from att ctrl
+                    # from mpc att ctrl
                     control_outputs = monoco.MPC_SAM_get_angles_and_thrust(q,r) # roll and pitch torque requirements into motor values 
                     cmd_bod_acc = control_outputs[0]
-                    nom_state = control_outputs[3] # cont here tmr...
+                    nom_state = control_outputs[3]
+
+
+                    # stab control
+                    monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate, body_pitch)
+                    monoco_stab.linear_ref(nom_state)
+                    stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
+                    monoco_stab.p_control_input_manual(stab_cyclic)
+                    # get angle
+                    stab_att = monoco_stab.get_angle()
+                    # get body rate
+                    stab_rates = monoco_stab.get_body_rate()
+                    # get torque and motor cmds after INDI
+                    stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust()
+                    stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]
+
 
                     # alt control with input from TX 
                     motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-
+                    motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
                 else:
 
@@ -553,19 +586,29 @@ if __name__ == '__main__':
                     monoco.p_control_input_manual(ref_pos) # update the ref states
                     #monoco.rotational_drag()
 
-                    # from att ctrl
-                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust(q,r) # roll and pitch torque requirements into motor values 
-                    
+                    # from mpc att ctrl
+                    control_outputs = monoco.MPC_SAM_get_angles_and_thrust(q,r) # roll and pitch torque requirements into motor values    
                     cmd_bod_acc = control_outputs[0]
-                    #des_rps = control_outputs[1]
-                    #cyclic = control_outputs[2]
-                    #motor_soln = control_outputs[3]
+                    nom_state = control_outputs[3]
+
+                    # stab control
+                    monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate, body_pitch)
+                    monoco_stab.linear_ref(nom_state)
+                    stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
+                    monoco_stab.p_control_input_manual(stab_cyclic)
+                    # get angle
+                    stab_att = monoco_stab.get_angle()
+                    # get body rate
+                    stab_rates = monoco_stab.get_body_rate()
+                    # get torque and motor cmds after INDI
+                    stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust()
+                    stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]                   
 
 
                     ## alt control with input from TX 
                     motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-
+                    motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
                 att_raterate_error = monoco.attitude_raterate_error
             
