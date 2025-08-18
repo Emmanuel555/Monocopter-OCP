@@ -43,8 +43,8 @@ class SAM(object):
         self.cf_max = 65500
 
         # Max cyclic & collective PWM inputs 
-        self.max_thrust_cyclic = 13000/self.cf_max # cannot go below 10k
-        self.max_thrust_collective = 55500/self.cf_max 
+        self.max_thrust_cyclic = 10000/self.cf_max # cannot go below 10k, pure ff = 13000, always the heavier one 
+        self.max_thrust_collective = 50500/self.cf_max 
 
         # Max & min PWM inputs for the motor 
         self.max_input_value = 65500/self.cf_max  # Motors at full thrust = 1

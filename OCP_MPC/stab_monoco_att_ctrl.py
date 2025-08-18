@@ -359,7 +359,7 @@ class stab_att_ctrl(object):
         return (self.cascaded_ref_bod_rates)
     
 
-    def CF_SAM_get_angles_and_thrust(self):
+    def CF_SAM_get_angles_and_thrust(self,stab_act_limit):
         cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
         
         ## to account for phase delay
@@ -370,10 +370,10 @@ class stab_att_ctrl(object):
         cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
         
         # output saturation (cmd_att)
-        if abs(cmd_bod_acc[0]) > 10000:
-            cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
-        if abs(cmd_bod_acc[1]) > 10000:
-             cmd_bod_acc[1] = 10000*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
+        if abs(cmd_bod_acc[0]) > stab_act_limit:
+            cmd_bod_acc[0] = stab_act_limit*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
+        if abs(cmd_bod_acc[1]) > stab_act_limit:
+             cmd_bod_acc[1] = stab_act_limit*(cmd_bod_acc[1]/abs(cmd_bod_acc[1]))
 
         return (cmd_bod_acc)
 

@@ -162,8 +162,8 @@ class att_ctrl(object):
         self.des_rps = p_error_z
 
         # motor saturation
-        if self.des_rps > 55500:
-            self.des_rps = 55500
+        if self.des_rps > 50500:
+            self.des_rps = 50500
         elif self.des_rps < 10:
             self.des_rps = 10
         
@@ -191,8 +191,8 @@ class att_ctrl(object):
         cmd_bod_acc = np.array([cyclic[1], cyclic[0]]) # abt y x only, roll, pitch
         raw_cmd_bod_acc = cmd_bod_acc
 
-        #self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
-        #cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
+        self.cascaded_ref_bod_rates = cmd_bod_acc/self.monoco.J[0]         
+        cmd_bod_acc = self.INDI_loop(self.cascaded_ref_bod_rates)
         
         ## to account for phase delay
         x_sign = math.sin(self.yaw)
@@ -201,7 +201,7 @@ class att_ctrl(object):
         cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
         cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
 
-        # # output saturation (cmd_att)
+        ## output saturation (cmd_att)
         # if abs(cmd_bod_acc[0]) > 10000:
         #     cmd_bod_acc[0] = 10000*(cmd_bod_acc[0]/abs(cmd_bod_acc[0]))        
         # if abs(cmd_bod_acc[1]) > 10000:
