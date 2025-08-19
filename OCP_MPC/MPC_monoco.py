@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
     data_receiver_sender = Mocap.Udp()
     max_sample_rate = 250 # 360 at 65 - test 100 tmr
-    mpc_rate = 100 # best - 100
+    mpc_rate = 250 # best - 100, lets test w 250 to lock the time 
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate
@@ -667,7 +667,7 @@ if __name__ == '__main__':
                 loop_counter += 1
 
 
-                # # auto & collect data
+                ## auto & collect data
                 if button2 == 1: 
                     if stage == 'trajectory on':
                 #         x_error = ref_pos[0]-x_offset-linear_state_vector[0]
@@ -683,6 +683,11 @@ if __name__ == '__main__':
                 #                     rmse_num,att_raterate_error,yawrate)   
 
                         data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc) 
+
+
+                ## Enforce loop rate
+                sleep_time = max(0.0, t_horizon - dt)
+                time.sleep(sleep_time)
                     
 
         except KeyboardInterrupt:  
