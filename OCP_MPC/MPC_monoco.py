@@ -136,10 +136,10 @@ def transmitter_calibration():
 
 
 def p_control_input(linear_pos,kpn,kvn,kin,nom_pos,dt):
-    """ position control """
+    """ position control, nom = {xyz rpy (vx,vy,vz) bodyrates} """
     # error
-    control_x = kpn[0]*(linear_pos[0] - nom_pos[0]) + kvn[0]*(linear_pos[3] - nom_pos[3]) + kin[0]*(linear_pos[0] - nom_pos[0])*dt
-    control_y = kpn[1]*(linear_pos[1] - nom_pos[1]) + kvn[1]*(linear_pos[4] - nom_pos[4]) + kin[1]*(linear_pos[1] - nom_pos[1])*dt
+    control_x = kpn[0]*(linear_pos[0] - nom_pos[0]) + kvn[0]*(linear_pos[3] - nom_pos[6]) + kin[0]*(linear_pos[0] - nom_pos[0])*dt
+    control_y = kpn[1]*(linear_pos[1] - nom_pos[1]) + kvn[1]*(linear_pos[4] - nom_pos[7]) + kin[1]*(linear_pos[1] - nom_pos[1])*dt
     control_z = 1.0
 
     cmd = np.array([control_x, control_y, control_z])  # roll, pitch, yawrate, thrust
@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
     data_receiver_sender = Mocap.Udp()
     max_sample_rate = 250 # 360 at 65 - test 100 tmr
-    mpc_rate = 250 # best - 100, lets test w 250 to lock the time 
+    mpc_rate = 100 # best - 100, lets test w 250 to lock the time 
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate
@@ -305,7 +305,7 @@ if __name__ == '__main__':
     kin = [10.0,10.0,0.0] 
 
     # cyclic xyz (stab velocity)
-    kvn = [0.0001,0.0001,0.0] 
+    kvn = [0.01,0.01,0.0] 
     
     # cyclic xy (stab attitude) - heuristic gains thus far
     kan = [6000, 6000]  # 6000
@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 1.0 # 0.5
+    radius = 0.5 # 0.5
     speedX = 5.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
@@ -551,24 +551,24 @@ if __name__ == '__main__':
 
 
                     # # stab control
-                    # monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
-                    # monoco_stab.linear_ref(nom_state)
-                    # stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
-                    # monoco_stab.p_control_input_manual(stab_cyclic)
-                    # # get angle
-                    # stab_att = monoco_stab.get_angle()
-                    # # get body rate
-                    # stab_rates = monoco_stab.get_body_rate()
-                    # # get torque and motor cmds after INDI
-                    # stab_act_limit = 10000
-                    # stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust(stab_act_limit)
-                    # stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]
+                    monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
+                    monoco_stab.linear_ref(nom_state)
+                    stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
+                    monoco_stab.p_control_input_manual(stab_cyclic)
+                    # get angle
+                    stab_att = monoco_stab.get_angle()
+                    # get body rate
+                    stab_rates = monoco_stab.get_body_rate()
+                    # get torque and motor cmds after INDI
+                    stab_act_limit = 2000
+                    stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust(stab_act_limit)
+                    stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]
 
 
                     # alt control with input from TX 
                     motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-                    #motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
+                    motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
                 else:
 
@@ -685,9 +685,8 @@ if __name__ == '__main__':
                         data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc) 
 
 
-                ## Enforce loop rate
-                sleep_time = max(0.0, t_horizon - dt)
-                time.sleep(sleep_time)
+                ## Dun bother with enforcing loop rate anymore, doesnt work!
+                
                     
 
         except KeyboardInterrupt:  

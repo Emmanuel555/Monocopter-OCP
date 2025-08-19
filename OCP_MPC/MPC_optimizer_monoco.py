@@ -310,9 +310,8 @@ class Monoco_Optimizer(object):
         x_init = np.stack(x_init)
 
         ## Update cost_matrix depending on phase
-        W = np.diag(np.concatenate((q, r)))
-        for j in range(self.N):
-            self.acados_ocp_solver.cost_set(j, 'W', W)        
+        W = np.diag(np.concatenate((q, r)))  
+        self.acados_ocp_solver.cost_set(0, 'W', W)         
 
         ## Input initial states
         self.acados_ocp_solver.set(0, 'lbx', x_init) # lower bounds 
