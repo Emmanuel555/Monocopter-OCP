@@ -231,8 +231,8 @@ if __name__ == '__main__':
 
 
     data_receiver_sender = Mocap.Udp()
-    max_sample_rate = 250 # 360 at 65 - test 100 tmr
-    mpc_rate = 100 # best - 100, lets test w 250 to lock the time 
+    max_sample_rate = 250 # 360 at 65 - tested fully
+    mpc_rate = 100 # best - 100 - tested fully
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate

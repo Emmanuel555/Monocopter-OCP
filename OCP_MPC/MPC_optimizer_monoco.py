@@ -289,7 +289,7 @@ class Monoco_Optimizer(object):
         ## somehow, the update must be done externally either via p or x 
         
         ## how to change parameter P:
-        aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, -self.rot_drag] + [0.0, 0.0, 0.0] # change the first vector to introduce velocity disturbances or permutations  
+        aug_state = [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] + [0.0, 0.0, 0.0] # change the first vector to introduce velocity disturbances or permutations  
         aug_state = np.stack(aug_state)
         self.acados_ocp_solver.set(0, 'p', aug_state) # aug_state taken from above    
   
@@ -309,7 +309,7 @@ class Monoco_Optimizer(object):
         x_init = initial_state
         x_init = np.stack(x_init)
 
-        ## Update cost_matrix depending on phase
+        ## Update cost_matrix depending on phase - dun set each stage to have the cost matrix, only the first wud do
         W = np.diag(np.concatenate((q, r)))  
         self.acados_ocp_solver.cost_set(0, 'W', W)         
 

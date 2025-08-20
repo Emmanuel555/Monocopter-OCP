@@ -183,7 +183,7 @@ ax1.set_ylabel('PWM')
 plt.subplots_adjust(hspace=0.34, wspace=0.2)
 
 # ax2.plot(traj_time, motor_soln[0], label='PWM', color='blue',linewidth=2)
-ax2.plot(mf_px, mf_py, label='circle path', color='blue',linewidth=2)
+ax2.plot(mf_px[0:], mf_py[0:], label='circle path', color='blue',linewidth=2)
 ax2.plot(px_r[0][start:end], py_r[0][start:end], label='ref', color='red',linewidth=2)
 # #ax1.plot(time[0], pz_r[0], label='z_r', color='green',linewidth=2,linestyle='dashed')
 # # ax1.plot(time[0], px_r[0], label='x_r', color='blue',linewidth=2,linestyle='dashed')
