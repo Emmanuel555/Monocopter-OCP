@@ -25,6 +25,7 @@ position = mat_data['Monocopter_XYZ']
 ref_position = mat_data['ref_position']
 motor_soln = mat_data['motor_cmd']
 motor_cmd = mat_data['motor_actual_cmd']
+cmd_bod_acc = mat_data['cmd_bod_acc'] 
  
 """ tpp_roll = mat_data['tpp_roll']
 tpp_pitch = mat_data['tpp_pitch']
@@ -35,6 +36,9 @@ body_angle_roll = mat_data['body_angle_roll']
 att_error = mat_data['att_error']
 yawrate = mat_data['yawrate']
 rmse = mat_data['rmse_num_xyz'] """
+
+roll = [row[0] for row in cmd_bod_acc]
+pitch = [row[1] for row in cmd_bod_acc]
 
 px = [row[0] for row in position] # column vector
 py = [row[1] for row in position]
@@ -150,8 +154,8 @@ print('RMSE XYZ: ', final_rmse_x, final_rmse_y, final_rmse_z)
 
 ## generate the plot
 #plt.figure(figsize=(10, 5))
-#fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
-fig, ((ax1), (ax2)) = plt.subplots(1, 2, figsize=(40, 10))
+fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2, 2, figsize=(40, 10))
+#fig, ((ax1), (ax2)) = plt.subplots(1, 2, figsize=(40, 10))
 #fig, ((ax1)) = plt.subplots(1, 1, figsize=(40, 10))
 #print(cmd_x[0])
 
@@ -206,6 +210,15 @@ ax2.set_ylabel('Y(m)')
 # ax2.set_title('TPP angles vs time', fontsize=20)
 # ax2.set_xlabel('Time(s)')
 # ax2.set_ylabel('Angle(deg)')
+
+roll = ndimage.median_filter(roll[start:end], size=100)
+pitch = ndimage.median_filter(pitch[start:end], size=100)
+ax3.plot(traj_time, roll+pitch, label='cmd_bod_acc_combined', color='blue')
+ax3.legend()
+ax3.set_title('Cmd_Bod_Acc vs Time', fontsize=20)
+ax3.set_xlabel('Time(s)')
+ax3.set_ylabel('PWM')
+
 
 # ax3.plot(time[0], np.round((tpp_roll_rate[0]*(180/np.pi)),3), label='tpp_roll_rate', color='blue')
 # ax3.plot(time[0], np.round((tpp_pitch_rate[0]*(180/np.pi)),3), label='tpp_pitch_rate', color='red')

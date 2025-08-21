@@ -243,7 +243,7 @@ if __name__ == '__main__':
     #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position','motor_actual_cmd','cmd_bod_acc') 
+                                   'Monocopter_XYZ','motor_cmd','ref_position','motor_actual_cmd','cmd_bod_acc','stab_bod_acc') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -550,7 +550,7 @@ if __name__ == '__main__':
                     nom_state = control_outputs[3]
 
 
-                    # # stab control
+                    ## stab control
                     monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
                     monoco_stab.linear_ref(nom_state)
                     stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
@@ -669,7 +669,7 @@ if __name__ == '__main__':
 
                 ## auto & collect data
                 if button2 == 1: 
-                    if stage == 'trajectory on':
+                    if stage == 'hover':
                 #         x_error = ref_pos[0]-x_offset-linear_state_vector[0]
                 #         y_error = ref_pos[1]-y_offset-linear_state_vector[1]
                 #         z_error = ref_pos[2]-z_offset-linear_state_vector[2]
@@ -682,7 +682,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                        data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc) 
+                        data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc,stab_bod_acc) 
 
 
                 ## Dun bother with enforcing loop rate anymore, doesnt work!
@@ -704,6 +704,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_new'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_hover'
 data_saver.save_data(path)
 
