@@ -243,7 +243,7 @@ if __name__ == '__main__':
     #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position','motor_actual_cmd','cmd_bod_acc','stab_bod_acc') 
+                                   'Monocopter_XYZ','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc','stab_bod_acc') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -287,7 +287,7 @@ if __name__ == '__main__':
     time_start = time.time()
     minutes = 1 # no.of mins to run this loop
     time_end = time.time() + (60*100*minutes) 
-
+    now = time.time()
 
     ## old gains from INDI Diff flatness
     # collective z 
@@ -435,6 +435,10 @@ if __name__ == '__main__':
                 start = timeit.default_timer() 
                 abs_time = time.time() - time_start
 
+                # looprate tracker
+                dt = time.time() - now
+                now = time.time() 
+
                 # dk why need this for python 3.10
                 #joystick = pygame.joystick.Joystick(0) # added here to speed up loop
 
@@ -459,8 +463,8 @@ if __name__ == '__main__':
                 # tpp_omega_dot = data_processor.Omega_dot
                 tpp_quat = data_processor.tpp_eulerAnglesToQuaternion()
                 bod_angle_roll = data_processor.body_angle_roll
-                # time difference needed to calculate velocity
-                dt = time.time() - time_last  #  time step/period
+                ## time difference needed to calculate velocity
+                # dt = time.time() - time_last  #  time step/period
                 
                 # update from transmitter
                 tx_cmds = transmitter_calibration()  # get the joystick commands
@@ -669,7 +673,7 @@ if __name__ == '__main__':
 
                 ## auto & collect data
                 if button2 == 1: 
-                    if stage == 'hover':
+                    if stage == 'trajectory on':
                 #         x_error = ref_pos[0]-x_offset-linear_state_vector[0]
                 #         y_error = ref_pos[1]-y_offset-linear_state_vector[1]
                 #         z_error = ref_pos[2]-z_offset-linear_state_vector[2]
@@ -682,11 +686,17 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                        data_saver.add_item(abs_time,linear_state_vector[0:3],motor_soln,ref_pos,motor_cmd,cmd_bod_acc,stab_bod_acc) 
+                        data_saver.add_item(abs_time,linear_state_vector[0:6],motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc,stab_bod_acc) 
 
 
                 ## Dun bother with enforcing loop rate anymore, doesnt work!
-                
+                ## testing:
+                print(f"dt: {dt}")
+                sleep_time = max(0.0, t_horizon - (time.time() - now))
+                #print (f"sleep_time: {sleep_time}")
+                time.sleep(sleep_time)
+
+
                     
 
         except KeyboardInterrupt:  

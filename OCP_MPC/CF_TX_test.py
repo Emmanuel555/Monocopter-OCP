@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     time_start = time.time()
     time_end = time_start + 1000
-    last_time = 0
+    last_time = time.time()
     count = 0
 
     # Initialize the joysticks
@@ -67,14 +67,20 @@ if __name__ == '__main__':
     done = False
     controllerEnable = False
     pad_speed = 1
+    t_horizon = 1/2
+    now = time.time()
    
     try:
-        while True:  
-            start = timeit.default_timer()  
-            abs_time = time.time() - time_start
+        while True:
+            #if count > 0:
+            #    print(f"update rate in s: {dt+sleep_time}")
+            start = timeit.default_timer() 
+            dt = time.time() - now
+            now = time.time()  
+            abs_time = now - time_start
 
             # dk why need this for python 3.10
-            joystick = pygame.joystick.Joystick(0) # added here to speed up loop
+            # joystick = pygame.joystick.Joystick(0) # added here to speed up loop
 
             ## update from transmitter
             tx_cmds = transmitter_calibration()  # get the joystick commands
@@ -87,14 +93,18 @@ if __name__ == '__main__':
 
             a0 = tx_cmds[3]     
             a1 = tx_cmds[4]
+            #dt = now - last_time
+            #last_time = now
 
             # if count % 5 == 0:
-            print(f"Thrust: {manual_thrust}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
+            # print(f"Thrust: {manual_thrust}, X: {a0}, Y: {a1}, Enable: {enable}, Button0: {button0}, Button1: {button1}, ConPad: {conPad}, Button2: {button2}")     
             
             #how fast the loop goes at
-            #print("test...")
-            time.sleep(0.05)
-            #count += 1
+            print(f"dt: {dt}")
+            sleep_time = max(0.0, t_horizon - (time.time() - now))
+            print (f"sleep_time: {sleep_time}")
+            time.sleep(sleep_time)
+            count += 1
 
     except KeyboardInterrupt: 
         print("Exiting the program...")
