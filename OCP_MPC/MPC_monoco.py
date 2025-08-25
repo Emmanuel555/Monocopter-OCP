@@ -288,6 +288,7 @@ if __name__ == '__main__':
     minutes = 1 # no.of mins to run this loop
     time_end = time.time() + (60*100*minutes) 
     now = time.time()
+    dt_sum = []
 
     ## old gains from INDI Diff flatness
     # collective z 
@@ -321,10 +322,10 @@ if __name__ == '__main__':
     ka = np.array([0.0,0.0,0.0])
    
     # velocity - try this
-    kv = np.array([10.0,10.0,10.0])
+    kv = np.array([60.0,60.0,0.0]) # 20 for 0.5 m/s
     
     # bodyrates
-    kr = np.array([500.0,500.0,0.0])
+    kr = np.array([250.0,250.0,0.0])
 
     # INDI Loop
     krr = [1.0, 1.0] # 1.0
@@ -374,9 +375,9 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 0.5 # 0.5
-    speedX = 5.0 # 0.5 m/s the best thus far
-    laps = 5
+    radius = 0.75 # 0.5
+    speedX = 10.0 # 0.5 m/s the best thus far
+    laps = 3
     leminiscate_laps = 4
     leminiscate_radius = 1.5
     helix_laps = 9
@@ -402,7 +403,7 @@ if __name__ == '__main__':
 
     # Solver terms
     t_horizon = mpc_sample_time # 100 Hz
-    Nodes = 20 # 
+    Nodes = 20 # tested fully, 15 - pushing it
 
 
     # MPC Monoco Model
@@ -439,8 +440,11 @@ if __name__ == '__main__':
                 dt = time.time() - now
                 now = time.time() 
 
+                # Match loop time
+                dt_sum.append(dt)
+
                 # dk why need this for python 3.10
-                #joystick = pygame.joystick.Joystick(0) # added here to speed up loop
+                joystick = pygame.joystick.Joystick(0) # added here to speed up loop
 
                 # require data from Mocap
                 data = data_receiver_sender.get_data()
@@ -515,7 +519,9 @@ if __name__ == '__main__':
                         ref_msg = ref_derivatives[5]  
                         q = t_q_cost
                         r = t_r_cost
-                        count += 1 
+                        if sum(dt_sum) >= sample_time: 
+                            count += 1
+                            dt_sum.clear() 
 
 
                     ## landing 
@@ -691,10 +697,10 @@ if __name__ == '__main__':
 
                 ## Dun bother with enforcing loop rate anymore, doesnt work!
                 ## testing:
-                print(f"dt: {dt}")
-                sleep_time = max(0.0, t_horizon - (time.time() - now))
+                #print(f"dt: {dt}")
+                #sleep_time = max(0.0, (1/max_sample_rate) - (time.time() - now))
                 #print (f"sleep_time: {sleep_time}")
-                time.sleep(sleep_time)
+                #time.sleep(sleep_time)
 
 
                     
@@ -714,6 +720,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_hover'
+path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_1ms'
 data_saver.save_data(path)
 
