@@ -243,7 +243,7 @@ if __name__ == '__main__':
     #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc','stab_bod_acc') 
+                                   'Monocopter_XYZ','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -376,7 +376,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.75 # 0.5
-    speedX = 5.0 # 0.5 m/s the best thus far, 1 m/s possible
+    speedX = 10.0 # 0.5 m/s the best thus far, 1 m/s possible
     laps = 3
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -412,7 +412,7 @@ if __name__ == '__main__':
 
 
     # Set constraints on
-    set_constraints = 1
+    set_constraints = True
 
 
     # MPC Monoco Control & Optimizer
@@ -564,7 +564,7 @@ if __name__ == '__main__':
                     nom_state = control_outputs[3]
 
 
-                    ## stab control
+                    # # stab control
                     # monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
                     # monoco_stab.linear_ref(nom_state)
                     # stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
@@ -579,9 +579,8 @@ if __name__ == '__main__':
                     # stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]
 
 
-                    # alt control with input from TX 
-                    #motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
-                    motor_soln = control_outputs[1] # des_rps from NMPC
+                    # alt control with input from TX - des rps doesnt work lol, cfm plus chop 
+                    motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
                     #motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
@@ -607,7 +606,7 @@ if __name__ == '__main__':
                     cmd_bod_acc = control_outputs[0]
                     nom_state = control_outputs[3]
 
-                    # stab control
+                    ## stab control
                     # monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
                     # monoco_stab.linear_ref(nom_state)
                     # stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
@@ -622,9 +621,8 @@ if __name__ == '__main__':
                     # stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]                   
 
 
-                    ## alt control with input from TX 
-                    #motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
-                    motor_soln = control_outputs[1] # des_rps from NMPC
+                    ## alt control with input from TX - des rps doesnt work lol, cfm plus chop
+                    motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
                     #motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
@@ -698,7 +696,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                        data_saver.add_item(abs_time,linear_state_vector[0:6],motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc,stab_bod_acc) 
+                        data_saver.add_item(abs_time,linear_state_vector[0:6],motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc) 
 
 
                 ## Dun bother with enforcing loop rate anymore, doesnt work!
@@ -726,6 +724,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_1ms'
-data_saver.save_data(path)
+#path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_1ms'
+#data_saver.save_data(path)
 

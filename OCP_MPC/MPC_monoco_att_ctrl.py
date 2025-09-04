@@ -162,8 +162,8 @@ class att_ctrl(object):
         self.des_rps = p_error_z
 
         # motor saturation
-        if self.des_rps > 50500:
-            self.des_rps = 50500
+        if self.des_rps > 55500:
+            self.des_rps = 55500
         elif self.des_rps < 10:
             self.des_rps = 10
         
