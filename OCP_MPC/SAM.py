@@ -44,11 +44,12 @@ class SAM(object):
 
         # Max cyclic & collective PWM inputs 
         self.max_thrust_cyclic = 10000/self.cf_max # cannot go below 10k, pure ff = 13000, always the heavier one (10000>max_thrust<12000)
-        self.max_thrust_collective = 50500/self.cf_max 
+        self.max_thrust_collective = 55500/self.cf_max 
 
         # Max & min PWM inputs for the motor 
         self.max_input_value = 65500/self.cf_max  # Motors at full thrust = 1
         self.min_input_value = -65500/self.cf_max  # Motors turned off = -1
+        self.min_thrust = 0
 
         # Monoco name 
         self.monoco_name = monoco_name
@@ -63,11 +64,11 @@ class SAM(object):
             self.chord = 0.10
             self.AoA = 30
         elif monoco_name == 'long':
-            self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
-            self.mass = 0.058  # kg
+            self.J = np.array([0.03, 0.03, 0.0001])  # N m s^2 = kg m^2
+            self.mass = 0.00272  # kg
         elif monoco_name == 'ultralight':
-            self.J = np.array([.03, .03, .06])  # N m s^2 = kg m^2
-            self.mass = 0.032  # kg
+            self.J = np.array([0.03, 0.03, 0.0001])  # N m s^2 = kg m^2
+            self.mass = 0.0015  # kg
 
 
 

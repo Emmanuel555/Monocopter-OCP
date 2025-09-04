@@ -18,11 +18,12 @@ import numpy as np
 from copy import copy
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
 from Utils.utils import skew_symmetric, v_dot_q, safe_mkdir_recursive, quaternion_inverse, euler_to_quaternion
+import math
 
 class Monoco_Optimizer(object):
     def __init__(self, monoco_type, t_horizon=None, n_nodes=None,
                  q_cost=None, r_cost=None,
-                 model_name="monoco_acados_mpc", solver_options=None): # insert one more argument here to show that I am using the ith iterated gp...
+                 model_name="monoco_acados_mpc", solver_options=None, set_constraints=True): # insert one more argument here to show that I am using the ith iterated gp...
         
         """
         :param monoco_type: monoco typed object from (long_wing, short_wing, ultra-light_wing);
@@ -52,6 +53,7 @@ class Monoco_Optimizer(object):
 
         self.max_u = monoco_type.max_input_value
         self.min_u = monoco_type.min_input_value
+        self.min_thrust = monoco_type.min_thrust
 
         # Declare model variables (row vectors with col vector 1)
         self.pos = cs.MX.sym('pos', 3)  # position
@@ -127,9 +129,11 @@ class Monoco_Optimizer(object):
         ocp.constraints.x0 = x_ref
 
         # Set constraints
-        ocp.constraints.lbu = np.array([self.min_u] * 3)
-        ocp.constraints.ubu = np.array([self.max_u] * 3)
-        ocp.constraints.idxbu = np.array([0, 1, 2])
+        if set_constraints is True:
+            #ocp.constraints.lbu = np.array([self.min_u] * 3)
+            ocp.constraints.lbu = np.array([self.min_u, self.min_u, self.min_thrust])
+            ocp.constraints.ubu = np.array([self.max_u] * 3)
+            ocp.constraints.idxbu = np.array([0, 1, 2])
 
         # Solver options
         ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
@@ -216,13 +220,20 @@ class Monoco_Optimizer(object):
 
 
     def ang_dot_dynamics(self): # returns ang_rate in W
-        return self.bodyrate
+        roll = self.ang[0]
+        pitch = self.ang[1]
+        bodyrate = [self.bodyrate[0],self.bodyrate[1],self.bodyrate[2]]
+        rot_mat_tpp2world = [[1, math.sin(roll)*math.tan(pitch), math.cos(roll)*math.tan(pitch)],
+                             [0, math.cos(roll), -math.sin(roll)],
+                             [0, math.sin(roll)/math.cos(pitch), math.cos(roll)/math.cos(pitch)]]
+        att_rate = np.dot(rot_mat_tpp2world, bodyrate)
+        return att_rate
 
 
     def v_dot_dynamics(self): # dyn from uzh
         # cyclic = self.u[0:2] * self.monoco.max_thrust_cyclic # max force value allocated
-        #collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
-        collective = self.u[-1] * pow(self.monoco.max_thrust_collective,2) # max force value allocated
+        collective = self.u[-1] * self.monoco.max_thrust_collective # max force value allocated
+        #collective = self.u[-1] * pow(self.monoco.max_thrust_collective,2) # max force value allocated
         g = cs.vertcat(0.0, 0.0, 9.81)
 
         ## needa test this shit tmr
@@ -231,10 +242,12 @@ class Monoco_Optimizer(object):
         vel_term = cs.vertcat(0.0, 0.0, self.vel_term_quad*pow(self.vel[2],2)) # needa play with the power abit 
         
         quat = euler_to_quaternion(self.ang[0], self.ang[1], self.ang[2]) # from rpy, function from utils file, not data_process
-        bemt = 1/6 * pow(self.monoco.radius,3) * self.monoco.rho * self.monoco.chord * self.monoco.cla * self.monoco.AoA
-        a_thrust = cs.vertcat(0.0, 0.0, collective[0]*bemt) / self.monoco.mass # convert to m/s^2
+        # bemt = 1/6 * pow(self.monoco.radius,3) * self.monoco.rho * self.monoco.chord * self.monoco.cla * self.monoco.AoA
+        # a_thrust = cs.vertcat(0.0, 0.0, collective[0]*bemt) / self.monoco.mass # convert to m/s^2
 
-        a_dynamics = v_dot_q(a_thrust, quat) - g - vel_term # W frame - dyn model may not be the issue
+        a_thrust = cs.vertcat(0.0, 0.0, collective[0]) / self.monoco.mass # convert to m/s^2
+
+        a_dynamics = v_dot_q(a_thrust, quat) - g # W frame - dyn model may not be the issue
 
         # a_dynamics = a_thrust - g - vel_term # try this 
         # a_dynamics = a_thrust - g # W frame 

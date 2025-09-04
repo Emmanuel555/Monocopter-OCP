@@ -376,7 +376,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.75 # 0.5
-    speedX = 10.0 # 0.5 m/s the best thus far
+    speedX = 5.0 # 0.5 m/s the best thus far, 1 m/s possible
     laps = 3
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -411,8 +411,12 @@ if __name__ == '__main__':
     monoco_type = SAM.SAM(monoco_name)
 
 
+    # Set constraints on
+    set_constraints = 1
+
+
     # MPC Monoco Control & Optimizer
-    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, h_q_cost, h_r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes)
+    monoco = MPC_monoco_att_ctrl.att_ctrl(krr, ku, h_q_cost, h_r_cost, monoco_type, time_horizon=t_horizon, nodes=Nodes, set_constraints=set_constraints)
     
 
     # MPC Monoco Stab INDI Control
@@ -561,24 +565,25 @@ if __name__ == '__main__':
 
 
                     ## stab control
-                    monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
-                    monoco_stab.linear_ref(nom_state)
-                    stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
-                    monoco_stab.p_control_input_manual(stab_cyclic)
-                    # get angle
-                    stab_att = monoco_stab.get_angle()
-                    # get body rate
-                    stab_rates = monoco_stab.get_body_rate()
-                    # get torque and motor cmds after INDI
-                    stab_act_limit = 2000
-                    stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust(stab_act_limit)
-                    stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]
+                    # monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
+                    # monoco_stab.linear_ref(nom_state)
+                    # stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
+                    # monoco_stab.p_control_input_manual(stab_cyclic)
+                    # # get angle
+                    # stab_att = monoco_stab.get_angle()
+                    # # get body rate
+                    # stab_rates = monoco_stab.get_body_rate()
+                    # # get torque and motor cmds after INDI
+                    # stab_act_limit = 2000
+                    # stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust(stab_act_limit)
+                    # stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]
 
 
                     # alt control with input from TX 
-                    motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
+                    #motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
+                    motor_soln = control_outputs[1] # des_rps from NMPC
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-                    motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
+                    #motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
                 else:
 
@@ -603,24 +608,25 @@ if __name__ == '__main__':
                     nom_state = control_outputs[3]
 
                     # stab control
-                    monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
-                    monoco_stab.linear_ref(nom_state)
-                    stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
-                    monoco_stab.p_control_input_manual(stab_cyclic)
-                    # get angle
-                    stab_att = monoco_stab.get_angle()
-                    # get body rate
-                    stab_rates = monoco_stab.get_body_rate()
-                    # get torque and motor cmds after INDI
-                    stab_act_limit = 2000
-                    stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust(stab_act_limit)
-                    stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]                   
+                    # monoco_stab.update(linear_state_vector, rotational_state_vector, tpp_quat[0], dt, z_offset, body_yaw, tpp_quat[1], tpp_quat[2], yawrate)
+                    # monoco_stab.linear_ref(nom_state)
+                    # stab_cyclic = p_control_input(linear_state_vector, kpn, kvn, kin, nom_state, sample_time) # stab position term
+                    # monoco_stab.p_control_input_manual(stab_cyclic)
+                    # # get angle
+                    # stab_att = monoco_stab.get_angle()
+                    # # get body rate
+                    # stab_rates = monoco_stab.get_body_rate()
+                    # # get torque and motor cmds after INDI
+                    # stab_act_limit = 2000
+                    # stab_bod_acc = monoco_stab.CF_SAM_get_angles_and_thrust(stab_act_limit)
+                    # stab_bod_acc = stab_bod_acc[0] + stab_bod_acc[1]                   
 
 
                     ## alt control with input from TX 
-                    motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
+                    #motor_soln = monoco.manual_collective_thrust(apz,adz,aiz)
+                    motor_soln = control_outputs[1] # des_rps from NMPC
                     motor_soln = motor_soln + cmd_bod_acc[0] + cmd_bod_acc[1]  # collective thrust + cyclic
-                    motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
+                    #motor_soln = motor_soln + stab_bod_acc # add stab body acceleration to motor solution
 
                 att_raterate_error = monoco.attitude_raterate_error
             

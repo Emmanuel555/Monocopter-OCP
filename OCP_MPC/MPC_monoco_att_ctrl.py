@@ -14,7 +14,7 @@ import SAM
 
 
 class att_ctrl(object):
-    def __init__(self, body_rate_rate_gains, thrust_rate, q_cost, r_cost, monoco, time_horizon, nodes):
+    def __init__(self, body_rate_rate_gains, thrust_rate, q_cost, r_cost, monoco, time_horizon, nodes, set_constraints):
         ## feedback
         self.robot_pos = np.array([0.0,0.0,0.0]) # x y z
         self.robot_vel = np.array([0.0,0.0,0.0]) # x y z
@@ -78,7 +78,7 @@ class att_ctrl(object):
         self.monoco = monoco
         self.mpc_monoco = MPC_optimizer_monoco.Monoco_Optimizer(monoco_type=self.monoco, 
                                                                 model_name=self.monoco.monoco_name, q_cost=q_cost, 
-                                                                r_cost=r_cost, t_horizon=time_horizon, n_nodes=nodes)
+                                                                r_cost=r_cost, t_horizon=time_horizon, n_nodes=nodes, set_constraints=set_constraints)
 
 
     def ocp_stats(self):
@@ -177,13 +177,13 @@ class att_ctrl(object):
         nom_state = opti_outputs[1][1]
 
         # collective thrust
-        #des_rps = control_inputs[2] * self.monoco.max_thrust_collective
-        #des_rps = des_rps * self.monoco.cf_max
+        des_rps = control_inputs[2] * self.monoco.max_thrust_collective
+        des_rps = des_rps * self.monoco.cf_max
 
-        des_rps = control_inputs[2] * pow(self.monoco.max_thrust_collective,2)
-        if des_rps < 0.0:
-            des_rps = 0.0
-        des_rps = np.sqrt(des_rps) * self.monoco.cf_max
+        #des_rps = control_inputs[2] * pow(self.monoco.max_thrust_collective,2)
+        #if des_rps < 0.0:
+        #    des_rps = 0.0
+        #des_rps = np.sqrt(des_rps) * self.monoco.cf_max
 
         # mpc cyclic
         cyclic = np.array(control_inputs[0:2]) * self.monoco.max_thrust_cyclic
