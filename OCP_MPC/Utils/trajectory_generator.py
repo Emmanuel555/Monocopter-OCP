@@ -640,7 +640,46 @@ class trajectory_generator(object):
         return (pva,num_points)
     
 
-    
+    def boomerang_teardrop(self, x_len, y_width, laps, pid_update_rate, reverse_cw, speedX, alt):
+        parts = 9
+        t = np.linspace(0, 2*np.pi, parts)
+        y_coordinates = y_width * np.sin(t)
+        x_coordinates = x_len * np.sin(t) * np.cos(t)
+        total_parts = parts + ((parts-1)*(laps-1))
 
+        if reverse_cw == 0:
+            x_coordinates = np.flip(x_coordinates)
+            y_coordinates = np.flip(y_coordinates)
 
+        x = np.array([x_coordinates[0]])
+        y = np.array([y_coordinates[0]])
+        refs = []
+
+        speed = 0.1 * speedX # default is 0.1
+        total_distance = x_len * 2 * (laps)    
+        total_time = total_distance/speed
+        num_pts = int(total_time*pid_update_rate)
+
+        for i in range(laps):
+            x = np.append(x,x_coordinates[1:])
+            y = np.append(y,y_coordinates[1:])
+
+        for i in range(total_parts):
+            refs.append(ms.Waypoint(
+                time=(total_time/(total_parts-1))*i,
+                position=np.array([x[i], y[i], alt]), # altitude used to be 1.0
+            ))
+
+        polys = ms.generate_trajectory(
+                refs,
+                degree=8,  # Polynomial degree
+                idx_minimized_orders=(3, 4),  
+                num_continuous_orders=3,  
+                algorithm="closed-form",  # Or "constrained"
+            )
+
+        t = np.linspace(0, total_time, num_pts)
+        # Sample up to the 3rd order (Jerk) -----v
+        pva = ms.compute_trajectory_derivatives(polys, t, 6) # up to order of derivatives is 6
+        return (pva,num_pts)    
     
