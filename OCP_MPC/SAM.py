@@ -49,7 +49,7 @@ class SAM(object):
         # Max & min PWM inputs for the motor 
         self.max_input_value = 65500/self.cf_max  # Motors at full thrust = 1
         self.min_input_value = -65500/self.cf_max  # Motors turned off = -1
-        self.min_thrust = 0
+        self.min_thrust = 0 # dun use
 
         # Monoco name 
         self.monoco_name = monoco_name
@@ -57,18 +57,28 @@ class SAM(object):
         # Monocopter's intrinsic parameters as a disk
         if monoco_name == 'short':
             self.J = np.array([0.1,0.1,0.0001])  # N m s^2 = kg m^2, needa test adjusting J[2]
-            self.mass = 0.003  # kg - 0.005
+            self.mass = 0.003  # kg - tested
             self.cla = 0.12
             self.rho = 1.225
             self.radius = 0.23
             self.chord = 0.10
             self.AoA = 30
-        elif monoco_name == 'long':
-            self.J = np.array([0.03, 0.03, 0.0001])  # N m s^2 = kg m^2
-            self.mass = 0.00272  # kg
+        elif monoco_name == 'long': # dun change model parameters
+            self.J = np.array([0.1,0.1,0.0001])  # N m s^2 = kg m^2
+            self.mass = 0.003  # kg
+            self.cla = 0.12
+            self.rho = 1.225
+            self.radius = 0.23
+            self.chord = 0.10
+            self.AoA = 30
         elif monoco_name == 'ultralight':
-            self.J = np.array([0.03, 0.03, 0.0001])  # N m s^2 = kg m^2
-            self.mass = 0.0015  # kg
+            self.J = np.array([0.2,0.2,0.0002])  # N m s^2 = kg m^2
+            self.mass = 0.005  # kg
+            self.cla = 0.12
+            self.rho = 1.225
+            self.radius = 0.23
+            self.chord = 0.10
+            self.AoA = 37
 
 
 

@@ -15,7 +15,7 @@ from pyrr import quaternion
 import numpy as np
 import numpy.linalg as la
 
-import monoco_att_ctrl
+import stab_monoco_att_ctrl
 import trajectory_generator
 import timeit
 from pynput import keyboard
@@ -327,7 +327,7 @@ if __name__ == '__main__':
     J = np.array([1/100000,1/100000,1/1000000]) # moment of inertia
     
 
-    monoco = monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, ka, kr, krr)
+    monoco = stab_monoco_att_ctrl.att_ctrl(kp, kd, ki, kvp, ka, kr, krr)
     monoco.physical_params(wing_radius, chord_length, mass, cl, cd, J) 
 
 

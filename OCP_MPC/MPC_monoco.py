@@ -9,6 +9,7 @@ import time
 import Utils.Mocap as Mocap
 import Utils.DataSave as DataSave
 import Localization.Data_process as Data_process
+import Localization.Foam_Data_process as Foam_data_process
 
 import math
 from pyrr import quaternion
@@ -35,7 +36,8 @@ from cflib.crazyflie.syncLogger import SyncLogger
 # Change uris and sequences according to your setup
 
 # monoco radio 1
-URI1 = 'radio://0/80/2M/E7E7E7E701'
+URI1 = 'radio://0/80/2M/E7E7E7E701' # long, short
+#URI1 = 'radio://0/80/2M/E7E7E7E7E7' # ultralight
 
 
 uris = {
@@ -236,14 +238,20 @@ if __name__ == '__main__':
     sample_rate = data_receiver_sender.get_sample_rate()
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate
-    data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
+    
+    monoco_name = "short" # long, short, ultralight
+
+    if monoco_name == "ultralight":
+        data_processor = Foam_data_process.RealTimeProcessor(4, [100], 'lowpass', 'cheby2', 85, sample_rate)
+    else:
+        data_processor = Data_process.RealTimeProcessor(5, [16], 'lowpass', 'cheby2', 85, sample_rate)
 
     # data_saver = DataSave.SaveData('Data_time',
     #                                'Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll',
     #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc') 
+                                   'Monocopter_XYZ','rotational_state_vector','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -296,9 +304,18 @@ if __name__ == '__main__':
     kdz = 6000 
     kiz = 1200 # | 128
 
-    apz = 320000 
-    adz = 50000 
-    aiz = 1000 # | 128
+    if monoco_name == "short":
+        apz = 320000 
+        adz = 50000 
+        aiz = 1000 # | 128
+    elif monoco_name == "long":
+        apz = 320000 
+        adz = 50000 
+        aiz = 1000 # | 128
+    elif monoco_name == "ultralight":
+        apz = 120000 
+        adz = 25000 
+        aiz = 1000 # | 128
 
     # cyclic xyz (stab position)
     kpn = [1.3,1.3,0.0] # 0.04
@@ -376,7 +393,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.75 # 0.5
-    speedX = 10.0 # 0.5 m/s the best thus far, 1 m/s possible
+    speedX = 4.0 # 0.5 m/s the best thus far, start from 1, move up to 1.5 then 2 
     laps = 3
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -390,14 +407,18 @@ if __name__ == '__main__':
     traj_gen = trajectory_generator.trajectory_generator()
     ## traj generator for min snap circle, ####### pre computed points
     ## 2 pt line
+    #chosen_traj = "_2_pt_line_"
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
+    chosen_traj = "_circle_"
     pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
+    #chosen_traj = "_lemniscate_"
     #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
+    #chosen_traj = "_elevated_circle_"
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
 
@@ -407,9 +428,8 @@ if __name__ == '__main__':
 
 
     # MPC Monoco Model
-    monoco_name = "short"
     monoco_type = SAM.SAM(monoco_name)
-
+    
 
     # Set constraints on
     set_constraints = True
@@ -696,7 +716,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                        data_saver.add_item(abs_time,linear_state_vector[0:6],motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc) 
+                        data_saver.add_item(abs_time,linear_state_vector[0:6],rotational_state_vector,motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc) 
 
 
                 ## Dun bother with enforcing loop rate anymore, doesnt work!
@@ -724,6 +744,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_short_wing_circle_1ms'
+#path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_m/s'
 #data_saver.save_data(path)
 

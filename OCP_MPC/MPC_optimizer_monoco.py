@@ -129,11 +129,15 @@ class Monoco_Optimizer(object):
         ocp.constraints.x0 = x_ref
 
         # Set constraints
-        if set_constraints == True:
+        if set_constraints is True:
             ocp.constraints.lbu = np.array([self.min_u] * 3)
             #ocp.constraints.lbu = np.array([self.min_u, self.min_u, self.min_thrust]) # this does not work!
             ocp.constraints.ubu = np.array([self.max_u] * 3)
             ocp.constraints.idxbu = np.array([0, 1, 2])
+        else:
+            ocp.constraints.lbu = np.array([] * 3) # "unbounded"
+            ocp.constraints.ubu = np.array([] * 3) # "unbounded"
+            ocp.constraints.idxbu = np.array([0, 1, 2])   
 
         # Solver options
         ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'

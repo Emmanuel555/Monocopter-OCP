@@ -72,6 +72,7 @@ class att_ctrl(object):
         self.kud = thrust_rate[1]
         self.kui = thrust_rate[2]
 
+        self.set_constraints = set_constraints
 
         # model
         self.g = 9.81
@@ -162,10 +163,11 @@ class att_ctrl(object):
         self.des_rps = p_error_z
 
         # motor saturation
-        if self.des_rps > 55500:
-            self.des_rps = 55500
-        elif self.des_rps < 10:
-            self.des_rps = 10
+        if self.set_constraints is True:
+            if self.des_rps > 55500:
+                self.des_rps = 55500
+            elif self.des_rps < 10:
+                self.des_rps = 10
         
         return (self.des_rps)
     
@@ -198,8 +200,13 @@ class att_ctrl(object):
         x_sign = math.sin(self.yaw)
         y_sign = math.cos(self.yaw)
 
-        cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
-        cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
+        ## to account for ultralight wing
+        if self.monoco.monoco_name == "ultralight":
+            cmd_bod_acc[0] = cmd_bod_acc[0] * x_sign * 1 
+            cmd_bod_acc[1] = cmd_bod_acc[1] * y_sign * -1
+        else:
+            cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
+            cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1
 
         ## output saturation (cmd_att)
         # if abs(cmd_bod_acc[0]) > 10000:

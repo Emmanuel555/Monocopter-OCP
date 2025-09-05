@@ -351,7 +351,7 @@ class att_ctrl(object):
         if flatness_option == 0:
             self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att)
         else:
-            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att) + self.include_jerk_bod_rates()
+            self.cascaded_ref_bod_rates = self.body_rate_loop(self.cmd_att + self.include_jerk_bod_rates)
         return (self.cascaded_ref_bod_rates)
     
 
