@@ -245,10 +245,13 @@ if __name__ == '__main__':
     #data_saver = DataSave.SaveData('Data_time',
     #                               'Monocopter_XYZ','ref_position','rmse_num_xyz','final_rmse','ref_msg','status','cmd','tpp_angle')
 
+    #data_saver = DataSave.SaveData('Data_time',
+    #                               'Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll',
+    #                               'rmse_num_xyz','att_error','att_rate_error','att_raterate_error','yawrate')   
+
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','motor_cmd','ref_position','tpp_roll','tpp_pitch','body_yaw_deg','tpp_omega','tpp_omega_dot','body_angle_roll',
-                                   'rmse_num_xyz','att_error','att_rate_error','att_raterate_error','yawrate')   
-              
+                                   'Monocopter_XYZ','rotational_state_vector','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc','yawrate') 
+                
                                    
     logging.basicConfig(level=logging.ERROR)
     cflib.crtp.init_drivers()
@@ -363,7 +366,7 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 1.0 # 0.5
+    radius = 0.75 # 0.5
     speedX = 5.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
@@ -378,14 +381,18 @@ if __name__ == '__main__':
     traj_gen = trajectory_generator.trajectory_generator()
     ## traj generator for min snap circle, ####### pre computed points
     ## 2 pt line
+    #chosen_traj = "_2_pt_line_"
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
+    chosen_traj = "_circle_"
     pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
+    #chosen_traj = "_lemniscate_"
     #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
+    #chosen_traj = "_elevated_circle_"
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
 
@@ -586,10 +593,12 @@ if __name__ == '__main__':
                         rmse_num_z = rmse_num_z + (x_error )**2
                         rmse_num = [x_error,y_error,z_error,rmse_num_x,rmse_num_y,rmse_num_z]
                         
-                        data_saver.add_item(abs_time,
-                                    linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
-                                    rmse_num,att_error,att_rate_error,att_raterate_error,yawrate)   
+                        #data_saver.add_item(abs_time,
+                        #            linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
+                        #            rmse_num,att_error,att_rate_error,att_raterate_error,yawrate)   
                         
+                        data_saver.add_item(abs_time,linear_state_vector[0:6],rotational_state_vector,motor_cmd,ref_pos,ref_vel,motor_cmd,cmd_bod_acc,yawrate) 
+
                     
 
         except KeyboardInterrupt:  
@@ -605,8 +614,8 @@ if __name__ == '__main__':
             #print('Emergency Stopped and final rmse produced: ', rmse_num )
             
                     
+monoco_name = 'short'
 
 # save data
-#path = '/home/emmanuel/Monocopter-OCP/cf_robot_solo/0.5lemniscate_short_att'
-#data_saver.save_data(path)
-
+path = '/home/emmanuel/Monocopter-OCP/DFBC/DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_m/s'
+data_saver.save_data(path)

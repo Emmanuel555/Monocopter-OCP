@@ -251,7 +251,7 @@ if __name__ == '__main__':
     #                                'rmse_num_xyz','att_raterate_error','yawrate')   
 
     data_saver = DataSave.SaveData('Data_time',
-                                   'Monocopter_XYZ','rotational_state_vector','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc') 
+                                   'Monocopter_XYZ','rotational_state_vector','motor_cmd','ref_position','ref_velocity','motor_actual_cmd','cmd_bod_acc','yawrate') 
               
                                    
     logging.basicConfig(level=logging.ERROR)
@@ -400,7 +400,13 @@ if __name__ == '__main__':
     helix_laps = 9
     alt = ref_pos[2]
     elevated_alt = 1.0
-    reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
+
+    if monoco_name == 'short':
+        reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
+    elif monoco_name == 'long':
+        reverse_cw = 0
+    elif monoco_name == 'ultralight':
+        reverse_cw = 1
 
 
     # trajectory generator
@@ -716,7 +722,7 @@ if __name__ == '__main__':
                 #                     linear_state_vector[0:3],motor_cmd,ref_pos,round((tpp_angle[0]*(180/np.pi)),3),round((tpp_angle[1]*(180/np.pi)),3),round(body_yaw*(180/np.pi),2),tpp_omega,tpp_omega_dot,bod_angle_roll,
                 #                     rmse_num,att_raterate_error,yawrate)   
 
-                        data_saver.add_item(abs_time,linear_state_vector[0:6],rotational_state_vector,motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc) 
+                        data_saver.add_item(abs_time,linear_state_vector[0:6],rotational_state_vector,motor_soln,ref_pos,ref_vel,motor_cmd,cmd_bod_acc,yawrate) 
 
 
                 ## Dun bother with enforcing loop rate anymore, doesnt work!
