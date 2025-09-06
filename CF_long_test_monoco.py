@@ -368,7 +368,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.75 # 0.5 original was 1.0
-    speedX = 5.0 # 0.5 m/s the best thus far
+    speedX = 15.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -388,13 +388,13 @@ if __name__ == '__main__':
     #chosen_traj = "_circle_"
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
-    chosen_traj = "_lemniscate_"
-    pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
+    #chosen_traj = "_lemniscate_"
+    #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
-    #chosen_traj = "_elevated_circle_"
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
+    chosen_traj = "_elevated_circle_"
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
     with Swarm(uris, factory= CachedCfFactory(rw_cache='./cache')) as swarm:
         #swarm.reset_estimators()
@@ -616,6 +616,6 @@ if __name__ == '__main__':
 monoco_name = 'long'
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/DFBC/DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_m/s'
+path = '/home/emmanuel/Monocopter-OCP/DFBC/DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
 data_saver.save_data(path)
 

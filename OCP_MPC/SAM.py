@@ -65,12 +65,12 @@ class SAM(object):
             self.AoA = 30
         elif monoco_name == 'long': # dun change model parameters
             self.J = np.array([0.1,0.1,0.0001])  # N m s^2 = kg m^2
-            self.mass = 0.003  # kg
+            self.mass = 0.004  # kg
             self.cla = 0.12
             self.rho = 1.225
             self.radius = 0.23
             self.chord = 0.10
-            self.AoA = 30
+            self.AoA = 50
         elif monoco_name == 'ultralight':
             self.J = np.array([0.2,0.2,0.0002])  # N m s^2 = kg m^2
             self.mass = 0.005  # kg

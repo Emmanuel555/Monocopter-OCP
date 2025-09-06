@@ -618,6 +618,6 @@ if __name__ == '__main__':
 monoco_name = 'ultralight'
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/DFBC/DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_m/s'
+path = '/home/emmanuel/Monocopter-OCP/DFBC/DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
 #data_saver.save_data(path)
 

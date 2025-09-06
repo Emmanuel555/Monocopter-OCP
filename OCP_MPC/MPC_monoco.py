@@ -239,7 +239,7 @@ if __name__ == '__main__':
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate
     
-    monoco_name = "short" # long, short, ultralight
+    monoco_name = "long" # long, short, ultralight
 
     if monoco_name == "ultralight":
         data_processor = Foam_data_process.RealTimeProcessor(4, [100], 'lowpass', 'cheby2', 85, sample_rate)
@@ -393,7 +393,7 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.75 # 0.5
-    speedX = 4.0 # 0.5 m/s the best thus far, start from 1, move up to 1.5 then 2 
+    speedX = 10.0 # 0.5 m/s the best thus far, start from 1, move up to 1.5, 2 bit hard cos very erratic
     laps = 3
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -404,7 +404,7 @@ if __name__ == '__main__':
     if monoco_name == 'short':
         reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
     elif monoco_name == 'long':
-        reverse_cw = 0
+        reverse_cw = 0 # doesnt look like circle but prefer this 
     elif monoco_name == 'ultralight':
         reverse_cw = 1
 
@@ -416,16 +416,16 @@ if __name__ == '__main__':
     #chosen_traj = "_2_pt_line_"
     #pva,num_pts = traj_gen.two_pt_line(speedX, max_sample_rate/pid_loop, alt)
     ## circle
-    chosen_traj = "_circle_"
-    pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
+    #chosen_traj = "_circle_"
+    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop, laps, reverse_cw, alt) # mechanical limit for monocopter is 0.5m/s
     ## lemniscate
     #chosen_traj = "_lemniscate_"
     #pva,num_pts = traj_gen.lemniscate(x_offset, y_offset, leminiscate_laps, leminiscate_radius, max_sample_rate/pid_loop, reverse_cw, speedX, alt)
     ## helix
     #pva,num_pts = traj_gen.compute_jerk_snap_9pt_helix_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,helix_laps,reverse_cw,alt)
     ## elevated circle
-    #chosen_traj = "_elevated_circle_"
-    #pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
+    chosen_traj = "_elevated_circle_"
+    pva,num_pts = traj_gen.compute_jerk_snap_9pt_elevated_circle_x_laps(x_offset, y_offset, radius, speedX, max_sample_rate/pid_loop,laps,reverse_cw,elevated_alt)
 
 
     # Solver terms
@@ -750,6 +750,6 @@ if __name__ == '__main__':
                     
 
 # save data
-#path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_m/s'
-#data_saver.save_data(path)
+path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/fan_MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
+data_saver.save_data(path)
 
