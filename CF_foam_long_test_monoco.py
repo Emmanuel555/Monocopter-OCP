@@ -368,8 +368,8 @@ if __name__ == '__main__':
 
     # circle parameters
     radius = 0.75 # 0.5
-    speedX = 3.0 # 0.5 m/s the best thus far
-    laps = 5
+    speedX = 4.0 # 0.5 m/s the best thus far
+    laps = 3
     leminiscate_laps = 4
     leminiscate_radius = 1.0
     helix_laps = 9
@@ -618,6 +618,6 @@ if __name__ == '__main__':
 monoco_name = 'ultralight'
 
 # save data
-path = '/home/emmanuel/Monocopter-OCP/DFBC/DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
-#data_saver.save_data(path)
+path = '/home/emmanuel/Monocopter-OCP/DFBC/payload_DFBC_' + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
+data_saver.save_data(path)
 
