@@ -210,4 +210,4 @@ for i in range(paper_size[0]):
 
 file.close()
 plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
-#plt.show()
+plt.show()
