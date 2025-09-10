@@ -82,8 +82,8 @@ class all_trajectory(object):
         mf_vx = ndimage.median_filter(vx[0][start:end], size=300)
         mf_vy = ndimage.median_filter(vy[0][start:end], size=300)
         mf_vz = ndimage.median_filter(vz[0][start:end], size=300)
-        roll = ndimage.median_filter(roll[0][start:end], size=700)
-        pitch = ndimage.median_filter(pitch[0][start:end], size=700)
+        roll = ndimage.median_filter(roll[0][start:end], size=700) # could be 1500
+        pitch = ndimage.median_filter(pitch[0][start:end], size=700) # could be 1500
         
         yawrate = ndimage.median_filter(yawrate[0], size=200)
         yawrate = np.round((yawrate[start:end]/(2*math.pi)),2) # in Hz
