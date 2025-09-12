@@ -295,12 +295,12 @@ class all_trajectory(object):
         vx_r = vx_r[0][start:end]
         vy_r = vy_r[0][start:end]
         vz_r = vz_r[0][start:end]
-        mf_px = ndimage.median_filter(px[0][start:end], size=700)
-        mf_py = ndimage.median_filter(py[0][start:end], size=700)
-        mf_pz = ndimage.median_filter(pz[0][start:end], size=700)
-        mf_vx = ndimage.median_filter(vx[0][start:end], size=700)
-        mf_vy = ndimage.median_filter(vy[0][start:end], size=700)
-        mf_vz = ndimage.median_filter(vz[0][start:end], size=700)
+        mf_px = ndimage.median_filter(px[0][start:end], size=300)
+        mf_py = ndimage.median_filter(py[0][start:end], size=300)
+        mf_pz = ndimage.median_filter(pz[0][start:end], size=300)
+        mf_vx = ndimage.median_filter(vx[0][start:end], size=300)
+        mf_vy = ndimage.median_filter(vy[0][start:end], size=300)
+        mf_vz = ndimage.median_filter(vz[0][start:end], size=300)
         
         yawrate = ndimage.median_filter(yawrate[0], size=700)
         yawrate = np.round((yawrate[start:end]/(2*math.pi)),2) # in Hz
@@ -420,9 +420,9 @@ class all_trajectory(object):
             x_error_squared,
             y_error_squared,
             z_error_squared,
-            x_error_norm,
-            y_error_norm,
-            z_error_norm,
+            x_error_norm, # 6
+            y_error_norm, # 7
+            z_error_norm, # 8
             rmse_xyz_list,
             final_rmse_xyz,
             traj_time,
@@ -434,9 +434,9 @@ class all_trajectory(object):
             vx_error_squared,
             vy_error_squared,
             vz_error_squared,
-            vx_error_norm,
-            vy_error_norm,
-            vz_error_norm,
+            vx_error_norm, # 20
+            vy_error_norm, # 21
+            vz_error_norm, # 22
             vel_rmse_xyz_list,
             vel_final_rmse_xyz
         )
