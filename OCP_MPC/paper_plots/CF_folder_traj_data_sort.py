@@ -68,25 +68,42 @@ class sort_traj_data(object):
         return (nmpc1, dfbc1, nmpc1_5, dfbc1_5, nmpc1_fan, dfbc1_fan)
     
 
+    def plot_foam_circle(self,folder,att):
+        # circle 0.4
+        nmpc4 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle4/NMPC/'
+        dfbc4 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle4/DFBC/'
+        
+        nmpc4_payload = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/payload_circle4/NMPC/'
+        dfbc4_payload = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/payload_circle4/DFBC/'
+        
+
+        nmpc4 = self.traj_compile.traj_data_compiler(nmpc4)
+        dfbc4 = self.traj_compile.traj_data_compiler(dfbc4)
+
+        nmpc4_payload = self.traj_compile.traj_data_compiler(nmpc4_payload)
+        dfbc4_payload = self.traj_compile.traj_data_compiler(dfbc4_payload)
+        
+        return (nmpc4, dfbc4, nmpc4_payload, dfbc4_payload)
+
+
     def foam_whisker_circle(self,folder):
-        # circle 0.3
-        indi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle3/indi/'
-        ndi3 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle3/ndi/'
+        # circle 0.4
+        nmpc4 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle4/NMPC/'
+        dfbc4 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle4/DFBC/'
         
-        indi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle5/indi/'
-        ndi5 = '/home/emmanuel/Monocopter-OCP/paper_plots/' + folder + '/circle5/ndi/'
+        nmpc4_payload = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/payload_circle4/NMPC/'
+        dfbc4_payload = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/payload_circle4/DFBC/'
         
 
-        indi3 = self.traj_compile.data_whisker_plot(indi3)
-        ndi3 = self.traj_compile.data_whisker_plot(ndi3)
+        nmpc4 = self.traj_compile.data_whisker_plot(nmpc4)
+        dfbc4 = self.traj_compile.data_whisker_plot(dfbc4)
 
-        indi5 = self.traj_compile.data_whisker_plot(indi5)
-        ndi5 = self.traj_compile.data_whisker_plot(ndi5)
+        nmpc4_payload = self.traj_compile.data_whisker_plot(nmpc4_payload)
+        dfbc4_payload = self.traj_compile.data_whisker_plot(dfbc4_payload)
         
-        return (indi3, ndi3, indi5, ndi5)
+        return (nmpc4, dfbc4, nmpc4_payload, dfbc4_payload)
 
 
-    
     def plot_elevated_circle(self,folder,att):
         # elevated_circle 1 and 1.5
         nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/elevated_circle1/NMPC/'

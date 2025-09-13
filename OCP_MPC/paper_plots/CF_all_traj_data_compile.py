@@ -29,8 +29,12 @@ class all_trajectory(object):
         att_feedback = mat_data['rotational_state_vector']
         yawrate = mat_data['yawrate']
 
-        start = int(np.size(time[0])*2/5)
-        end = int(np.size(time[0])*3/5) #- int(np.size(time[0])
+        # ideal
+        #start = int(np.size(time[0])*1.5/5)
+        #end = int(np.size(time[0])*3/5) #- int(np.size(time[0])
+
+        start = 0
+        end = int(np.size(time[0])*5/5) #- int(np.size(time[0])
 
         px = [row[0] for row in position] # column vector
         py = [row[1] for row in position]
@@ -63,8 +67,8 @@ class all_trajectory(object):
         vy_r = np.array([vy_r])
         vz_r = np.array([vz_r])
 
-        roll = [row[0] for row in att_feedback] # column vector
-        pitch = [row[1] for row in att_feedback] 
+        roll = [row[0][0] for row in att_feedback] # column vector
+        pitch = [row[1][1] for row in att_feedback] 
 
         roll = np.array([roll])
         pitch = np.array([pitch])
@@ -76,9 +80,12 @@ class all_trajectory(object):
         vx_r = vx_r[0][start:end]
         vy_r = vy_r[0][start:end]
         vz_r = vz_r[0][start:end]
-        mf_px = ndimage.median_filter(px[0][start:end], size=300)
-        mf_py = ndimage.median_filter(py[0][start:end], size=300)
-        mf_pz = ndimage.median_filter(pz[0][start:end], size=300)
+        #mf_px = ndimage.median_filter(px[0][start:end], size=1300)
+        #mf_py = ndimage.median_filter(py[0][start:end], size=1300)
+        #mf_pz = ndimage.median_filter(pz[0][start:end], size=1300)
+        mf_px = ndimage.gaussian_filter1d(px[0][start:end], 200)
+        mf_py = ndimage.gaussian_filter1d(py[0][start:end], 200)
+        mf_pz = ndimage.gaussian_filter1d(pz[0][start:end], 200)
         mf_vx = ndimage.median_filter(vx[0][start:end], size=300)
         mf_vy = ndimage.median_filter(vy[0][start:end], size=300)
         mf_vz = ndimage.median_filter(vz[0][start:end], size=300)
@@ -93,7 +100,7 @@ class all_trajectory(object):
         rollpitch_norm = []  
         yawrate_ls = []     
 
-        for i in range(len(mf_px)):
+        for i in range(len(traj_time)):
             x_error_squared = (px_r[i] - mf_px[i]) ** 2
             y_error_squared = (py_r[i] - mf_py[i]) ** 2    
             z_error_squared = (pz_r[i] - mf_pz[i]) ** 2
@@ -111,7 +118,7 @@ class all_trajectory(object):
             #roll_raterate_error_norm.append(math.sqrt(roll_raterate_error_squared))
             #pitch_raterate_error_norm.append(math.sqrt(pitch_raterate_error_squared))
             rollpitch_norm.append(math.sqrt(roll_sq + pitch_sq))
-            
+            #norm = norm*(180/math.pi)
             yawrate_ls.append(yawrate[i])
 
             

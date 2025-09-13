@@ -14,8 +14,8 @@ def compute_l2_norm(x, y, z):
 
 if __name__ == "__main__":
     # circle parameters
-    radius = 1.0 # 0.5
-    speedX = 5.0 # 0.5 m/s the best thus far
+    radius = 0.75 # 0.5
+    speedX = 10.0 # 0.5 m/s the best thus far
     laps = 5
     leminiscate_laps = 4
     leminiscate_radius = 1.5
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     fig.subplots_adjust(hspace=0.284, wspace=0.223, 
                         left=0.04, right=0.98, 
                         top =0.87, bottom =0.043)
-    fig.suptitle("ref traj vel and acc norm @ 0.5 m/s", fontsize=40, fontweight='bold')
+    fig.suptitle("ref traj vel and acc norm @ " + str(speedX*0.1) + " m/s", fontsize=40, fontweight='bold')
 
     for a in range(len(graphs[0])): # 3D plot for trajs
         if a == 0:
@@ -86,8 +86,14 @@ if __name__ == "__main__":
 
         # print (traj_label + 'pos_norm', len(pos_norm))
         # smooth the data - gaussian filter inflates the data, not good for errors (median filter still better)
-        vel_norm = ndimage.gaussian_filter1d(vel_norm, 200)
-        acc_norm = ndimage.gaussian_filter1d(acc_norm, 200)
+        
+        vel_norm = ndimage.gaussian_filter1d(vel_norm, 50)
+        acc_norm = ndimage.gaussian_filter1d(acc_norm, 50)
+
+        max_vel = max(vel_norm)
+        max_acc = max(acc_norm)
+        mean_vel = statistics.mean(vel_norm)
+        mean_acc = statistics.mean(acc_norm)
 
         for i in range(2):
             if i == 0:
@@ -100,10 +106,15 @@ if __name__ == "__main__":
         graphs[0][a].legend(loc='upper right', fontsize=25)
         # add title
         length = str(len(pos_norm))
-        graphs[0][a].set_title(traj_label + ' @ 0.5 m/s' + length, fontsize=25, fontweight='bold')
+        graphs[0][a].set_title(traj_label + '@ ' +  str(speedX*0.1) + ' m/s ' + length, fontsize=25, fontweight='bold')
         graphs[0][a].tick_params(axis='both', labelsize=10)     
-    
+        # add max vel and acc to the plot
+        graphs[0][a].text(0.2, 0.9, 'max vel: ' + str(round(max_vel, 2)) + ' m/s', transform=graphs[0][a].transAxes, fontsize=15, color=colors[0])
+        graphs[0][a].text(0.2, 0.8, 'mean vel: ' + str(round(mean_vel, 2)) + ' m/s', transform=graphs[0][a].transAxes, fontsize=15, color=colors[0])
+        graphs[0][a].text(0.2, 0.7, 'max acc: ' + str(round(max_acc, 2)) + ' m/s²', transform=graphs[0][a].transAxes, fontsize=15, color=colors[1])
+        graphs[0][a].text(0.2, 0.6, 'mean acc: ' + str(round(mean_acc, 2)) + ' m/s²', transform=graphs[0][a].transAxes, fontsize=15, color=colors[1])
+        
 
-plt.savefig('ref_vel_acc_norm @ 0.5 ms-1.png', dpi=300, bbox_inches='tight') 
+plt.savefig('ref_vel_acc_norm @ ' + str(speedX*0.1) + ' ms-1.png', dpi=300, bbox_inches='tight') 
 plt.show()
     

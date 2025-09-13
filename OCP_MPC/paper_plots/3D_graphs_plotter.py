@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d.axes3d import get_test_data
 data_sorter = cf.sort_traj_data()
 
 long_wing = 'long_traj_data'
-#short_wing = 'short_traj_data'
+short_wing = 'short_traj_data'
 
 selected_wing = long_wing
 att = 0
@@ -37,7 +37,7 @@ for i in range(1):
 
 colors = ['#254abe','#96400b','#254abe','#96400b']
 fig.subplots_adjust(hspace=0.3, wspace=0.19, 
-                    left=0.0, right=0.94, 
+                    left=0.0, right=0.98, 
                     top =1.0, bottom =0.043)
 #fig.suptitle(title, fontsize=40, fontweight='bold')
 
@@ -51,16 +51,17 @@ for a in range(len(graphs[0])): # 3D plot for trajs
     elif a == 2:
         traj_label = 'Lemniscate '   
 
-    for m in range(2): # 0.5 INDI and NDI  
-        m = m + 2
-        if m == 2:
-            method_label = 'INDI '
+    for m in range(2): # 1.0 NMPC+INDI and DFBC+INDI
+        num = 0
+        m = m + num
+        if m == num:
+            method_label = 'NMPC+INDI'
             style = 'solid'
-        elif m == 3:
-            method_label = 'NDI '
+        elif m == num+1:
+            method_label = 'DFBC+INDI'
             style = 'solid'
 
-        if m == 2:
+        if m == num:
             rx = wing[a][m][4] 
             ry = wing[a][m][5] 
             rz = wing[a][m][6] 
@@ -69,7 +70,7 @@ for a in range(len(graphs[0])): # 3D plot for trajs
         x = wing[a][m][1] 
         y = wing[a][m][2] 
         z = wing[a][m][3]
-        graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
+        graphs[0][a].plot3D(x,y,z,label=method_label,linewidth=7.0,color=colors[m-num],linestyle=style) #label=['NMPC']
                 
     graphs[0][a].set_zlim(0,2)
     graphs[0][a].set_xlabel('Xw [m]', fontsize=20)
@@ -87,7 +88,7 @@ for a in range(len(graphs[0])): # 3D plot for trajs
 
 
 #plt.savefig(title+'.pdf')   
-plt.savefig('ref_3D.png', dpi=300, bbox_inches='tight')  
+plt.savefig('Fan_3D.png', dpi=300, bbox_inches='tight')  
 plt.show()
 
 

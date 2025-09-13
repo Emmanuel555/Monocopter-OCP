@@ -26,6 +26,7 @@ ref_position = mat_data['ref_position']
 motor_soln = mat_data['motor_cmd']
 motor_cmd = mat_data['motor_actual_cmd']
 cmd_bod_acc = mat_data['cmd_bod_acc'] 
+att_feedback = mat_data['rotational_state_vector']
  
 """ tpp_roll = mat_data['tpp_roll']
 tpp_pitch = mat_data['tpp_pitch']
@@ -56,6 +57,13 @@ px_r = np.array([px_r])
 py_r = np.array([py_r])
 pz_r = np.array([pz_r])
 
+tpp_roll = [row[0][0] for row in att_feedback] # column vector
+tpp_pitch = [row[1][1] for row in att_feedback] 
+
+tpp_roll = np.array([tpp_roll])
+#print('len tpp: ', len(tpp_roll))
+
+tpp_pitch = np.array([tpp_pitch])
 
 """ tpp_roll_rate = [row[0] for row in tpp_omega] # column vector
 tpp_pitch_rate = [row[1] for row in tpp_omega]
@@ -95,7 +103,9 @@ traj_time = time[0][start:end]
 mf_px = ndimage.median_filter(px[0][start:end], size=100)
 mf_py = ndimage.median_filter(py[0][start:end], size=100)
 mf_pz = ndimage.median_filter(pz[0][start:end], size=300)
-
+tpp_roll = ndimage.median_filter(tpp_roll[0][start:end], size=100) # could be 1500
+tpp_pitch = ndimage.median_filter(tpp_pitch[0][start:end], size=100) # could be 1500
+        
 
 print('len: ', len(mf_px)) # must use x_e[0] to get the length of the array
 
@@ -218,6 +228,22 @@ ax3.legend()
 ax3.set_title('Cmd_Bod_Acc vs Time', fontsize=20)
 ax3.set_xlabel('Time(s)')
 ax3.set_ylabel('PWM')
+
+
+tpp_norm = []
+for i in range (len(tpp_roll)):
+    norm = math.sqrt(tpp_roll[i]**2 + tpp_pitch[i]**2)
+    norm = norm*(180/math.pi)
+    #norm = norm/3  
+    tpp_norm.append(norm)
+
+tpp_norm = ndimage.median_filter(tpp_norm[start:end], size=1500)
+
+ax4.plot(traj_time, tpp_norm, label='tpp_norm', color='blue')
+ax4.legend()
+ax4.set_title('Tpp_roll vs Time', fontsize=20)
+ax4.set_xlabel('Time(s)')
+ax4.set_ylabel('Deg')
 
 
 # ax3.plot(time[0], np.round((tpp_roll_rate[0]*(180/np.pi)),3), label='tpp_roll_rate', color='blue')
