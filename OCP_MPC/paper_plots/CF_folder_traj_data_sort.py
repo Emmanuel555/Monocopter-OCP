@@ -10,7 +10,7 @@ class sort_traj_data(object):
         self.traj_compile = cf.all_trajectory()
 
     
-    def plot_circle(self,folder,att): # only for indi
+    def plot_circle(self,folder,att): 
         # circle 1 and 1.5
         nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/NMPC/'
         dfbc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/DFBC/'
@@ -45,6 +45,41 @@ class sort_traj_data(object):
         return (nmpc1, dfbc1, nmpc1_5, dfbc1_5, nmpc1_fan, dfbc1_fan)
     
 
+    def plot_fan_circle(self,folder,att): 
+        # circle 1 and 1.5
+        nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/NMPC/'
+        dfbc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/DFBC/'
+
+        nmpc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1.5/NMPC/'
+        dfbc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1.5/DFBC/'
+
+        nmpc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_circle1/NMPC/'
+        dfbc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_circle1/DFBC/'
+
+        
+        if att == 1:
+            nmpc1 = self.traj_compile.att_data_compiler(nmpc1)
+            dfbc1 = self.traj_compile.att_data_compiler(dfbc1)
+
+            nmpc1_fan = self.traj_compile.att_data_compiler(nmpc1_fan)
+            dfbc1_fan = self.traj_compile.att_data_compiler(dfbc1_fan)
+            
+            nmpc1_5 = self.traj_compile.att_data_compiler(nmpc1_5)
+            dfbc1_5 = self.traj_compile.att_data_compiler(dfbc1_5)
+        else:
+            nmpc1 = self.traj_compile.traj_data_compiler(nmpc1)
+            dfbc1 = self.traj_compile.traj_data_compiler(dfbc1)
+
+            nmpc1_fan = self.traj_compile.traj_data_compiler(nmpc1_fan)
+            dfbc1_fan = self.traj_compile.traj_data_compiler(dfbc1_fan)
+            
+            nmpc1_5 = self.traj_compile.traj_data_compiler(nmpc1_5)
+            dfbc1_5 = self.traj_compile.traj_data_compiler(dfbc1_5)
+        
+    
+        return (nmpc1, dfbc1, nmpc1_fan, dfbc1_fan)
+
+
     def whisker_circle(self,folder):
         # circle 1 and 1.5
         nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/NMPC/'
@@ -66,6 +101,29 @@ class sort_traj_data(object):
         dfbc1_fan = self.traj_compile.data_whisker_plot(dfbc1_fan)
         
         return (nmpc1, dfbc1, nmpc1_5, dfbc1_5, nmpc1_fan, dfbc1_fan)
+    
+
+    def fan_whisker_circle(self,folder):
+        # circle 1 and 1.5
+        nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/NMPC/'
+        dfbc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/DFBC/'
+
+        nmpc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1.5/NMPC/'
+        dfbc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1.5/DFBC/'
+
+        nmpc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_circle1/NMPC/'
+        dfbc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_circle1/DFBC/'
+
+        nmpc1 = self.traj_compile.data_whisker_plot(nmpc1)
+        dfbc1 = self.traj_compile.data_whisker_plot(dfbc1)
+        
+        nmpc1_5 = self.traj_compile.data_whisker_plot(nmpc1_5)
+        dfbc1_5 = self.traj_compile.data_whisker_plot(dfbc1_5)
+
+        nmpc1_fan = self.traj_compile.data_whisker_plot(nmpc1_fan)
+        dfbc1_fan = self.traj_compile.data_whisker_plot(dfbc1_fan)
+        
+        return (nmpc1, dfbc1, nmpc1_fan, dfbc1_fan)
     
 
     def plot_foam_circle(self,folder,att):
