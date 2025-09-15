@@ -14,7 +14,7 @@ data_sorter = cf.sort_traj_data()
 long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 
-selected_wing = long_wing
+selected_wing = short_wing
 att = 0
 
 # test short wing first
@@ -52,7 +52,7 @@ for a in range(len(graphs[0])): # 3D plot for trajs
         traj_label = 'Lemniscate '   
 
     for m in range(2): # 1.0 NMPC+INDI and DFBC+INDI
-        num = 0
+        num = 2
         m = m + num
         if m == num:
             method_label = 'NMPC+INDI'
@@ -88,7 +88,7 @@ for a in range(len(graphs[0])): # 3D plot for trajs
 
 
 #plt.savefig(title+'.pdf')   
-plt.savefig('Fan_3D.png', dpi=300, bbox_inches='tight')  
+plt.savefig('ALL_3D.png', dpi=300, bbox_inches='tight')  
 plt.show()
 
 

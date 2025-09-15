@@ -36,8 +36,8 @@ from cflib.crazyflie.syncLogger import SyncLogger
 # Change uris and sequences according to your setup
 
 # monoco radio 1
-#URI1 = 'radio://0/80/2M/E7E7E7E701' # long, short
-URI1 = 'radio://0/80/2M/E7E7E7E7E7' # ultralight
+URI1 = 'radio://0/80/2M/E7E7E7E701' # long, short
+#URI1 = 'radio://0/80/2M/E7E7E7E7E7' # ultralight
 
 
 uris = {
@@ -239,7 +239,7 @@ if __name__ == '__main__':
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate
     
-    monoco_name = "ultralight" # long, short, ultralight
+    monoco_name = "long" # long, short, ultralight
 
     if monoco_name == "ultralight":
         data_processor = Foam_data_process.RealTimeProcessor(4, [100], 'lowpass', 'cheby2', 85, sample_rate)
@@ -392,9 +392,9 @@ if __name__ == '__main__':
 
 
     # circle parameters
-    radius = 0.5 # 0.75 for normal, 0.5 for ultralight 
-    speedX = 4.0 # 0.5 m/s the best thus far, start from 1, move up to 1.5, 2 bit hard cos very erratic
-    laps = 3
+    radius = 0.75 # 0.75 for normal, 0.5 for ultralight 
+    speedX = 10.0 # 0.5 m/s the best thus far, start from 1, move up to 1.5, 2 bit hard cos very erratic
+    laps = 5
     leminiscate_laps = 4
     leminiscate_radius = 1.5
     helix_laps = 9
@@ -750,6 +750,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/payload_MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
+path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
 data_saver.save_data(path)
 

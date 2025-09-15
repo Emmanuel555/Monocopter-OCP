@@ -28,7 +28,7 @@ rows = 2
 fig = plt.figure(figsize=(20, 12))
 graphs = [[None]*3 for _ in range(rows)]
 
-# Create 1x3 3D subplots manually
+# Create 2x3 3D subplots manually
 for i in range(rows):
     for j in range(3):
         #ax = fig.add_subplot(1, 3, i * 3 + j + 1, projection='3d')
@@ -59,7 +59,7 @@ for i in range(rows):
             elif a == 2:
                 traj_label = 'Ultralight-Payload ' 
 
-        for m in range(2): # 1.0 NMPC+INDI and DFBC+INDI
+        for m in range(rows): # 1.0 NMPC+INDI and DFBC+INDI
             num = i*2
             m = m + num
             if m == num:
@@ -86,7 +86,7 @@ for i in range(rows):
         graphs[i][a].set_ylabel('Yw [m]', fontsize=20)
         graphs[i][a].set_zlabel('Zw [m]', fontsize=20)
         # legend        
-        graphs[i][a].legend(loc='upper right', fontsize=20) # font used to be 23
+        graphs[i][a].legend(loc='upper right', fontsize=23) # font used to be 23
         # add title
         graphs[i][a].set_title(traj_label, fontsize=25, fontweight='bold') # font used to be 35
         graphs[i][a].tick_params(axis='both', labelsize=20)
@@ -164,7 +164,7 @@ for i in range(rows):
                 x_lbl = x0 + label_rot[0]
                 y_lbl = y0 + label_rot[1]
                 z_lbl = z0 + label_rot[2]
-                graphs[i][a].text(x_lbl, y_lbl, z_lbl, 'FAN', fontsize=15, color='black')
+                graphs[i][a].text(x_lbl, y_lbl, z_lbl, 'FAN', fontsize=23, color='black')
 
 
 #plt.savefig(title+'.pdf')   

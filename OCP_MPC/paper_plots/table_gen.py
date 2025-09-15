@@ -15,6 +15,7 @@ short_wing = 'short_traj_data'
 foam_wing = 'ultralight_traj_data'
 
 selected_wing = short_wing
+type = selected_wing
 display_mean = False
 
 if selected_wing == short_wing:
@@ -26,14 +27,25 @@ elif selected_wing == foam_wing:
 
 # test short wing first
 if selected_wing == foam_wing:
-    wing_circle = data_sorter.foam_whisker_circle(selected_wing)
+    wing_circle = data_sorter.foam_whisker_circle(selected_wing,type)
     wing = [wing_circle,wing_circle]
 
 else:
-    wing_circle = data_sorter.whisker_circle(selected_wing)
-    wing_elevated = data_sorter.whisker_elevated_circle(selected_wing)
-    wing_lem = data_sorter.whisker_lem(selected_wing)
+    wing_circle = data_sorter.whisker_circle(selected_wing,type)
+    wing_elevated = data_sorter.whisker_elevated_circle(selected_wing,type)
+    wing_lem = data_sorter.whisker_lem(selected_wing,type)
     wing = [wing_circle,wing_circle,wing_elevated,wing_elevated,wing_lem,wing_lem]
+
+
+## to test if updating at 250Hz, and yes even after filtering, the data is quite consistent
+""" test_long = data_sorter.norm_circle()
+traj_time = test_long[0]
+o = 0
+for v in range(30):
+    if traj_time[v] % (1/250) < 1/2050:
+        #print ('fk off')
+        o = o + 1
+print ('test:', traj_time[-1]) """
 
 
 if selected_wing == foam_wing:

@@ -17,7 +17,7 @@ foam_wing = 'ultralight_traj_data'
 display_mean = False
 
 
-title = 'Tracking performances along a Circle'
+title = 'Tracking performances along a Lemniscate (∞) '
 wing_foam_circle = data_sorter.foam_whisker_circle(foam_wing)
 wing_short_circle = data_sorter.fan_whisker_circle(short_wing)
 wing_long_circle = data_sorter.fan_whisker_circle(long_wing)
@@ -46,21 +46,21 @@ for a in range(len(graphs)): # 3 monocos
     if a < 2:
         drone_label = 'Short-'
         if a == 0:
-            order = '-pos'
+            order = '-Position Error'
         else: 
-            order = '-vel'    
+            order = '-Velocity Error'    
     elif a > 1 and a < 4:
         drone_label = 'Long-'
         if a == 2:
-            order = '-pos'
+            order = '-Position Error'
         else:
-            order = '-vel'    
+            order = '-Velocity Error'    
     elif a > 3:
         drone_label = 'Ultralight-' 
         if a == 4:
-            order = '-pos'
+            order = '-Position Error'
         else:
-            order = '-vel'  
+            order = '-Velocity Error'  
 
    
     for m in range(len(graphs[a])): # 1.0 m/s circle w and w/o payload, NMPC+INDI and DFBC+INDI 
@@ -87,15 +87,15 @@ for a in range(len(graphs)): # 3 monocos
         
 
     
-        if order == '-pos':
+        if order == '-Position Error':
 
             for i in range(3): #xyz
                 if i == 0:
-                    label = '∥Px∥ (m)'
+                    label = '∥Px∥(m)'
                 elif i == 1:
-                    label = '∥Py∥ (m)'
+                    label = '∥Py∥(m)'
                 elif i == 2:
-                    label = '∥Pz∥ (m)'
+                    label = '∥Pz∥(m)'
                 method = graphs[a][m].boxplot(wing[a][m][6+i],
                                     #patch_artist = True,
                                     boxprops={'color':colors[m]},
@@ -152,15 +152,15 @@ for a in range(len(graphs)): # 3 monocos
                     median.set(linewidth=7.0) # Set the thickness
 
 
-        elif order == '-vel':
+        elif order == '-Velocity Error':
 
             for i in range(3): #xyz
                 if i == 0:
-                    label = '∥Vx∥ (m/s)'
+                    label = '∥Vx∥(m/s)'
                 elif i == 1:
-                    label = '∥Vy∥ (m/s)'
+                    label = '∥Vy∥(m/s)'
                 elif i == 2:
-                    label = '∥Vz∥ (m/s)'
+                    label = '∥Vz∥(m/s)'
                 method = graphs[a][m].boxplot(wing[a][m][20+i],
                                     #patch_artist = True,
                                     boxprops={'color':colors[m]},
