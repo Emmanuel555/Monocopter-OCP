@@ -35,16 +35,8 @@ class all_trajectory(object):
         #start = int(np.size(time[0])*1.5/5)
         #end = int(np.size(time[0])*3.5/5) #- int(np.size(time[0])
 
-        ## lem-short
-        #start = int(np.size(time[0])*2.83/5)
-        #end = int(np.size(time[0])*5/5) #- int(np.size(time[0])
-
-        ## lem-long
-        #start = int(np.size(time[0])*2/5)
-        #end = int(np.size(time[0])*4.47/5) #- int(np.size(time[0])
-
         start = 0
-        end = int(np.size(time[0])*5/5) #- int(np.size(time[0])
+        end = int(np.size(time[0])) #- int(np.size(time[0])
 
         px = [row[0] for row in position] # column vector
         py = [row[1] for row in position]
@@ -159,6 +151,165 @@ class all_trajectory(object):
             motor_cmd #17
         )
     
+
+    def lem_ele_data_compiler(self,file_path,drone_type,path_type):
+        #file_path = '/home/emmanuel/Monocopter-OCP/circle/0.3/'
+        files = os.listdir(file_path)
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(file_path, x)), reverse=True)
+
+        last_file = files[0]
+        mat_data = loadmat(os.path.join(file_path, last_file)) ##
+
+        #print(mat_data)
+        time = mat_data['Data_time']
+        #position = mat_data['data']
+        position = mat_data['Monocopter_XYZ']
+        ref_position = mat_data['ref_position']
+        ref_velocity = mat_data['ref_velocity']
+        att_feedback = mat_data['rotational_state_vector']
+        yawrate = mat_data['yawrate']
+        motor_cmd = mat_data['motor_cmd']
+
+        # ideal
+        ## circle
+        #start = int(np.size(time[0])*1.5/5)
+        #end = int(np.size(time[0])*3.5/5) #- int(np.size(time[0])
+
+        if drone_type == 'short_traj_data':
+            if path_type == 'lem':
+            ## lem-short
+                start = int(np.size(time[0])*2.83/5)
+                end = int(np.size(time[0])*5/5) #- int(np.size(time[0])
+
+            elif path_type == 'ele':
+            ## elevated_circle-short
+                start = int(np.size(time[0])*3.12/5)
+                end = int(np.size(time[0])*4.3/5) #- int(np.size(time[0])
+
+        elif drone_type == 'long_traj_data':
+            if path_type == 'lem':
+            ## lem-long
+                start = int(np.size(time[0])*2/5)
+                end = int(np.size(time[0])*4.47/5) #- int(np.size(time[0])
+
+            elif path_type == 'ele':
+            ## elevated_circle-long
+                start = int(np.size(time[0])*3/5)
+                end = int(np.size(time[0])*4.3/5) #- int(np.size(time[0])    
+
+        px = [row[0] for row in position] # column vector
+        py = [row[1] for row in position]
+        pz = [row[2] for row in position]
+        vx = [row[3] for row in position] # column vector
+        vy = [row[4] for row in position]
+        vz = [row[5] for row in position]
+
+        px = np.array([px])
+        py = np.array([py])
+        pz = np.array([pz])
+
+        vx = np.array([vx])
+        vy = np.array([vy])
+        vz = np.array([vz])
+
+        px_r = [row[0] for row in ref_position] # column vector
+        py_r = [row[1] for row in ref_position]
+        pz_r = [row[2] for row in ref_position]
+
+        px_r = np.array([px_r])
+        py_r = np.array([py_r])
+        pz_r = np.array([pz_r])
+
+        vx_r = [row[0] for row in ref_velocity] # column vector
+        vy_r = [row[1] for row in ref_velocity]
+        vz_r = [row[2] for row in ref_velocity]
+
+        vx_r = np.array([vx_r])
+        vy_r = np.array([vy_r])
+        vz_r = np.array([vz_r])
+
+        roll_raterate = [row[2][0] for row in att_feedback] # column vector
+        pitch_raterate = [row[2][1] for row in att_feedback] 
+
+        roll_raterate = np.array([roll_raterate])
+        pitch_raterate = np.array([pitch_raterate])
+
+        traj_time = time[0][start:end]
+        px_r = px_r[0][start:end]
+        py_r = py_r[0][start:end]
+        pz_r = pz_r[0][start:end]
+        vx_r = vx_r[0][start:end]
+        vy_r = vy_r[0][start:end]
+        vz_r = vz_r[0][start:end]
+        #mf_px = ndimage.median_filter(px[0][start:end], size=1300)
+        #mf_py = ndimage.median_filter(py[0][start:end], size=1300)
+        #mf_pz = ndimage.median_filter(pz[0][start:end], size=1300)
+        mf_px = ndimage.gaussian_filter1d(px[0][start:end], 200) #200
+        mf_py = ndimage.gaussian_filter1d(py[0][start:end], 200)
+        mf_pz = ndimage.gaussian_filter1d(pz[0][start:end], 200)
+        mf_vx = ndimage.median_filter(vx[0][start:end], size=300)
+        mf_vy = ndimage.median_filter(vy[0][start:end], size=300)
+        mf_vz = ndimage.median_filter(vz[0][start:end], size=300)
+        roll_raterate = ndimage.gaussian_filter1d(roll_raterate[0][start:end], 500) # could be 1500
+        pitch_raterate = ndimage.gaussian_filter1d(pitch_raterate[0][start:end], 500) # could be 1500
+        #roll_raterate = ndimage.median_filter(roll_raterate, size=1200) # could be 1500
+        #pitch_raterate = ndimage.median_filter(pitch_raterate, size=1200) # could be 1500
+        
+        yawrate = ndimage.gaussian_filter1d(yawrate[0], 120)
+        #yawrate = ndimage.median_filter(yawrate[0], size=300)
+        yawrate = np.round((yawrate[start:end]/(2*math.pi)),2) # in Hz
+
+        #motor_cmd = ndimage.median_filter(motor_cmd[0][start:end], size=30)
+        motor_cmd = ndimage.gaussian_filter1d(motor_cmd[0][start:end], 120)
+
+        xyz_error_norm = []
+        velocity_xyz_error_norm = []
+        rollpitch_raterate_norm = []  
+        yawrate_ls = []     
+
+        for i in range(len(traj_time)):
+            x_error_squared = (px_r[i] - mf_px[i]) ** 2
+            y_error_squared = (py_r[i] - mf_py[i]) ** 2    
+            z_error_squared = (pz_r[i] - mf_pz[i]) ** 2
+            xyz_error_norm.append(math.sqrt(x_error_squared + y_error_squared + z_error_squared))
+
+            vx_error_squared = (vx_r[i] - mf_vx[i]) ** 2
+            vy_error_squared = (vy_r[i] - mf_vy[i]) ** 2    
+            vz_error_squared = (vz_r[i] - mf_vz[i]) ** 2
+            velocity_xyz_error_norm.append(math.sqrt(vx_error_squared + vy_error_squared + vz_error_squared))
+
+            #roll_raterate_error_squared = (att_raterate_error_roll[i]/10000) ** 2
+            #pitch_raterate_error_squared = (att_raterate_error_pitch[i]/10000) ** 2
+            roll_raterate_sq = (roll_raterate[i]) ** 2
+            pitch_raterate_sq = (pitch_raterate[i]) ** 2
+            #roll_raterate_error_norm.append(math.sqrt(roll_raterate_error_squared))
+            #pitch_raterate_error_norm.append(math.sqrt(pitch_raterate_error_squared))
+            rollpitch_raterate_norm.append(math.sqrt(roll_raterate_sq + pitch_raterate_sq))
+            #norm = norm*(180/math.pi)
+            yawrate_ls.append(yawrate[i])
+
+            
+        return (
+            traj_time,
+            mf_px,
+            mf_py,
+            mf_pz,
+            px_r,
+            py_r,
+            pz_r,
+            xyz_error_norm,
+            rollpitch_raterate_norm, #8
+            yawrate_ls, #9
+            mf_vx,
+            mf_vy,
+            mf_vz,
+            vx_r,
+            vy_r,
+            vz_r,
+            velocity_xyz_error_norm,
+            motor_cmd #17
+        )
+
 
     def att_data_compiler(self,file_path):
         #file_path = '/home/emmanuel/Monocopter-OCP/circle/0.3/'
