@@ -79,6 +79,14 @@ class SAM(object):
             self.radius = 0.23
             self.chord = 0.10
             self.AoA = 37
+        # elif monoco_name == 'soft':
+        #     self.J = np.array([0.05,0.05,0.0001])  # N m s^2 = kg m^2, needa test adjusting J[2]
+        #     self.mass = 0.05  # kg - tested
+        #     self.cla = 0.12
+        #     self.rho = 1.225
+        #     self.radius = 0.23
+        #     self.chord = 0.10
+        #     self.AoA = 30    
 
 
 

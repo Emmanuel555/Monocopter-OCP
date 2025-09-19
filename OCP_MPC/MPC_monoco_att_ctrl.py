@@ -200,10 +200,13 @@ class att_ctrl(object):
         x_sign = math.sin(self.yaw)
         y_sign = math.cos(self.yaw)
 
-        ## to account for ultralight wing
+        ## to account for ultralight & soft wing
         if self.monoco.monoco_name == "ultralight":
             cmd_bod_acc[0] = cmd_bod_acc[0] * x_sign * 1 
             cmd_bod_acc[1] = cmd_bod_acc[1] * y_sign * -1
+        # elif self.monoco.monoco_name == "soft":
+        #     cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * 1 
+        #     cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * 1    
         else:
             cmd_bod_acc[0] = cmd_bod_acc[0] * y_sign * -1 
             cmd_bod_acc[1] = cmd_bod_acc[1] * x_sign * -1

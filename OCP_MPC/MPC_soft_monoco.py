@@ -316,6 +316,10 @@ if __name__ == '__main__':
         apz = 120000 
         adz = 25000 
         aiz = 1000 # | 128
+    elif monoco_name == "soft":
+        apz = 320000 
+        adz = 50000 
+        aiz = 1000 # | 128    
 
     # cyclic xyz (stab position)
     kpn = [1.3,1.3,0.0] # 0.04
@@ -332,8 +336,12 @@ if __name__ == '__main__':
     # null
     kn = np.array([0.0,0.0,0.0])
 
-    # position
-    kp = np.array([1000,1000,1200])
+    if monoco_name == "soft":
+        # position
+        kp = np.array([1000,1000,1200])
+    else:
+        # position
+        kp = np.array([1000,1000,1200])    
 
     # angle
     ka = np.array([0.0,0.0,0.0])
@@ -401,12 +409,12 @@ if __name__ == '__main__':
     alt = ref_pos[2]
     elevated_alt = 1.0
 
-    if monoco_name == 'short':
-        reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
-    elif monoco_name == 'long':
-        reverse_cw = 0 # doesnt look like circle but prefer this 
-    elif monoco_name == 'ultralight':
-        reverse_cw = 1
+    #if monoco_name == 'short':
+    reverse_cw = 1 # 1 for clockwise, 0 for counterclockwise
+    # elif monoco_name == 'long':
+    #     reverse_cw = 0 # doesnt look like circle but prefer this 
+    # elif monoco_name == 'ultralight':
+    #     reverse_cw = 1
 
 
     # trajectory generator
@@ -750,6 +758,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
-data_saver.save_data(path)
+#path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
+#data_saver.save_data(path)
 
