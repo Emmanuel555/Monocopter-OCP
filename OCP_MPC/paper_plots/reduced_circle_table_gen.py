@@ -16,7 +16,7 @@ foam_wing = 'ultralight_traj_data'
 
 display_mean = False
 
-title = 'Tracking performances along a Circle'
+title = 'Tracking performances along a Circle (○) '
 wing_foam_circle = data_sorter.foam_whisker_circle(foam_wing,foam_wing)
 wing_short_circle = data_sorter.fan_whisker_circle(short_wing,short_wing)
 wing_long_circle = data_sorter.fan_whisker_circle(long_wing,long_wing)

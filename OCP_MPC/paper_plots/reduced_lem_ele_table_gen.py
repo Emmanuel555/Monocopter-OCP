@@ -12,27 +12,34 @@ data_sorter = cf.sort_traj_data()
 
 long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
-foam_wing = 'ultralight_traj_data'
 
 display_mean = False
+type = 'ele'
 
 
-title = 'Tracking performances along a Lemniscate (∞) '
-wing_foam_circle = data_sorter.foam_whisker_circle(foam_wing)
-wing_short_circle = data_sorter.fan_whisker_circle(short_wing)
-wing_long_circle = data_sorter.fan_whisker_circle(long_wing)
-wing = [wing_short_circle,wing_short_circle,wing_long_circle,wing_long_circle,wing_foam_circle,wing_foam_circle]
+wing_short_lem = data_sorter.fan_whisker_lem(short_wing,short_wing)
+wing_long_lem = data_sorter.fan_whisker_lem(long_wing,long_wing)
+wing_short_ele = data_sorter.fan_whisker_elevated_circle(short_wing,short_wing)
+wing_long_ele = data_sorter.fan_whisker_elevated_circle(long_wing,long_wing)
 
 
-fig, ((ax1,ax5,ax9,ax13,ax17,ax21),(ax2,ax6,ax10,ax14,ax18,ax22),
-    (ax3,ax7,ax11,ax15,ax19,ax23),(ax4,ax8,ax12,ax16,ax20,ax24)) = plt.subplots(4, 6, figsize=(50, 30))
+if type == 'lem':
+    title = 'Tracking performances along a Lemniscate (∞) '
+    wing = [wing_short_lem,wing_short_lem,wing_long_lem,wing_long_lem]
+elif type == 'ele':
+    title = 'Tracking performances along an Elevated Circle (○) '
+    wing = [wing_short_ele,wing_short_ele,wing_long_ele,wing_long_ele]    
+
+
+fig, ((ax1,ax5,ax9,ax13),(ax2,ax6,ax10,ax14),
+    (ax3,ax7,ax11,ax15),(ax4,ax8,ax12,ax16)) = plt.subplots(4, 4, figsize=(50, 30))
 graphs = [[ax1,ax2,ax3,ax4],[ax5,ax6,ax7,ax8],[ax9,ax10,ax11,ax12],
-        [ax13,ax14,ax15,ax16],[ax17,ax18,ax19,ax20],[ax21,ax22,ax23,ax24]]
+        [ax13,ax14,ax15,ax16]]
 #colors = ['#254abe','#96400b','#a725be','#254abe','#96400b','#a725be']
 colors = ['#254abe','#96400b','#254abe','#96400b']
 #med_colors = ['#34be25','#34be25','red','#34be25','#34be25','red']
 med_colors = ['#34be25','red','#34be25','red']
-aggregate = np.zeros((4, 6, 3))
+aggregate = np.zeros((4, 4, 3))
 aggregate = np.array(aggregate, dtype=list) # to store mean and stdev
 fig.subplots_adjust(hspace=0.3, wspace=0.2, 
                     left=0.048, right=0.97, 
@@ -54,36 +61,18 @@ for a in range(len(graphs)): # 3 monocos
         if a == 2:
             order = '-Position Error'
         else:
-            order = '-Velocity Error'    
-    elif a > 3:
-        drone_label = 'Ultralight-' 
-        if a == 4:
-            order = '-Position Error'
-        else:
-            order = '-Velocity Error'  
+            order = '-Velocity Error'       
 
    
     for m in range(len(graphs[a])): # 1.0 m/s circle w and w/o payload, NMPC+INDI and DFBC+INDI 
         if m == 0:
-            if a > 3:
-                method_label = '0.4m/s \n(NMPC+INDI)'
-            else:
-                method_label = '1.0m/s \n(NMPC+INDI)'
+            method_label = '1.0m/s \n(NMPC+INDI)'
         elif m == 1:
-            if a > 3:
-                method_label = '0.4m/s \n(DFBC+INDI)'
-            else:
-                method_label = '1.0m/s \n(DFBC+INDI)'
-        elif m == 2:
-            if a > 3:
-                method_label = '0.4m/s-Payload \n(NMPC+INDI)'
-            else:
-                method_label = '1.0m/s-Fan \n(NMPC+INDI)'      
+            method_label = '1.0m/s \n(DFBC+INDI)'
+        elif m == 2:            
+            method_label = '1.0m/s-Fan \n(NMPC+INDI)'      
         elif m == 3:
-            if a > 3:
-                method_label = '0.4m/s-Payload \n(DFBC+INDI)'
-            else:
-                method_label = '1.0m/s-Fan \n(DFBC+INDI)' 
+            method_label = '1.0m/s-Fan \n(DFBC+INDI)' 
         
 
     
