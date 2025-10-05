@@ -34,7 +34,7 @@ elif type == 'ele':
 rows = 3
 cols = 2
 ## generate the plot
-fig = plt.figure(figsize=(40, 20))
+fig = plt.figure(figsize=(40, 30))
 
 gs = gridspec.GridSpec(rows, cols,
         width_ratios=[1.5, 1],
@@ -51,7 +51,7 @@ for i in range(rows):
         graphs[i][j] = ax
 
 colors = ['#254abe','#96400b','#254abe','#96400b']
-fig.subplots_adjust(hspace=0.248, wspace=0.078, 
+fig.subplots_adjust(hspace=0.4, wspace=0.078, 
                     left=0.03, right=0.98, 
                     top =0.9, bottom =0.075)
 #fig.suptitle(title, fontsize=40, fontweight='bold')
@@ -101,9 +101,9 @@ for i in range(rows):
                 yawrate = wing[a][m][9] 
                 mean = statistics.mean(yawrate)
                 mean = np.round(mean,1)
-                graphs[i][a].set_xlabel('Time(s)',fontsize=20) 
+                graphs[i][a].set_xlabel('Time(s)',fontsize=35) 
                 #graphs[i][a].plot(traj_time,yawrate,label=method_label+"(Mean:{})".format(mean),linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
-                graphs[i][a].plot(traj_time,yawrate,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) 
+                graphs[i][a].plot(traj_time,yawrate,label=method_label,linewidth=15.0,color=colors[m],linestyle=style) 
                  
         elif i == 0:
             for m in range((rows-1)*2): # 1.0 NMPC+INDI and DFBC+INDI
@@ -125,9 +125,9 @@ for i in range(rows):
                 att_raterate = wing[a][m][8] 
                 mean = statistics.mean(att_raterate)
                 mean = np.round(mean,2)
-                graphs[i][a].set_xlabel('Time(s)',fontsize=20) 
+                graphs[i][a].set_xlabel('Time(s)',fontsize=35) 
                 #graphs[i][a].plot(traj_time,att_track,label=method_label+"(Mean:{}, RMS:{})".format(mean, rms),linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
-                graphs[i][a].plot(traj_time,att_raterate,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) 
+                graphs[i][a].plot(traj_time,att_raterate,label=method_label,linewidth=15.0,color=colors[m],linestyle=style) 
                  
         else:
             for m in range((rows-1)*2): # 1.0 NMPC+INDI and DFBC+INDI
@@ -149,9 +149,9 @@ for i in range(rows):
                 motor_cmd = ((wing[a][m][17])/65500)*100 
                 mean = statistics.mean(motor_cmd)
                 mean = np.round(mean,2)
-                graphs[i][a].set_xlabel('Time(s)',fontsize=20) 
+                graphs[i][a].set_xlabel('Time(s)',fontsize=35) 
                 #graphs[i][a].plot(traj_time,att_track,label=method_label+"(Mean:{}, RMS:{})".format(mean, rms),linewidth=7.0,color=colors[m],linestyle=style) #label=['INDI']
-                graphs[i][a].plot(traj_time,motor_cmd,label=method_label,linewidth=7.0,color=colors[m],linestyle=style) 
+                graphs[i][a].plot(traj_time,motor_cmd,label=method_label,linewidth=15.0,color=colors[m],linestyle=style) 
                  
 
         # set limits
@@ -165,12 +165,12 @@ for i in range(rows):
                 graphs[i][a].set_ylim(0,90)
 
         # legend        
-        graphs[i][a].legend(loc='upper right', fontsize=20)
+        graphs[i][a].legend(loc='upper right', fontsize=35)
         # axes
-        graphs[i][a].tick_params(axis='both', labelsize=20)
+        graphs[i][a].tick_params(axis='both', labelsize=35)
         # add title
-        graphs[i][a].set_title(traj_label+att_label, fontsize=25, fontweight='bold')
-        graphs[i][a].grid(linewidth=4.0)
+        graphs[i][a].set_title(traj_label+att_label, fontsize=45, fontweight='bold')
+        graphs[i][a].grid(linewidth=8.0)
 
 
 

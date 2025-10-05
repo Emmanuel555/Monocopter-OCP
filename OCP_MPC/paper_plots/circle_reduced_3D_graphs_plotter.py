@@ -86,13 +86,13 @@ for i in range(rows):
         graphs[i][a].set_ylabel('Yw [m]', fontsize=20)
         graphs[i][a].set_zlabel('Zw [m]', fontsize=20)
         # legend        
-        graphs[i][a].legend(loc='upper right', fontsize=23) # font used to be 23
+        graphs[i][a].legend(loc='upper right', fontsize=15) # font used to be 23
         # add title
         graphs[i][a].set_title(traj_label, fontsize=25, fontweight='bold') # font used to be 35
         graphs[i][a].tick_params(axis='both', labelsize=20)
-        graphs[i][a].tick_params(axis='x', pad=30)
-        graphs[i][a].tick_params(axis='y', pad=30)
-        graphs[i][a].tick_params(axis='z', pad=33)   
+        graphs[i][a].tick_params(axis='x', pad=40)
+        graphs[i][a].tick_params(axis='y', pad=40)
+        graphs[i][a].tick_params(axis='z', pad=40)   
 
         if i == 1 and a < 2: # only for the second row of graphs for short and long
             # fan parameters
