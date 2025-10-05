@@ -88,13 +88,13 @@ for i in range(rows):
         graphs[i][a].set_ylabel('Yw [m]', fontsize=20)
         graphs[i][a].set_zlabel('Zw [m]', fontsize=20)
         # legend        
-        graphs[i][a].legend(loc='upper right', fontsize=20) # font used to be 23
+        graphs[i][a].legend(loc='upper right', fontsize=15) # font used to be 23
         # add title
         graphs[i][a].set_title(traj_label, fontsize=25, fontweight='bold') # font used to be 35
-        graphs[i][a].tick_params(axis='both', labelsize=20)
-        graphs[i][a].tick_params(axis='x', pad=40)
-        graphs[i][a].tick_params(axis='y', pad=40)
-        graphs[i][a].tick_params(axis='z', pad=40)   
+        graphs[i][a].tick_params(axis='both', labelsize=15)
+        graphs[i][a].tick_params(axis='x', pad=35)
+        graphs[i][a].tick_params(axis='y', pad=35)
+        graphs[i][a].tick_params(axis='z', pad=35)   
 
         
 #plt.savefig(title+'.pdf')   
