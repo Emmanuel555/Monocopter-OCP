@@ -265,12 +265,19 @@ class all_trajectory(object):
         xyz_error_norm = []
         velocity_xyz_error_norm = []
         rollpitch_raterate_norm = []  
-        yawrate_ls = []     
+        yawrate_ls = []  
+
+        xe_sq = []
+        ye_sq = []   
+        ze_sq = []      
 
         for i in range(len(traj_time)):
             x_error_squared = (px_r[i] - mf_px[i]) ** 2
-            y_error_squared = (py_r[i] - mf_py[i]) ** 2    
+            xe_sq.append(x_error_squared)
+            y_error_squared = (py_r[i] - mf_py[i]) ** 2
+            ye_sq.append(y_error_squared)    
             z_error_squared = (pz_r[i] - mf_pz[i]) ** 2
+            ze_sq.append(z_error_squared)
             xyz_error_norm.append(math.sqrt(x_error_squared + y_error_squared + z_error_squared))
 
             vx_error_squared = (vx_r[i] - mf_vx[i]) ** 2
@@ -287,6 +294,12 @@ class all_trajectory(object):
             rollpitch_raterate_norm.append(math.sqrt(roll_raterate_sq + pitch_raterate_sq))
             #norm = norm*(180/math.pi)
             yawrate_ls.append(yawrate[i])
+
+        final_rmse_x = math.sqrt(sum(xe_sq)/(end-start))
+        final_rmse_y = math.sqrt(sum(ye_sq)/(end-start))
+        final_rmse_z = math.sqrt(sum(ze_sq)/(end-start))
+        rmse_xyz_list = [final_rmse_y]
+        final_rmse_xyz = la.norm(rmse_xyz_list, 2)    
 
             
         return (
@@ -307,7 +320,8 @@ class all_trajectory(object):
             vy_r,
             vz_r,
             velocity_xyz_error_norm,
-            motor_cmd #17
+            motor_cmd, #17
+            final_rmse_xyz
         )
 
 
@@ -621,6 +635,206 @@ class all_trajectory(object):
         vz_r = data[15]
         yawrate_ls = data[8]
         motor_cmd = data[9]
+        traj_time = data[0]
+
+        x_error = [] 
+        y_error = []
+        z_error = []
+        x_error_squared = [] 
+        y_error_squared = []
+        z_error_squared = []
+        x_error_norm = []
+        y_error_norm = []
+        z_error_norm = []
+        
+        vx_error = [] 
+        vy_error = []
+        vz_error = []
+        vx_error_squared = [] 
+        vy_error_squared = []
+        vz_error_squared = []
+        vx_error_norm = []
+        vy_error_norm = []
+        vz_error_norm = []
+
+        for i in range(len(mf_px)):
+            x_error_squared.append((px_r[i] - mf_px[i]) ** 2)
+            y_error_squared.append((py_r[i] - mf_py[i]) ** 2)    
+            z_error_squared.append((pz_r[i] - mf_pz[i]) ** 2)
+            x_error_norm.append(math.sqrt(x_error_squared[i]))
+            y_error_norm.append(math.sqrt(y_error_squared[i]))
+            z_error_norm.append(math.sqrt(z_error_squared[i]))
+            x_error.append((px_r[i] - mf_px[i]))
+            y_error.append((py_r[i] - mf_py[i]))
+            z_error.append((pz_r[i] - mf_pz[i]))
+
+            vx_error_squared.append((vx_r[i] - mf_vx[i]) ** 2)
+            vy_error_squared.append((vy_r[i] - mf_vy[i]) ** 2)    
+            vz_error_squared.append((vz_r[i] - mf_vz[i]) ** 2)
+            vx_error_norm.append(math.sqrt(vx_error_squared[i]))
+            vy_error_norm.append(math.sqrt(vy_error_squared[i]))
+            vz_error_norm.append(math.sqrt(vz_error_squared[i]))
+            vx_error.append((vx_r[i] - mf_vx[i]))
+            vy_error.append((vy_r[i] - mf_vy[i]))
+            vz_error.append((vz_r[i] - mf_vz[i]))
+
+        final_rmse_x = math.sqrt(sum(x_error_squared)/len(mf_px))
+        final_rmse_y = math.sqrt(sum(y_error_squared)/len(mf_px))
+        final_rmse_z = math.sqrt(sum(z_error_squared)/len(mf_px))
+        rmse_xyz_list = [final_rmse_x,final_rmse_y,final_rmse_z]
+        final_rmse_xyz = la.norm(rmse_xyz_list, 2)
+
+        final_rmse_vx = math.sqrt(sum(vx_error_squared)/len(mf_px))
+        final_rmse_vy = math.sqrt(sum(vy_error_squared)/len(mf_px))
+        final_rmse_vz = math.sqrt(sum(vz_error_squared)/len(mf_px))
+        vel_rmse_xyz_list = [final_rmse_vx,final_rmse_vy,final_rmse_vz]
+        vel_final_rmse_xyz = la.norm(vel_rmse_xyz_list, 2)
+
+        return (
+            x_error,
+            y_error,
+            z_error,
+            x_error_squared,
+            y_error_squared,
+            z_error_squared,
+            x_error_norm, # 6
+            y_error_norm, # 7
+            z_error_norm, # 8
+            rmse_xyz_list,
+            final_rmse_xyz,
+            traj_time,
+            yawrate_ls,
+            motor_cmd,
+            vx_error,
+            vy_error,
+            vz_error,
+            vx_error_squared,
+            vy_error_squared,
+            vz_error_squared,
+            vx_error_norm, # 20
+            vy_error_norm, # 21
+            vz_error_norm, # 22
+            vel_rmse_xyz_list,
+            vel_final_rmse_xyz
+        )
+    
+
+    def red_whisker_lem_ele_plot(self,file_path,drone_type,path_type):
+        data = self.lem_ele_data_compiler(file_path,drone_type,path_type)
+        mf_px = data[1]
+        mf_py = data[2]
+        mf_pz = data[3]
+        px_r = data[4]
+        py_r = data[5]
+        pz_r = data[6]
+        mf_vx = data[10]
+        mf_vy = data[11]
+        mf_vz = data[12]
+        vx_r = data[13]
+        vy_r = data[14]
+        vz_r = data[15]
+        yawrate_ls = data[9]
+        motor_cmd = data[17]
+        traj_time = data[0]
+
+        x_error = [] 
+        y_error = []
+        z_error = []
+        x_error_squared = [] 
+        y_error_squared = []
+        z_error_squared = []
+        x_error_norm = []
+        y_error_norm = []
+        z_error_norm = []
+        
+        vx_error = [] 
+        vy_error = []
+        vz_error = []
+        vx_error_squared = [] 
+        vy_error_squared = []
+        vz_error_squared = []
+        vx_error_norm = []
+        vy_error_norm = []
+        vz_error_norm = []
+
+        for i in range(len(mf_px)):
+            x_error_squared.append((px_r[i] - mf_px[i]) ** 2)
+            y_error_squared.append((py_r[i] - mf_py[i]) ** 2)    
+            z_error_squared.append((pz_r[i] - mf_pz[i]) ** 2)
+            x_error_norm.append(math.sqrt(x_error_squared[i]))
+            y_error_norm.append(math.sqrt(y_error_squared[i]))
+            z_error_norm.append(math.sqrt(z_error_squared[i]))
+            x_error.append((px_r[i] - mf_px[i]))
+            y_error.append((py_r[i] - mf_py[i]))
+            z_error.append((pz_r[i] - mf_pz[i]))
+
+            vx_error_squared.append((vx_r[i] - mf_vx[i]) ** 2)
+            vy_error_squared.append((vy_r[i] - mf_vy[i]) ** 2)    
+            vz_error_squared.append((vz_r[i] - mf_vz[i]) ** 2)
+            vx_error_norm.append(math.sqrt(vx_error_squared[i]))
+            vy_error_norm.append(math.sqrt(vy_error_squared[i]))
+            vz_error_norm.append(math.sqrt(vz_error_squared[i]))
+            vx_error.append((vx_r[i] - mf_vx[i]))
+            vy_error.append((vy_r[i] - mf_vy[i]))
+            vz_error.append((vz_r[i] - mf_vz[i]))
+
+        final_rmse_x = math.sqrt(sum(x_error_squared)/len(mf_px))
+        final_rmse_y = math.sqrt(sum(y_error_squared)/len(mf_px))
+        final_rmse_z = math.sqrt(sum(z_error_squared)/len(mf_px))
+        rmse_xyz_list = [final_rmse_x,final_rmse_y,final_rmse_z]
+        final_rmse_xyz = la.norm(rmse_xyz_list, 2)
+
+        final_rmse_vx = math.sqrt(sum(vx_error_squared)/len(mf_px))
+        final_rmse_vy = math.sqrt(sum(vy_error_squared)/len(mf_px))
+        final_rmse_vz = math.sqrt(sum(vz_error_squared)/len(mf_px))
+        vel_rmse_xyz_list = [final_rmse_vx,final_rmse_vy,final_rmse_vz]
+        vel_final_rmse_xyz = la.norm(vel_rmse_xyz_list, 2)
+
+        return (
+            x_error,
+            y_error,
+            z_error,
+            x_error_squared,
+            y_error_squared,
+            z_error_squared,
+            x_error_norm, # 6
+            y_error_norm, # 7
+            z_error_norm, # 8
+            rmse_xyz_list,
+            final_rmse_xyz,
+            traj_time,
+            yawrate_ls,
+            motor_cmd,
+            vx_error,
+            vy_error,
+            vz_error,
+            vx_error_squared,
+            vy_error_squared,
+            vz_error_squared,
+            vx_error_norm, # 20
+            vy_error_norm, # 21
+            vz_error_norm, # 22
+            vel_rmse_xyz_list,
+            vel_final_rmse_xyz
+        )
+    
+
+    def red_whisker_circle_plot(self,file_path):
+        data = self.traj_data_compiler(file_path)
+        mf_px = data[1]
+        mf_py = data[2]
+        mf_pz = data[3]
+        px_r = data[4]
+        py_r = data[5]
+        pz_r = data[6]
+        mf_vx = data[10]
+        mf_vy = data[11]
+        mf_vz = data[12]
+        vx_r = data[13]
+        vy_r = data[14]
+        vz_r = data[15]
+        yawrate_ls = data[9]
+        motor_cmd = data[17]
         traj_time = data[0]
 
         x_error = [] 

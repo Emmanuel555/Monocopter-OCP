@@ -317,6 +317,94 @@ class sort_traj_data(object):
         return (nmpc1, dfbc1, nmpc1_fan, dfbc1_fan)
     
 
+    def red_whisker_ele(self,folder,drone_type,path_type):
+        # elevated_circle 1 and 1.5
+        nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/elevated_circle1/NMPC/'
+        dfbc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/elevated_circle1/DFBC/'
+
+        nmpc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/elevated_circle1.5/NMPC/'
+        dfbc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/elevated_circle1.5/DFBC/'
+
+        nmpc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_elevated_circle1/NMPC/'
+        dfbc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_elevated_circle1/DFBC/'
+     
+        nmpc1 = self.traj_compile.red_whisker_lem_ele_plot(nmpc1,drone_type,path_type)
+        dfbc1 = self.traj_compile.red_whisker_lem_ele_plot(dfbc1,drone_type,path_type)
+        
+        nmpc1_5 = self.traj_compile.red_whisker_lem_ele_plot(nmpc1_5,drone_type,path_type)
+        dfbc1_5 = self.traj_compile.red_whisker_lem_ele_plot(dfbc1_5,drone_type,path_type)
+
+        nmpc1_fan = self.traj_compile.red_whisker_lem_ele_plot(nmpc1_fan,drone_type,path_type)
+        dfbc1_fan = self.traj_compile.red_whisker_lem_ele_plot(dfbc1_fan,drone_type,path_type)
+        
+        return (nmpc1, dfbc1, nmpc1_5, dfbc1_5, nmpc1_fan, dfbc1_fan)
+    
+
+    def red_whisker_lem(self,folder,drone_type,path_type):
+        # lem 1 and 1.5
+        nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/lem1/NMPC/'
+        dfbc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/lem1/DFBC/'
+
+        nmpc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/lem1.5/NMPC/'
+        dfbc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/lem1.5/DFBC/'
+
+        nmpc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_lem1/NMPC/'
+        dfbc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_lem1/DFBC/'
+
+        nmpc1 = self.traj_compile.red_whisker_lem_ele_plot(nmpc1,drone_type,path_type)
+        dfbc1 = self.traj_compile.red_whisker_lem_ele_plot(dfbc1,drone_type,path_type)
+        
+        nmpc1_5 = self.traj_compile.red_whisker_lem_ele_plot(nmpc1_5,drone_type,path_type)
+        dfbc1_5 = self.traj_compile.red_whisker_lem_ele_plot(dfbc1_5,drone_type,path_type)
+
+        nmpc1_fan = self.traj_compile.red_whisker_lem_ele_plot(nmpc1_fan,drone_type,path_type)
+        dfbc1_fan = self.traj_compile.red_whisker_lem_ele_plot(dfbc1_fan,drone_type,path_type)
+        
+        return (nmpc1, dfbc1, nmpc1_5, dfbc1_5, nmpc1_fan, dfbc1_fan)
+    
+
+    def red_whisker_circle(self,folder): 
+        # circle 1 and 1.5
+        nmpc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/NMPC/'
+        dfbc1 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1/DFBC/'
+
+        nmpc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1.5/NMPC/'
+        dfbc1_5 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle1.5/DFBC/'
+
+        nmpc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_circle1/NMPC/'
+        dfbc1_fan = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/fan_circle1/DFBC/'
+        
+        nmpc1 = self.traj_compile.red_whisker_circle_plot(nmpc1)
+        dfbc1 = self.traj_compile.red_whisker_circle_plot(dfbc1)
+
+        nmpc1_fan = self.traj_compile.red_whisker_circle_plot(nmpc1_fan)
+        dfbc1_fan = self.traj_compile.red_whisker_circle_plot(dfbc1_fan)
+        
+        nmpc1_5 = self.traj_compile.red_whisker_circle_plot(nmpc1_5)
+        dfbc1_5 = self.traj_compile.red_whisker_circle_plot(dfbc1_5)
+    
+        return (nmpc1, dfbc1, nmpc1_5, dfbc1_5, nmpc1_fan, dfbc1_fan)
+    
+
+    def red_whisker_foam_circle(self,folder): 
+        # circle 0.4
+        nmpc4 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle4/NMPC/'
+        dfbc4 = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/circle4/DFBC/'
+        
+        nmpc4_payload = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/payload_circle4/NMPC/'
+        dfbc4_payload = '/home/emmanuel/Monocopter-OCP/OCP_MPC/paper_plots/' + folder + '/payload_circle4/DFBC/'
+        
+
+        nmpc4 = self.traj_compile.red_whisker_circle_plot(nmpc4)
+        dfbc4 = self.traj_compile.red_whisker_circle_plot(dfbc4)
+
+        nmpc4_payload = self.traj_compile.red_whisker_circle_plot(nmpc4_payload)
+        dfbc4_payload = self.traj_compile.red_whisker_circle_plot(dfbc4_payload)
+        
+        return (nmpc4, dfbc4, nmpc4_payload, dfbc4_payload)
+    
+
+
     
     
 
