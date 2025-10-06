@@ -81,36 +81,39 @@ for i in range(rows):
             x = wing[m][n][1] 
             y = wing[m][n][2] 
             z = wing[m][n][3]
+            # rx = wing[m][n][4] 
+            # ry = wing[m][n][5] 
+            # rz = wing[m][n][6] 
             #final_rmse = wing[m][n][18]
 
-            xe_sq = []
-            x_p = 0.0
-            ye_sq = []   
-            y_p = 0.0
-            ze_sq = []
-            z_p = 0.0
+            # xe_sq = []
+            # x_p = 0.0
+            # ye_sq = []   
+            # y_p = 0.0
+            # ze_sq = []
+            # z_p = 0.0
 
-            for k in range(len(x)):
-                if rx[k] != x_p:
-                    x_error_squared = (rx[k] - x[k]) ** 2
-                    xe_sq.append(x_error_squared)
-                    x_p = rx[k]
-                if ry[k] != y_p:
-                    y_error_squared = (ry[k] - y[k]) ** 2
-                    ye_sq.append(y_error_squared)    
-                    y_p = ry[k]
-                if rz[k] != z_p:
-                    z_error_squared = (rz[k] - z[k]) ** 2
-                    ze_sq.append(z_error_squared)
-                    z_p = rz[k]
+            # for k in range(len(x)):
+            #     #if rx[k] != x_p:
+            #     x_error_squared = (rx[k] - x[k]) ** 2
+            #     xe_sq.append(x_error_squared)
+            #     #    x_p = rx[k]
+            #     #if ry[k] != y_p:
+            #     y_error_squared = (ry[k] - y[k]) ** 2
+            #     ye_sq.append(y_error_squared)    
+            #     #y_p = ry[k]
+            #     #if rz[k] != z_p:
+            #     z_error_squared = (rz[k] - z[k]) ** 2
+            #     ze_sq.append(z_error_squared)
+            #     #z_p = rz[k]
                 
-            final_rmse_x = math.sqrt(sum(xe_sq)/(len(xe_sq)))
-            final_rmse_y = math.sqrt(sum(ye_sq)/(len(ye_sq)))
-            final_rmse_z = math.sqrt(sum(ze_sq)/(len(ze_sq)))
-            rmse_xyz_list = [final_rmse_y,final_rmse_x,final_rmse_z]
-            final_rmse = la.norm(rmse_xyz_list, 2) 
+            # final_rmse_x = math.sqrt(sum(xe_sq)/(len(x)))
+            # final_rmse_y = math.sqrt(sum(ye_sq)/(len(x)))
+            # final_rmse_z = math.sqrt(sum(ze_sq)/(len(x)))
+            # rmse_xyz_list = [final_rmse_y,final_rmse_x,final_rmse_z]
+            # final_rmse = la.norm(rmse_xyz_list, 2) 
 
-            graphs[i][a].plot3D(x,y,z,label=method_label+"  "+f'{final_rmse:.2f}',linewidth=7.0,color=colors[n],linestyle=style) #label=['NMPC']      
+            graphs[i][a].plot3D(x,y,z,label=method_label,linewidth=7.0,color=colors[n],linestyle=style) #label=['NMPC']      
 
         graphs[i][a].set_zlim(0,2)
         graphs[i][a].set_xlabel('Xw [m]', fontsize=20)

@@ -431,7 +431,8 @@ if selected_wing == foam_wing:
         for j in range(paper_size[1]):
             paper_mean[i][j] = statistics.mean(xyz_hold_mean[i][j])
             paper_stddev[i][j] = statistics.stdev(xyz_hold_stddev[i][j])
-            paper_rmse[i][j] = statistics.mean(xyz_rmse[i][j]) 
+            #paper_rmse[i][j] = statistics.mean(xyz_rmse[i][j]) 
+            paper_rmse[i][j] = la.norm(xyz_rmse[i][j], 2) # euclidean RMSE 
 
     file = open(title, "w+")
     file.write(selected_wing+'\n')
@@ -500,7 +501,8 @@ else:
         for j in range(paper_size[1]):
             paper_mean[i][j] = statistics.mean(xyz_hold_mean[i][j])
             paper_stddev[i][j] = statistics.stdev(xyz_hold_stddev[i][j])
-            paper_rmse[i][j] = statistics.mean(xyz_rmse[i][j])        
+            #paper_rmse[i][j] = statistics.mean(xyz_rmse[i][j]) 
+            paper_rmse[i][j] = la.norm(xyz_rmse[i][j], 2) # euclidean RMSE       
 
     file = open(title, "w+")
     file.write(selected_wing+'\n')
