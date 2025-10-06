@@ -14,7 +14,7 @@ data_sorter = cf.sort_traj_data()
 long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 
-type = 'ele'
+type = 'lem'
 
 att = 1
 
@@ -37,7 +37,7 @@ cols = 2
 fig = plt.figure(figsize=(40, 30))
 
 gs = gridspec.GridSpec(rows, cols,
-        width_ratios=[1.5, 1],
+        width_ratios=[1, 1],
         height_ratios=[1, 1, 1],
         figure=fig)
 
