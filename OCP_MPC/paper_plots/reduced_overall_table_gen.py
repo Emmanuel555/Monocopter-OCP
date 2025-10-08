@@ -14,7 +14,7 @@ long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 foam_wing = 'ultralight_traj_data'
 
-selected_wing = long_wing
+selected_wing = short_wing
 type = selected_wing
 display_mean = False
 
