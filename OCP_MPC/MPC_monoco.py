@@ -239,7 +239,7 @@ if __name__ == '__main__':
     sample_time = 1 / max_sample_rate
     mpc_sample_time = 1 / mpc_rate
     
-    monoco_name = "long" # long, short, ultralight
+    monoco_name = "short" # long, short, ultralight
 
     if monoco_name == "ultralight":
         data_processor = Foam_data_process.RealTimeProcessor(4, [100], 'lowpass', 'cheby2', 85, sample_rate)
@@ -750,6 +750,6 @@ if __name__ == '__main__':
                     
 
 # save data
-path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
-data_saver.save_data(path)
+#path = "/home/emmanuel/Monocopter-OCP/OCP_MPC/MPC_robot/MPC_" + monoco_name + chosen_traj + str(speedX*0.1) + '_ms'
+#data_saver.save_data(path)
 
