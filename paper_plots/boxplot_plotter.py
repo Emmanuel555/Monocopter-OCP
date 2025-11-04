@@ -14,7 +14,7 @@ long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 foam_wing = 'foam_traj_data'
 
-selected_wing = long_wing
+selected_wing = short_wing
 display_mean = False
 
 if selected_wing == short_wing:
@@ -32,16 +32,16 @@ wing_lem = data_sorter.whisker_lem(selected_wing)
 wing = [wing_circle,wing_elevated,wing_lem]
 
 ## generate the plot
-fig, ((ax1,ax4,ax7,ax10,ax13,ax16),(ax2,ax5,ax8,ax11,ax14,ax17),(ax3,ax6,ax9,ax12,ax15,ax18)) = plt.subplots(3, 6, figsize=(40, 12))
+fig, ((ax1,ax4,ax7,ax10,ax13,ax16),(ax2,ax5,ax8,ax11,ax14,ax17),(ax3,ax6,ax9,ax12,ax15,ax18)) = plt.subplots(3, 6, figsize=(40, 60))
 graphs = [[ax1,ax2,ax3,ax4,ax5,ax6],[ax7,ax8,ax9,ax10,ax11,ax12],[ax13,ax14,ax15,ax16,ax17,ax18]]
 colors = ['#254abe','#96400b','#a725be','#254abe','#96400b','#a725be']
 med_colors = ['#34be25','#34be25','red','#34be25','#34be25','red']
 aggregate = np.zeros((3, 6, 3))
 aggregate = np.array(aggregate, dtype=list) # to store mean and stdev
-fig.subplots_adjust(hspace=0.3, wspace=0.2, 
+fig.subplots_adjust(hspace=0.3, wspace=0.5, 
                     left=0.048, right=0.97, 
-                    top = 0.89, bottom = 0.042)
-fig.suptitle(title + ' (L2 norm error(m))', fontsize=40, fontweight='bold')
+                    top = 0.93, bottom = 0.042)
+fig.suptitle(title + ' (L2 norm error(m))', fontsize=73, fontweight='bold')
 
 
 for a in range(len(graphs)): # 3 trajs
@@ -84,10 +84,10 @@ for a in range(len(graphs)): # 3 trajs
 
             # rmse
             graphs[a][m].plot(placement+i*0.05, wing[a][m][9][0+i], 'X', 
-                              mfc = med_colors[m], mec = med_colors[m], ms = 17, label='RMS') # marker type
+                              mfc = med_colors[m], mec = med_colors[m], ms = 30, label='RMS') # marker type
             # mean
             graphs[a][m].plot(placement+i*0.05, statistics.mean(wing[a][m][6+i]), 'o', 
-                              mfc = med_colors[m], mec = med_colors[m], ms = 17, label='Mean') # marker type
+                              mfc = med_colors[m], mec = med_colors[m], ms = 30, label='Mean') # marker type
             
             method_mean = statistics.mean(wing[a][m][6+i])
             method_stdev = statistics.stdev(wing[a][m][6+i])
@@ -105,15 +105,15 @@ for a in range(len(graphs)): # 3 trajs
                 color='black')  # Adjust color as needed
 
             # rotate x axis labels
-            graphs[a][m].tick_params(axis='x', labelrotation=0, labelsize=27)
-            graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=27)
+            graphs[a][m].tick_params(axis='x', labelrotation=0, labelsize=53)
+            graphs[a][m].tick_params(axis='y', labelrotation=0, labelsize=53)
             graphs[a][m].set_xlim(-0.02, 0.12)
             # add title
-            graphs[a][m].set_title(traj_label + method_label, fontsize=25, fontweight='bold')
+            graphs[a][m].set_title(traj_label + method_label, fontsize=43, fontweight='bold')
             graphs[a][m].grid(linewidth=4.0)
             # add legend
             if i == 0:
-                graphs[a][m].legend(loc='upper right', fontsize=20)
+                graphs[a][m].legend(loc='upper right', fontsize=43)
 
             for whisker in method['whiskers']:
                 whisker.set(linewidth=7.0) # Set the thickness 
@@ -209,5 +209,5 @@ for i in range(paper_size[0]):
 #print ('Paper stddev:', paper_stddev)
 
 file.close()
-plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
-plt.show()
+plt.savefig(title+'.pdf', dpi=300, bbox_inches='tight')  
+#plt.show()

@@ -13,7 +13,7 @@ long_wing = 'long_traj_data'
 short_wing = 'short_traj_data'
 foam_wing = 'foam_traj_data'
 
-selected_wing = long_wing
+selected_wing = short_wing
 
 if selected_wing == short_wing:
     title = 'Short-wing '
@@ -81,5 +81,5 @@ ax1.grid(linewidth=2.0)
 ax2.grid(linewidth=2.0)
 ax3.grid(linewidth=2.0)    
   
-plt.savefig(title+'motor_cmd.png', dpi=300, bbox_inches='tight')  
+plt.savefig(title+'motor_cmd.pdf', dpi=300, bbox_inches='tight')  
 plt.show()

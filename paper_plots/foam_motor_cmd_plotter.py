@@ -70,5 +70,5 @@ ax2.legend(loc='upper right', fontsize=25)
 ax1.grid(linewidth=2.0)
 ax2.grid(linewidth=2.0)   
   
-plt.savefig(selected_wing+'motor_cmd.png', dpi=300, bbox_inches='tight')  
+plt.savefig(selected_wing+'motor_cmd.pdf', dpi=300, bbox_inches='tight')  
 plt.show()
