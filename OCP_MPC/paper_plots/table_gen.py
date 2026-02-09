@@ -572,4 +572,4 @@ else:
 file.close()
 
 plt.savefig(title+'.png', dpi=300, bbox_inches='tight')  
-#plt.show()
+plt.show()
